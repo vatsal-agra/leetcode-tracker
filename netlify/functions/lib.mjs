@@ -1,0 +1,414 @@
+/* DSA Mission Control — shared engine for Netlify Functions.
+   Faithful port of server.py: same data shapes, same math, IST throughout. */
+
+export const IST_SHIFT = 19800; // +05:30 in seconds
+
+export const DEFAULT_SETTINGS = {
+  username: "agrawal_vatsal",
+  baseline_total: 109,
+  baseline_date: "2026-07-11",
+  roadmap_start: "2026-07-11",
+  roadmap_end: "2026-12-31",
+  sync_minutes: 15,
+  redo_days: 7,
+};
+
+export const MONTHS = [
+  { key: "2026-07", name: "July",      short: "Jul", start: "2026-07-11", end: "2026-07-31", target: 60, block: 45, wildcard: 15 },
+  { key: "2026-08", name: "August",    short: "Aug", start: "2026-08-01", end: "2026-08-31", target: 50, block: 38, wildcard: 12 },
+  { key: "2026-09", name: "September", short: "Sep", start: "2026-09-01", end: "2026-09-30", target: 90, block: 66, wildcard: 24 },
+  { key: "2026-10", name: "October",   short: "Oct", start: "2026-10-01", end: "2026-10-31", target: 35, block: 27, wildcard: 8 },
+  { key: "2026-11", name: "November",  short: "Nov", start: "2026-11-01", end: "2026-11-30", target: 10, block: 0,  wildcard: 10 },
+  { key: "2026-12", name: "December",  short: "Dec", start: "2026-12-01", end: "2026-12-31", target: 75, block: 75, wildcard: 0 },
+];
+
+export const TOPICS = [
+  { name: "Arrays & Hashing",      target: 7,  months: "Jul",           icon: "grid" },
+  { name: "Two Pointers",          target: 10, months: "Jul",           icon: "arrows" },
+  { name: "Sliding Window",        target: 10, months: "Jul",           icon: "window" },
+  { name: "Stack",                 target: 10, months: "Jul",           icon: "stack" },
+  { name: "Binary Search",         target: 8,  months: "Jul",           icon: "search" },
+  { name: "Linked List",           target: 10, months: "Aug",           icon: "link" },
+  { name: "Trees & BST",           target: 24, months: "Aug",           icon: "tree" },
+  { name: "Tries",                 target: 4,  months: "Aug",           icon: "trie" },
+  { name: "Heap / Priority Queue", target: 8,  months: "Sep",           icon: "heap" },
+  { name: "Backtracking",          target: 12, months: "Sep",           icon: "back" },
+  { name: "Graphs",                target: 16, months: "Sep + Dec",     icon: "graph" },
+  { name: "Advanced Graphs",       target: 5,  months: "Sep",           icon: "network" },
+  { name: "Greedy",                target: 10, months: "Sep",           icon: "zap" },
+  { name: "Intervals",             target: 5,  months: "Sep",           icon: "bars" },
+  { name: "1-D DP",                target: 16, months: "Sep–Oct + Dec", icon: "dp1" },
+  { name: "2-D DP",                target: 10, months: "Oct + Dec",     icon: "dp2" },
+  { name: "Bit Manipulation",      target: 6,  months: "Oct",           icon: "bit" },
+  { name: "Math & Geometry",       target: 5,  months: "Oct",           icon: "sigma" },
+];
+export const TOPIC_NAMES = TOPICS.map(t => t.name);
+export const TYPES = ["Block", "Wildcard", "Redo", "Timed", "Contest"];
+
+export const MONTH_BLOCK_TOPICS = {
+  "2026-07": ["Two Pointers", "Sliding Window", "Stack", "Binary Search", "Arrays & Hashing"],
+  "2026-08": ["Linked List", "Trees & BST", "Tries"],
+  "2026-09": ["Heap / Priority Queue", "Backtracking", "Graphs", "Advanced Graphs", "Greedy", "Intervals", "1-D DP"],
+  "2026-10": ["1-D DP", "2-D DP", "Bit Manipulation", "Math & Geometry"],
+  "2026-11": [],
+  "2026-12": ["Graphs", "1-D DP", "2-D DP"],
+};
+
+export const ALLOCATIONS = [
+  { month: "2026-07", label: "Two Pointers",          mode: "Block",    topics: ["Two Pointers"],          target: 10, note: "Pair / partition / in-place patterns." },
+  { month: "2026-07", label: "Sliding Window",        mode: "Block",    topics: ["Sliding Window"],        target: 10, note: "Must include Sliding Window Maximum (monotonic deque)." },
+  { month: "2026-07", label: "Stack",                 mode: "Block",    topics: ["Stack"],                 target: 10, note: "≥4 monotonic stack: Daily Temps, Largest Histogram." },
+  { month: "2026-07", label: "Binary Search",         mode: "Block",    topics: ["Binary Search"],         target: 8,  note: "≥3 binary-search-on-answer: Koko, Ship Capacity, Split Array." },
+  { month: "2026-07", label: "Arrays & Hashing",      mode: "Block",    topics: ["Arrays & Hashing"],      target: 7,  note: "Top-up only — prefix sums, Kadane, anything your grind missed." },
+  { month: "2026-07", label: "Wildcard / Mixed",      mode: "Wildcard", topics: null,                      target: 15, note: "~1/day. Write your pattern guess BEFORE coding, every time." },
+  { month: "2026-08", label: "Linked List",           mode: "Block",    topics: ["Linked List"],           target: 10, note: "Fast/slow, reversal, merge-K; include LRU Cache." },
+  { month: "2026-08", label: "Trees & BST",           mode: "Block",    topics: ["Trees & BST"],           target: 24, note: "Traversals → BST props → construction → LCA → serialize." },
+  { month: "2026-08", label: "Tries",                 mode: "Block",    topics: ["Tries"],                 target: 4,  note: "Implement Trie + Word Search II." },
+  { month: "2026-08", label: "Wildcard / Mixed",      mode: "Wildcard", topics: null,                      target: 12, note: "Pool = all covered topics + your old arrays corpus." },
+  { month: "2026-09", label: "Heap / Priority Queue", mode: "Block",    topics: ["Heap / Priority Queue"], target: 8,  note: "Include one quickselect (Kth Largest WITHOUT a heap)." },
+  { month: "2026-09", label: "Backtracking",          mode: "Block",    topics: ["Backtracking"],          target: 12, note: "Subsets, permutations, combo sum, board problems." },
+  { month: "2026-09", label: "Graphs",                mode: "Block",    topics: ["Graphs"],                target: 16, note: "BFS/DFS on grids, topo sort, union-find." },
+  { month: "2026-09", label: "Advanced Graphs",       mode: "Block",    topics: ["Advanced Graphs"],       target: 5,  note: "Dijkstra, MST; Cheapest Flights = the Bellman-Ford idea." },
+  { month: "2026-09", label: "Greedy",                mode: "Block",    topics: ["Greedy"],                target: 10, note: "Exchange-argument intuition, jump game family." },
+  { month: "2026-09", label: "Intervals",             mode: "Block",    topics: ["Intervals"],             target: 5,  note: "Sort-then-sweep; meeting rooms." },
+  { month: "2026-09", label: "1-D DP",                mode: "Block",    topics: ["1-D DP"],                target: 10, note: "House Robber family, LIS, Word Break." },
+  { month: "2026-09", label: "Wildcard / Mixed",      mode: "Wildcard", topics: null,                      target: 24, note: "Heaviest month — interleaving is load-bearing here." },
+  { month: "2026-10", label: "1-D DP (finish)",       mode: "Block",    topics: ["1-D DP"],                target: 6,  note: "Finish the 1-D set (16 total across Sep–Oct)." },
+  { month: "2026-10", label: "2-D DP",                mode: "Block",    topics: ["2-D DP"],                target: 10, note: "Grid paths, LCS, edit distance, stock series." },
+  { month: "2026-10", label: "Bit Manipulation",      mode: "Block",    topics: ["Bit Manipulation"],      target: 6,  note: "XOR tricks, counting bits, single number." },
+  { month: "2026-10", label: "Math & Geometry",       mode: "Block",    topics: ["Math & Geometry"],       target: 5,  note: "Rotate image, spiral, happy number, pow." },
+  { month: "2026-10", label: "Wildcard / Mixed",      mode: "Wildcard", topics: null,                      target: 8,  note: "Syllabus closes Oct 31." },
+  { month: "2026-11", label: "Streak Preservation",   mode: "Wildcard", topics: null,                      target: 10, note: "2–3/week from weakest tags. ZERO new topics. Exams own this month." },
+  { month: "2026-12", label: "Flag Queue Flush",      mode: "Redo",     topics: null,                      target: 25, note: "Weeks 1–2: clear every open flag before anything else." },
+  { month: "2026-12", label: "Timed / Company Sets",  mode: "Timed",    topics: null,                      target: 35, note: "2 mediums / 70 min, no IDE autocomplete; company-tagged lists." },
+  { month: "2026-12", label: "Hard Reps (Graph/DP)",  mode: "Block",    topics: ["Graphs", "1-D DP", "2-D DP"], target: 7, note: "Hard problems only; log with their real topic." },
+  { month: "2026-12", label: "Contests",              mode: "Contest",  topics: null,                      target: 8,  note: "2 Sunday contests × 4 problems each." },
+];
+
+export const PRACTICE_MODES = [
+  { mode: "Wildcard", target: 69, note: "Jul–Oct 59 + Nov 10. The discrimination reps — never skip these." },
+  { mode: "Redo",     target: 25, note: "Rolling all year; December flush target = 25." },
+  { mode: "Timed",    target: 35, note: "December interview simulation. 2 mediums / 70 minutes." },
+  { mode: "Contest",  target: 10, note: "September onward; each contest logs ~4 rows." },
+];
+
+export const PLAYBOOK = [
+  { title: "Daily template — 2 + 1", body: "Two problems from the current mini-block (5–6 day topic runs), one wildcard: a redo-queue item if one is due, otherwise a random problem from any covered topic with the tag hidden." },
+  { title: "The 60-second rule", body: "Before coding any wildcard, write down which pattern you think it is and why. That minute of classification practice is the entire point of the slot." },
+  { title: "The 35-minute rule", body: "Stuck past 35 minutes → read the editorial, close it, implement from memory, flag it for redo. Grinding 2 hours on one DP problem kills the daily quota." },
+  { title: "Flag → +7 days", body: "Any problem that needed the editorial gets redone 7 days later. The tracker auto-detects the re-solve and clears the flag. Redos count toward monthly totals — repetition is the learning." },
+  { title: "Thin days: wildcard first", body: "On a 1-problem day, do the wildcard, not the block problem. Block progress can slip a day; discrimination reps can't be crammed later." },
+  { title: "Contests — Sept onward", body: "Start September, not before. Each contest counts ~4 toward the month; every attempted problem logs as its own entry." },
+  { title: "November — pure preservation", body: "Streak preservation only: 2–3 per week from your weakest tags (watch the Days-Cold badges). Zero new topics — exams own this month, and the full syllabus is already behind you by design." },
+  { title: "December — consolidation", body: "Flush the flag queue (weeks 1–2), then timed pairs — 2 mediums in 70 minutes, no autocomplete — company-tagged lists, hard reps on Graphs/DP, and 2 Sunday contests." },
+  { title: "Tier-2 (deliberately skipped)", body: "Segment trees / Fenwick, KMP / rolling hash, bitmask & digit DP, Floyd–Warshall. Contest material, ~1–2% of interviews. Reliability on the 95% beats breadth on the last 5%." },
+  { title: "Single source of truth", body: "The log drives every number here. Solves sync in automatically; your only jobs are the redo flags, time-taken, and honest No-Editorial marks." },
+];
+
+const TAG_RULES = [
+  [["Trie"], "Tries"],
+  [["Linked List", "Doubly-Linked List"], "Linked List"],
+  [["Binary Search Tree", "Binary Tree", "Tree", "Segment Tree", "Binary Indexed Tree"], "Trees & BST"],
+  [["Heap (Priority Queue)"], "Heap / Priority Queue"],
+  [["Shortest Path", "Minimum Spanning Tree", "Strongly Connected Component", "Eulerian Circuit", "Biconnected Component"], "Advanced Graphs"],
+  [["Graph", "Topological Sort", "Union Find"], "Graphs"],
+  [["Backtracking"], "Backtracking"],
+  [["Dynamic Programming"], "__DP__"],
+  [["Monotonic Stack", "Stack"], "Stack"],
+  [["Sliding Window", "Monotonic Queue"], "Sliding Window"],
+  [["Two Pointers"], "Two Pointers"],
+  [["Binary Search"], "Binary Search"],
+  [["Breadth-First Search", "Depth-First Search"], "Graphs"],
+  [["Greedy"], "Greedy"],
+  [["Line Sweep"], "Intervals"],
+  [["Bit Manipulation", "Bitmask"], "Bit Manipulation"],
+  [["Geometry", "Math", "Number Theory", "Combinatorics", "Probability and Statistics"], "Math & Geometry"],
+  [["Hash Table", "Array", "String", "Prefix Sum", "Counting", "Sorting", "Matrix", "Simulation"], "Arrays & Hashing"],
+];
+
+export function topicCandidates(tags) {
+  const tset = new Set(tags);
+  const out = [];
+  for (const [group, topicRaw] of TAG_RULES) {
+    if (group.some(g => tset.has(g))) {
+      const topic = topicRaw === "__DP__" ? (tset.has("Matrix") ? "2-D DP" : "1-D DP") : topicRaw;
+      if (!out.includes(topic)) out.push(topic);
+    }
+  }
+  return out.length ? out : ["Arrays & Hashing"];
+}
+
+/* ------------------------------------------------------------- date utils */
+export const istDateOf = tsSec => new Date((tsSec + IST_SHIFT) * 1000).toISOString().slice(0, 10);
+export const istToday = () => istDateOf(Math.floor(Date.now() / 1000));
+export const dayNum = iso => Math.floor(Date.parse(iso + "T00:00:00Z") / 86400000);
+export function addDays(iso, n) {
+  return new Date((dayNum(iso) + n) * 86400000).toISOString().slice(0, 10);
+}
+export const validISO = d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d + "T00:00:00Z"));
+
+const monthKeyOf = d => d.slice(0, 7);
+export function defaultType(topic, dsolved) {
+  return (MONTH_BLOCK_TOPICS[monthKeyOf(dsolved)] || []).includes(topic) ? "Block" : "Wildcard";
+}
+
+/* ------------------------------------------------------------- leetcode */
+const GQL = "https://leetcode.com/graphql";
+const HEADERS = {
+  "Content-Type": "application/json",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) DSA-Mission-Control/1.0",
+  "Referer": "https://leetcode.com",
+};
+
+async function gql(query, variables) {
+  const r = await fetch(GQL, { method: "POST", headers: HEADERS, body: JSON.stringify({ query, variables }) });
+  if (!r.ok) throw new Error(`leetcode http ${r.status}`);
+  const out = await r.json();
+  if (out.errors && !out.data) throw new Error(String(out.errors[0]?.message || "gql error").slice(0, 150));
+  return out.data;
+}
+
+export async function fetchProfile(username) {
+  try {
+    const d = await gql(
+      "query($u:String!){matchedUser(username:$u){profile{ranking}submitStatsGlobal{acSubmissionNum{difficulty count}}}}",
+      { u: username });
+    const nums = Object.fromEntries(d.matchedUser.submitStatsGlobal.acSubmissionNum.map(x => [x.difficulty, x.count]));
+    return { lifetime: nums.All ?? null, easy: nums.Easy ?? null, medium: nums.Medium ?? null,
+             hard: nums.Hard ?? null, ranking: d.matchedUser.profile.ranking ?? null };
+  } catch {
+    const r = await fetch(`https://leetcode-api-faisalshohag.vercel.app/${username}`);
+    if (!r.ok) throw new Error(`mirror http ${r.status}`);
+    const j = await r.json();
+    return { lifetime: j.totalSolved ?? null, easy: j.easySolved ?? null, medium: j.mediumSolved ?? null,
+             hard: j.hardSolved ?? null, ranking: j.ranking ?? null };
+  }
+}
+
+export async function fetchRecent(username, limit = 20) {
+  const d = await gql(
+    "query($u:String!,$n:Int!){recentAcSubmissionList(username:$u,limit:$n){title titleSlug timestamp}}",
+    { u: username, n: limit });
+  return d.recentAcSubmissionList || [];
+}
+
+export async function fetchQuestion(slug) {
+  const d = await gql(
+    "query($s:String!){question(titleSlug:$s){questionFrontendId title difficulty topicTags{name}}}",
+    { s: slug });
+  if (!d.question) return null;
+  return { lc_id: d.question.questionFrontendId, title: d.question.title,
+           difficulty: d.question.difficulty, tags: d.question.topicTags.map(t => t.name) };
+}
+
+/* ------------------------------------------------------------- sync engine
+   data = { problems:{nextId,items}, qcache:{}, snapshots:[], synclog:[], settings:{} }
+   Mutates `data`; caller persists. Returns the sync result. */
+export async function runSync(data) {
+  const s = { ...DEFAULT_SETTINGS, ...data.settings };
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    const prof = await fetchProfile(s.username);
+    const recent = await fetchRecent(s.username);
+
+    const known = new Set(data.problems.items.map(p => `${p.slug}|${p.date_solved}`));
+    const prepared = [];
+    let skipped = 0;
+    for (const sub of [...recent].sort((a, b) => +a.timestamp - +b.timestamp)) {
+      const ts = +sub.timestamp;
+      const dsolved = istDateOf(ts);
+      const slug = sub.titleSlug;
+      if (dsolved < s.roadmap_start || known.has(`${slug}|${dsolved}`)) continue;
+      known.add(`${slug}|${dsolved}`);
+      let meta = data.qcache[slug] || null;
+      if (!meta) {
+        try {
+          meta = await fetchQuestion(slug);
+          if (meta) data.qcache[slug] = meta;
+        } catch { meta = null; }
+      }
+      if (!meta) { meta = { lc_id: null, title: sub.title, difficulty: null, tags: [] }; skipped++; }
+      prepared.push({ slug, ts, dsolved, meta });
+    }
+
+    if (prof.lifetime != null) {
+      data.snapshots.push({ ts: now, ...prof });
+      if (data.snapshots.length > 2500) data.snapshots = data.snapshots.slice(-2500);
+    }
+
+    const added = [], notes = [];
+    for (const it of prepared) {
+      const cands = it.meta.tags.length ? topicCandidates(it.meta.tags) : [];
+      const topic = cands[0] || "Arrays & Hashing";
+      const needs_review = (cands.length > 1 || !it.meta.tags.length) ? 1 : 0;
+      const earlier = data.problems.items
+        .filter(p => p.slug === it.slug && p.date_solved < it.dsolved)
+        .sort((a, b) => b.date_solved.localeCompare(a.date_solved))[0];
+      let type, redo_of = null;
+      if (earlier) {
+        type = "Redo"; redo_of = earlier.id;
+        if (earlier.flag_redo && !earlier.redo_done) {
+          earlier.redo_done = 1;
+          notes.push(`redo flag cleared: ${it.meta.title}`);
+        }
+      } else {
+        type = defaultType(topic, it.dsolved);
+      }
+      data.problems.items.push({
+        id: data.problems.nextId++, slug: it.slug, title: it.meta.title, lc_id: it.meta.lc_id,
+        date_solved: it.dsolved, ts: it.ts, difficulty: it.meta.difficulty, topic,
+        lc_tags: it.meta.tags, candidates: cands, needs_review, type,
+        time_min: null, no_editorial: 1, flag_redo: 0, redo_done: 0, redo_of,
+        notes: "", auto: 1,
+      });
+      added.push({ title: it.meta.title, topic, difficulty: it.meta.difficulty,
+                   date: it.dsolved, type, needs_review });
+    }
+
+    let msg = `+${added.length} new`;
+    if (skipped) msg += ` · ${skipped} missing metadata (topic left for you to set)`;
+    if (notes.length) msg += " · " + notes.join("; ");
+    data.synclog.unshift({ ts: now, ok: 1, added: added.length, message: msg });
+    data.synclog = data.synclog.slice(0, 60);
+    return { ok: true, added: added.length, problems: added, message: msg };
+  } catch (e) {
+    data.synclog.unshift({ ts: now, ok: 0, added: 0, message: `${e.name || "Error"}: ${e.message}` });
+    data.synclog = data.synclog.slice(0, 60);
+    return { ok: false, added: 0, message: `${e.name || "Error"}: ${e.message}` };
+  }
+}
+
+/* ------------------------------------------------------------- state */
+export function computeState(data) {
+  const s = { ...DEFAULT_SETTINGS, ...data.settings };
+  const today = istToday();
+  const start = s.roadmap_start, end = s.roadmap_end;
+
+  const probs = data.problems.items
+    .filter(p => validISO(p.date_solved))
+    .map(p => ({ ...p }))
+    .sort((a, b) => b.date_solved.localeCompare(a.date_solved) || (b.ts || 0) - (a.ts || 0));
+
+  for (const p of probs) {
+    p.lc_tags = p.lc_tags || [];
+    p.candidates = p.candidates || [];
+    if (p.flag_redo && !p.redo_done) p.redo_due = addDays(p.date_solved, s.redo_days);
+  }
+
+  const totalTarget = MONTHS.reduce((a, m) => a + m.target, 0);
+  const done = probs.length;
+  const daysIn = Math.max(0, dayNum(today < end ? today : end) - dayNum(start) + 1);
+  const daysLeft = today <= end ? Math.max(0, dayNum(end) - dayNum(today) + 1) : 0;
+  const pace = daysIn ? +(done / daysIn).toFixed(2) : 0;
+  const required = daysLeft ? +(Math.max(0, totalTarget - done) / daysLeft).toFixed(2) : 0;
+
+  const months = MONTHS.map(m => {
+    const mdone = probs.filter(p => p.date_solved >= m.start && p.date_solved <= m.end).length;
+    const days = dayNum(m.end) - dayNum(m.start) + 1;
+    let status;
+    if (mdone >= m.target) status = "complete";
+    else if (today < m.start) status = "upcoming";
+    else if (today > m.end) status = "missed";
+    else status = mdone >= m.target * (dayNum(today) - dayNum(m.start) + 1) / days ? "ontrack" : "behind";
+    let need = 0;
+    if (status === "ontrack" || status === "behind") {
+      const leftDays = dayNum(m.end) - Math.max(dayNum(today), dayNum(m.start)) + 1;
+      need = +(Math.max(0, m.target - mdone) / Math.max(1, leftDays)).toFixed(2);
+    }
+    return { ...m, done: mdone, left: Math.max(0, m.target - mdone), days, status,
+             need_per_day: need, pct: m.target ? +(mdone / m.target * 100).toFixed(1) : 0 };
+  });
+
+  const topics = TOPICS.map(t => {
+    const tp = probs.filter(p => p.topic === t.name);
+    const blockDone = tp.filter(p => p.type === "Block").length;
+    const last = tp.reduce((a, p) => a && a > p.date_solved ? a : p.date_solved, null);
+    return { ...t, block_done: blockDone, touches: tp.length,
+             left: Math.max(0, t.target - blockDone),
+             pct: t.target ? +(blockDone / t.target * 100).toFixed(1) : 0,
+             easy: tp.filter(p => p.difficulty === "Easy").length,
+             medium: tp.filter(p => p.difficulty === "Medium").length,
+             hard: tp.filter(p => p.difficulty === "Hard").length,
+             last_touched: last, days_cold: last ? dayNum(today) - dayNum(last) : null };
+  });
+
+  const allocations = ALLOCATIONS.map(a => {
+    const inMonth = probs.filter(p => monthKeyOf(p.date_solved) === a.month);
+    const adone = (a.mode === "Block")
+      ? inMonth.filter(p => p.type === "Block" && (a.topics || []).includes(p.topic)).length
+      : inMonth.filter(p => p.type === a.mode).length;
+    return { ...a, done: adone, left: Math.max(0, a.target - adone),
+             pct: a.target ? +(adone / a.target * 100).toFixed(1) : 0 };
+  });
+
+  const modes = PRACTICE_MODES.map(m => {
+    const mdone = probs.filter(p => p.type === m.mode).length;
+    return { ...m, done: mdone, left: Math.max(0, m.target - mdone) };
+  });
+
+  const redo = probs
+    .filter(p => p.flag_redo && !p.redo_done)
+    .map(p => ({ id: p.id, title: p.title, slug: p.slug, topic: p.topic, difficulty: p.difficulty,
+                 logged: p.date_solved, due: p.redo_due,
+                 overdue: Math.max(0, dayNum(today) - dayNum(p.redo_due)) }))
+    .sort((a, b) => a.due.localeCompare(b.due));
+
+  const byDay = {};
+  for (const p of probs) byDay[p.date_solved] = (byDay[p.date_solved] || 0) + 1;
+
+  const rates = Object.fromEntries(MONTHS.map(m => [m.key, m.target / (dayNum(m.end) - dayNum(m.start) + 1)]));
+  const burnup = [];
+  let cum = 0, planCum = 0;
+  const horizon = today > start ? (today < end ? today : end) : start;
+  for (let d = start; d <= horizon; d = addDays(d, 1)) {
+    cum += byDay[d] || 0;
+    planCum += rates[monthKeyOf(d)] || 0;
+    burnup.push({ date: d, actual: cum, plan: +planCum.toFixed(1) });
+  }
+
+  let streak = 0;
+  let dcheck = today;
+  if (!byDay[dcheck]) dcheck = addDays(dcheck, -1);
+  while (byDay[dcheck]) { streak++; dcheck = addDays(dcheck, -1); }
+  let best = 0, run = 0;
+  for (let d = start; d <= today; d = addDays(d, 1)) {
+    run = byDay[d] ? run + 1 : 0;
+    if (run > best) best = run;
+  }
+
+  const snap = data.snapshots[data.snapshots.length - 1] || null;
+  const baseline = Number.isFinite(+s.baseline_total) ? +s.baseline_total : DEFAULT_SETTINGS.baseline_total;
+  const lc = {
+    lifetime: snap?.lifetime ?? null, easy: snap?.easy ?? null, medium: snap?.medium ?? null,
+    hard: snap?.hard ?? null, ranking: snap?.ranking ?? null,
+    since_baseline: snap?.lifetime != null ? snap.lifetime - baseline : null,
+    baseline, username: s.username,
+  };
+  let crossCheck = null;
+  if (lc.since_baseline != null && lc.since_baseline > done) {
+    const gap = lc.since_baseline - done;
+    crossCheck = `LeetCode counts ${gap} more solve${gap > 1 ? "s" : ""} since baseline than the log has. ` +
+      `LeetCode only exposes your last 20 accepted submissions, so anything older can't be auto-recovered — ` +
+      `add missing solves with the log's Add button (or they may simply predate Jul 11).`;
+  }
+
+  const lastSync = data.synclog[0] || null;
+  return {
+    generated: new Date().toISOString(),
+    today, settings: s,
+    kpi: {
+      total_target: totalTarget, done, pct: +(done / totalTarget * 100).toFixed(1),
+      days_in: daysIn, days_left: daysLeft, pace, required,
+      hards: probs.filter(p => p.difficulty === "Hard").length,
+      open_flags: redo.length, overdue: redo.filter(r => r.overdue > 0).length,
+      streak, best_streak: best,
+      needs_review: probs.filter(p => p.needs_review).length,
+    },
+    lc, cross_check: crossCheck,
+    sync: { last: lastSync, ranking_series: data.snapshots.map(r => ({ ts: r.ts, ranking: r.ranking })) },
+    months, topics, allocations, modes, redo, problems: probs,
+    burnup, plan_line: [], heatmap: byDay, playbook: PLAYBOOK,
+    difficulty_split: Object.fromEntries(["Easy", "Medium", "Hard"].map(k => [k, probs.filter(p => p.difficulty === k).length])),
+    type_split: Object.fromEntries(TYPES.map(k => [k, probs.filter(p => p.type === k).length])),
+  };
+}
