@@ -1,0 +1,225 @@
+{
+  "topic": "Bloom filters",
+  "questions": [
+    {
+      "q": "A Bloom filter lookup returns 'no'. What do you know?",
+      "options": [
+        "The element was deleted at some point earlier",
+        "The element is definitely not in the set",
+        "The element is probably absent, with some error chance",
+        "Nothing; negative results are unreliable by design"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A Bloom filter lookup returns 'yes'. What do you know?",
+      "options": [
+        "The element is certainly present in the set",
+        "The element was inserted exactly once, never more",
+        "The element may be present, or this may be a false positive",
+        "The element's hash collided, so the filter needs resizing"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What happens inside a Bloom filter on insert?",
+      "options": [
+        "k hash functions each set one bit in the bit array",
+        "The element is appended to a compressed list",
+        "One hash selects a bucket that stores the element's key",
+        "The bit array is rehashed to include the new element"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why can't a standard Bloom filter support deletion?",
+      "options": [
+        "Deletion requires re-presenting the original element, which the filter never stored",
+        "The bit array is write-once hardware in most implementations",
+        "Deletes would leave tombstones that break the hashing",
+        "Clearing a bit may also 'remove' other elements that share that bit"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What two parameters chiefly determine a Bloom filter's false-positive rate?",
+      "options": [
+        "Bits per element and the number of hash functions",
+        "The CPU speed and the array's memory bandwidth",
+        "Element size in bytes and the compression codec used",
+        "Insertion order and the seed of the first hash"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why are Bloom filters so memory-efficient compared to hash sets?",
+      "options": [
+        "They compress the stored keys with entropy coding",
+        "They store only bit patterns, never the elements or their keys",
+        "They deduplicate elements before storing them",
+        "They keep the actual data on disk, using RAM only for a small index"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "As more elements are inserted into a fixed-size Bloom filter, what happens?",
+      "options": [
+        "Lookups slow down linearly with the element count",
+        "The filter rejects inserts once 50% of bits are set",
+        "False negatives begin appearing alongside false positives",
+        "The false-positive rate climbs as more bits are set"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which is a classic Bloom filter use case?",
+      "options": [
+        "Storing user passwords in a compact but fully recoverable form",
+        "Ordering events across distributed nodes",
+        "Skipping disk lookups for keys an SSTable definitely lacks",
+        "Load balancing requests across identical replicas"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A web crawler uses a Bloom filter for 'have I seen this URL?'. What is the practical consequence of a false positive?",
+      "options": [
+        "The same URL ends up crawled twice, wasting bandwidth and storage",
+        "The crawler crashes on the unrecognized URL",
+        "A never-visited URL is skipped and may never be crawled",
+        "The filter must be rebuilt from the frontier queue"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Roughly how much memory does a Bloom filter need for a 1% false-positive rate?",
+      "options": [
+        "About 1 bit per element regardless of target rate",
+        "About 32 bytes per element, matching the size of each hash output",
+        "It depends only on element size, not element count",
+        "Roughly 10 bits per element, independent of element size"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Given a fixed bit array, what does using too many hash functions cause?",
+      "options": [
+        "Hash collisions corrupt the array's structure",
+        "Bits saturate faster, raising the false-positive rate despite more checks",
+        "Lookups start returning false negatives under load",
+        "Standard implementations silently ignore all hash functions beyond the optimal count"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How does a counting Bloom filter enable deletion?",
+      "options": [
+        "Each position holds a small counter, incremented on insert and decremented on delete",
+        "It stores each element's full key beside its bits",
+        "It keeps an append-only log of every insert so deletes can replay the log backward",
+        "It partitions the array per element, isolating their bits"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do databases place Bloom filters in front of on-disk structures like SSTables?",
+      "options": [
+        "The filter caches the hottest key-value pairs in RAM for instant reads",
+        "Filters re-sort the SSTable for faster binary search",
+        "Disk blocks are verified against the filter for corruption",
+        "A cheap RAM check avoids most pointless disk reads for absent keys"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "One-hit-wonder URLs make a CDN cache objects nobody requests twice. How does a Bloom filter help?",
+      "options": [
+        "It predicts future popularity from the URL's structure",
+        "It compresses one-hit objects so caching them is free",
+        "Cache only on the second request: the filter remembers first-time URLs cheaply",
+        "It evicts unpopular cached objects by scanning the whole cache every night"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An email service checks incoming addresses against 10M known-spam senders on every message. Why is a Bloom filter attractive?",
+      "options": [
+        "The whole set fits in a few dozen megabytes of RAM with tiny lookup cost",
+        "It guarantees genuine spam is never misclassified as legitimate correspondence",
+        "It updates itself as spammers change addresses",
+        "It hides the spam list's contents from subpoenas"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A Bloom filter screens senders against a spam list. What does a false positive cause?",
+      "options": [
+        "A spam message slips through unfiltered",
+        "A legitimate sender is treated as if on the spam list",
+        "The message gets duplicated into both quarantine and the inbox simultaneously",
+        "The filter must rebuild before more mail flows"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You sized a Bloom filter for 10M elements at 1% FP, but 40M arrive. Rough effect on the false-positive rate?",
+      "options": [
+        "It stays near 1%, since the rate depends only on hash count",
+        "It degrades dramatically, plausibly past 30%, as the array saturates",
+        "It rises precisely linearly, landing at exactly 4% for four times the elements",
+        "It becomes 100% the moment capacity is doubled"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Optimal hash count k for m bits and n elements is (m/n) times ln 2. What does this optimum actually balance?",
+      "options": [
+        "Setting enough bits to discriminate versus saturating the array with 1s",
+        "The CPU cost of computing hashes versus available memory bandwidth per query",
+        "The array's length versus its width",
+        "Collision resistance versus preimage resistance"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A distributed cache shares one Bloom filter across nodes, and entries expire hourly. Core difficulty?",
+      "options": [
+        "Standard Bloom filters cannot be serialized for transfer across the network",
+        "Hash functions differ across CPU architectures",
+        "Expired entries cannot be cleared, so the filter's error grows until rebuilt",
+        "The filter must be locked globally for every read"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Compared to a Bloom filter at equal FP rate, what does a cuckoo filter additionally offer?",
+      "options": [
+        "A guarantee of zero false positives while the load factor stays below one half",
+        "Range queries over the stored fingerprints",
+        "Cryptographic tamper evidence for its contents",
+        "Deletion support and often better space efficiency at low FP rates"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

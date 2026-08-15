@@ -1,0 +1,225 @@
+{
+  "topic": "Payment system",
+  "questions": [
+    {
+      "q": "Why must a payment API require an idempotency key on charge requests?",
+      "options": [
+        "The keys let the gateway route each request to the correct region",
+        "Keys encrypt card data end to end during transit",
+        "Keys order concurrent charges from the same customer",
+        "Retried requests can be recognized and not charged twice"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In double-entry bookkeeping, every transaction:",
+      "options": [
+        "Writes balanced debit and credit entries whose sums match",
+        "Updates a single running balance column atomically",
+        "Creates exactly one immutable log line for every account touched",
+        "Locks both accounts until end-of-day settlement"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a PSP (payment service provider) in a typical e-commerce flow?",
+      "options": [
+        "The government regulator that audits merchant transaction records annually",
+        "The service that processes cards and moves funds on the merchant's behalf",
+        "The customer's issuing bank that approves each purchase",
+        "A fraud-scoring vendor consulted after settlement"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do PSPs deliver payment outcomes via webhooks in addition to API responses?",
+      "options": [
+        "Webhooks are encrypted while API responses are not",
+        "Card networks mandate webhook delivery for compliance",
+        "Outcomes can arrive after the original request completes or times out",
+        "Webhooks bypass the strict rate limits that would throttle API status polling"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does PCI DSS scope primarily depend on?",
+      "options": [
+        "The merchant's total annual payment revenue across all sales channels",
+        "Whether your systems store, process, or transmit raw card data",
+        "The number of countries where payments are accepted",
+        "Which database engine holds the transaction history"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why are money amounts stored as integer minor units (cents) rather than floats?",
+      "options": [
+        "Integers compress far better in columnar storage",
+        "Databases cannot index floating-point columns",
+        "Binary floats can't represent many decimal amounts exactly, causing rounding drift",
+        "Currency symbols only attach cleanly to integers"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is authorization versus capture?",
+      "options": [
+        "Auth reserves funds on the card; capture actually collects them",
+        "Auth verifies the CVV; capture verifies the billing address",
+        "Auth is the customer login step; capture is checkout",
+        "Auth happens at the bank; capture happens at the card network only"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is tokenization of card numbers for?",
+      "options": [
+        "Speeding up charge requests by shortening payloads",
+        "Generating one-time discount codes tied to a card",
+        "Detecting duplicate card numbers registered across many customer accounts",
+        "Replacing the PAN with a reference so systems avoid storing card data"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A charge request times out. The client retries with the same idempotency key. The first attempt actually succeeded. What should the server return?",
+      "options": [
+        "A brand-new charge, since the network failure voided the first attempt",
+        "An error instructing the client to check back tomorrow",
+        "The stored result of the original charge, without charging again",
+        "A partial refund covering the accidental second attempt"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why must webhook handlers be idempotent?",
+      "options": [
+        "Webhook payloads arrive unsigned, so duplicate deliveries indicate possible tampering",
+        "PSPs may deliver the same event multiple times, especially around retries",
+        "Handlers run on multiple threads sharing one connection",
+        "Events always arrive in order, so replays are the only risk"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your ledger says the customer paid; the PSP report says the charge failed. Which process is designed to catch exactly this?",
+      "options": [
+        "Chargeback representment through the card network",
+        "Real-time fraud scoring on the charge attempt",
+        "Quarterly PCI compliance audits covering the settlement pipeline",
+        "Reconciliation: comparing internal records against PSP settlement files"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An order service must charge a card and mark the order paid, across two systems. Which pattern avoids charging without recording (or vice versa)?",
+      "options": [
+        "Record intent first, then charge, then finalize, with recovery for each gap",
+        "Wrap the PSP call and the database write in one XA transaction",
+        "Charge first, then write the order row with retries until success",
+        "Use a message queue so that the charge and the database write happen simultaneously"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why should refunds reference the original charge rather than issue a fresh opposite-direction transfer?",
+      "options": [
+        "The PSP ties the refund to the charge for fees, disputes, and card routing",
+        "Opposite-direction transfers require the merchant to hold a separate money-transmitter license",
+        "Fresh transfers cannot carry negative amounts in most APIs",
+        "Refund latency is lower because no bank is involved"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A balance is stored as a single mutable column, updated in place. What key auditability property is lost versus an append-only ledger?",
+      "options": [
+        "The ability to shard customer balances horizontally across multiple regions",
+        "Sub-millisecond reads of the current balance",
+        "Compatibility with double-precision arithmetic",
+        "Reconstructing how and why the balance reached its current value"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Payments must survive a region outage. Which component is hardest to make active-active, and why?",
+      "options": [
+        "The API gateway, because TLS certificates are region-bound",
+        "The ledger, because double-spend prevention needs a single source of truth per account",
+        "The webhook receiver, because PSPs only sign one endpoint",
+        "The fraud model, because feature stores cannot replicate"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Retrying a failed PSP call safely requires the retry to be:",
+      "options": [
+        "Executed within the same TCP connection as the original",
+        "Routed to a different PSP to avoid duplicate detection",
+        "Sent with the same idempotency key and identical request parameters",
+        "Delayed until the nightly reconciliation batch has confirmed the failure"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Design review: idempotency keys are stored with a 24-hour TTL. A client retries a timed-out charge 25 hours later. What's the failure mode?",
+      "options": [
+        "The retry is rejected because the key's cryptographic signature has expired",
+        "The key is gone, so the retry creates a second, duplicate charge",
+        "The PSP's own dedupe window guarantees safety regardless",
+        "The ledger blocks the retry via its balanced-entry invariant"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Under load, two workers process the same 'payment_succeeded' webhook concurrently. Idempotent handlers still double-credit. What's the likely bug?",
+      "options": [
+        "The PSP signed both deliveries with different keys",
+        "TTL expiry on the dedupe record between the two reads",
+        "Check-then-insert without a unique constraint: both saw 'not processed' and proceeded",
+        "Webhook payload compression corrupted the event ID"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Daily reconciliation finds 0.01% of transactions mismatched. Volumes are 10M/day. What's the sound operational design?",
+      "options": [
+        "Ignore mismatches below 0.1% as statistical noise",
+        "Halt all payments until each mismatch is resolved",
+        "Automatically adjust the internal ledger to match the PSP's reported numbers",
+        "Queue the ~1,000 exceptions into a workflow with alerting and aging SLAs"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "To shrink PCI scope, card data entry is moved to PSP-hosted fields (iframe or redirect). What is the resulting architecture property?",
+      "options": [
+        "Raw PANs never touch your servers; you handle only tokens",
+        "Your servers store PANs encrypted, halving audit requirements",
+        "The PSP assumes liability for all fraud on your platform",
+        "Your frontend must be certified, but backends fall out of scope"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "topic": "Sharding / partitioning",
+  "questions": [
+    {
+      "q": "What is the primary goal of sharding a database?",
+      "options": [
+        "Keeping a synchronized full copy of the data on every node",
+        "Reducing query latency by caching hot rows in memory",
+        "Encrypting different tables with different keys per tenant",
+        "Splitting data across nodes so no single machine stores or serves it all"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does hash partitioning assign a row to a shard?",
+      "options": [
+        "By the row's insertion timestamp, rotating through the shards on an hourly cycle",
+        "By hashing the shard key and mapping the digest into a shard slot",
+        "By the row's size, placing large rows on high-capacity shards",
+        "By the region of the client that first wrote the row"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What key advantage does range partitioning hold over hash partitioning?",
+      "options": [
+        "Rows adjacent in key order stay together, making range scans efficient",
+        "It can never produce hot spots regardless of how skewed the access pattern becomes",
+        "It requires no metadata service to locate a key's shard",
+        "Rows are perfectly evenly distributed without tuning"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a 'hot spot' in a sharded system?",
+      "options": [
+        "A shard whose disks run at higher temperature under sustained load",
+        "A key range that has been cached in memory by every shard",
+        "One shard receiving a disproportionate share of traffic or data",
+        "The coordinator node that routes every query in the cluster"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is the choice of shard key so consequential?",
+      "options": [
+        "It permanently sets the database's on-disk page size across every shard",
+        "It determines data spread and which queries can stay on one shard",
+        "It fixes the number of shards permanently at creation time",
+        "It controls which replication mode each shard may use"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A query filters on a column that is not part of the shard key. What must the router typically do?",
+      "options": [
+        "Reject the query, since non-key filters are unsupported",
+        "Route it to the first shard, which then proxies the request to the others in sequence",
+        "Answer it from the routing metadata without touching shards",
+        "Broadcast (scatter-gather) the query to all shards and merge results"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Time-ordered IDs as a range-sharding key create which classic problem?",
+      "options": [
+        "Old shards keep growing forever as history accumulates on them",
+        "Range lookups by ID must always touch every single shard in the cluster",
+        "All new writes land on the newest shard, creating a write hot spot",
+        "IDs collide across shards because time is not unique"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do sharded systems often pre-create many more logical partitions than physical nodes?",
+      "options": [
+        "Rebalancing becomes moving whole partitions, not re-splitting data",
+        "Each logical partition needs a dedicated physical disk to stay properly isolated",
+        "Query planners require partition counts to be powers of two",
+        "More partitions increase the replication factor automatically"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A multi-tenant app shards by tenant_id. One tenant grows to 30% of all traffic. What happens?",
+      "options": [
+        "The router automatically and transparently splits that tenant's rows across several shards",
+        "That tenant's shard saturates while others idle, since a tenant cannot span shards here",
+        "Traffic rebalances naturally as the hash function redistributes keys",
+        "The tenant's queries slow down only for cross-tenant joins"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does naive modulo (key % N) sharding make adding a node painful?",
+      "options": [
+        "Modulo arithmetic overflows once N exceeds the key's bit width",
+        "New nodes can only accept keys written after they joined",
+        "Changing N remaps most keys, forcing a massive data shuffle",
+        "The modulo must be recomputed per query, doubling read latency"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An order and its line items are always fetched together. What does sharding both by order_id give you?",
+      "options": [
+        "A guarantee that orders are globally sorted by creation time",
+        "Cross-shard transactions become unnecessary for any query in the system",
+        "Line items compress better because they share a shard file",
+        "Related rows co-locate, so the common query stays single-shard"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What makes cross-shard joins expensive?",
+      "options": [
+        "Rows must be shipped between nodes and joined outside their home shards",
+        "Every participating shard must first be locked to freeze its data for the join's duration",
+        "Join results must be written back to every participating shard",
+        "The SQL parser reparses the query once per participating shard"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "During live resharding, how do systems avoid downtime while moving a partition?",
+      "options": [
+        "They pause only the reads, because writes can always be replayed later from the log",
+        "They move data at night when traffic is assumed to be zero",
+        "They copy the partition while streaming ongoing changes, then cut over briefly",
+        "They drop the partition and rebuild it from a recent backup"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A unique username constraint must hold across all shards. Why is this harder than on one database?",
+      "options": [
+        "Uniqueness now needs a global check or a dedicated service, not one local index",
+        "Unique indexes cannot exist on sharded tables at all",
+        "Hash collisions between shards create duplicate usernames",
+        "Each individual shard enforces its uniqueness constraint only for reads and never for writes"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do many systems route by a directory (lookup service) instead of pure hashing?",
+      "options": [
+        "Directories eliminate the need for shard replicas entirely",
+        "Hashing cannot address more than 64 shards in practice",
+        "A directory service removes the query router as a single point of failure entirely",
+        "Explicit mappings allow targeted moves of hot keys without global remapping"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An analytics query must aggregate across all shards nightly. Reasonable pattern?",
+      "options": [
+        "Run it against the primary shard, which keeps summary copies of the others by default",
+        "Scatter the query, pre-aggregate per shard, and merge the partial results",
+        "Temporarily merge all shards onto one node for the query window",
+        "Disable writes cluster-wide so the aggregate is consistent"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A celebrity user makes a single key hot beyond one shard's capacity. Which mitigation works?",
+      "options": [
+        "Salt the key into sub-keys spread across shards, merging on read",
+        "Raise that shard's replication factor so followers absorb the writes",
+        "Move the key to the coordinator node, which has spare capacity",
+        "Enable synchronous replication so the writes are shared evenly"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Two-phase commit coordinates a cross-shard transaction. What is its well-known failure mode?",
+      "options": [
+        "Committed data is written twice, doubling storage on both shards",
+        "The prepare phase deadlocks unless shards share a physical clock",
+        "Participants auto-abort after prepare, so commits rarely succeed",
+        "A crashed coordinator can leave participants blocked, holding locks in doubt"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Geo-sharding places EU users' data in EU shards for latency and residency. What new problem appears?",
+      "options": [
+        "EU shards must run an entirely different database engine to comply with residency law",
+        "Interactions between users in different regions require slow cross-region queries",
+        "Hash functions behave differently across regions, corrupting routing",
+        "Latency inside the EU rises because the shards are smaller"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Your shard map lives in ZooKeeper; routers cache it. A partition moves and a router's cache is stale. Robust handling?",
+      "options": [
+        "Routers drop all traffic until an operator manually reloads every cache",
+        "Shards accept any key and forward misroutes in a nightly batch job",
+        "The old shard rejects misrouted requests with a hint, and the router refreshes its map",
+        "TTL the cache at one week to keep the ZooKeeper load minimal"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

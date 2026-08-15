@@ -1,0 +1,220 @@
+{
+  "topic": "Connection pooling",
+  "questions": [
+    {
+      "q": "Why do applications pool database connections instead of opening one per request?",
+      "options": [
+        "Pools encrypt traffic with TLS that raw connections would otherwise leave in plaintext",
+        "Connection setup and auth are costly; pooling reuses live connections",
+        "Databases refuse concurrent connections from a single client IP",
+        "Pooling upgrades every request to a prepared transaction"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A request needs a connection but the pool is fully checked out. What typically happens?",
+      "options": [
+        "The pool opens a temporary superuser connection to serve it",
+        "The pool silently cancels the oldest currently running query",
+        "The request gets rerouted automatically to a read replica with spare connection capacity",
+        "The request queues until a connection frees or a timeout fires"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "For a CPU-bound database workload, a good starting pool size is closest to...",
+      "options": [
+        "a small multiple of the database server's core count",
+        "one connection per concurrent end user of the application",
+        "whatever max_connections allows, minus a small safety margin",
+        "ten connections for every application server instance deployed"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In PgBouncer, what does transaction pooling mode mean?",
+      "options": [
+        "Each client keeps one server connection for its entire session",
+        "Every transaction is mirrored synchronously to a standby server",
+        "A server connection is lent out only for each transaction's duration",
+        "Each individual SQL statement gets its own server connection assignment"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which symptom points to pool exhaustion rather than a slow database?",
+      "options": [
+        "High CPU utilization on the database host itself",
+        "All queries slowing uniformly across every connected service as the database saturates",
+        "Rising disk I/O wait times on the primary storage node",
+        "Requests stall before any SQL runs, then hit checkout timeouts"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do serverless functions clash with traditional connection pooling?",
+      "options": [
+        "Serverless runtimes cannot hold outbound TCP sockets open at all",
+        "Every concurrent instance brings its own pool, multiplying connections",
+        "Functions cannot participate safely in database transactions",
+        "Pools need writable local disk that serverless platforms forbid"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A pooled connection turns out to be dead at checkout. What should the pool do?",
+      "options": [
+        "Return it to the idle set for the next caller to try again",
+        "Trigger an application restart to rebuild all connections cleanly",
+        "Discard it, open a replacement, and hand that out transparently",
+        "Fail the request, since broken connections cannot be replaced"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a pool's idle timeout govern?",
+      "options": [
+        "How long an unused connection stays open before being closed",
+        "How long a statement may execute before cancellation triggers",
+        "How long a caller waits in the checkout queue before erroring",
+        "How long a transaction may remain open before forced rollback"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "After a deploy, acquisition timeouts spike though query latency is unchanged. Most likely cause?",
+      "options": [
+        "The database filesystem is silently running out of space",
+        "The new build leaks prepared statements on every single call",
+        "New code holds connections longer per request, starving the pool",
+        "The deploy disabled TCP keepalives on the pooler"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "30 app instances each run a 20-connection pool against max_connections=200. Core risk?",
+      "options": [
+        "Bursts can attempt 600 connections and get refused at the database",
+        "Postgres load-balances the excess connections across backends so only latency rises slightly",
+        "Idle pools will crash the WAL writer under memory pressure",
+        "Each instance gets automatically capped at six connections"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which application feature breaks under transaction-mode pooling?",
+      "options": [
+        "Multi-statement transactions committed as one atomic unit",
+        "Single-statement autocommit reads issued under heavy load",
+        "Row-level security policies evaluated on every query",
+        "Session state like temp tables, SET values, and advisory locks"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A nightly batch saturates the shared pool and starves the API. Reasonable mitigation?",
+      "options": [
+        "Raise max_connections by an order of magnitude during the batch window",
+        "Give the batch its own capped pool or point it at a replica",
+        "Shorten the API's checkout timeout so it fails faster",
+        "Run the batch on raw unpooled connections instead"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why is simply enlarging the pool often the wrong fix for checkout timeouts?",
+      "options": [
+        "A saturated database gains contention, not throughput, from extra connections",
+        "Pool sizes are fixed at process start and cannot ever change",
+        "Larger pools break connection validation on most database drivers",
+        "Beyond 100 connections, poolers switch to statement mode automatically"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Many microservices share one Postgres. Where does PgBouncer-style pooling belong?",
+      "options": [
+        "Inside each service only, since a middle hop adds latency that outweighs any benefit",
+        "On developer machines, to catch connection leaks before production",
+        "Only in front of read replicas, never the primary",
+        "As a shared pooler before the database, with modest client-side pools"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A handler checks out a connection, calls a slow external API, then queries. Consequence?",
+      "options": [
+        "The pool force-closes the connection after a fixed grace period",
+        "The connection sits idle mid-request, shrinking effective capacity",
+        "Postgres kills idle-in-transaction sessions immediately by default",
+        "Nothing, because pools transparently multiplex idle connections to other callers"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A service issues 1,000 queries/second, each holding a connection about 5 ms. Steady-state busy connections needed (Little's law)?",
+      "options": ["About 50", "About 500", "About 5", "About 200"],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "During failover, every instance reconnects at once. What secondary failure threatens, and the usual defense?",
+      "options": [
+        "Split-brain writes to two primaries; defend with synchronous replication everywhere",
+        "WAL corruption on the standby; defend with page checksums",
+        "Nothing serious, since the new primary accepts connections serially",
+        "A reconnect storm crushing the new primary; jittered backoff plus caps"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "In benchmarks, a ~10-connection pool can beat a 100-connection pool on identical hardware. Why?",
+      "options": [
+        "Plan caches hold about ten entries per backend by default",
+        "Smaller pools skip the TCP and TLS handshakes that larger pools must repeat",
+        "Past hardware parallelism, extra connections only add contention and switching",
+        "The OS scheduler throttles any process owning many sockets"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Under PgBouncer transaction mode, a client runs SET search_path, then queries in a later transaction. Risk?",
+      "options": [
+        "The later query may land on a different server connection lacking that setting",
+        "PgBouncer rejects session-level SET statements outright in transaction mode",
+        "The SET is broadcast to every pooled server connection at once",
+        "Postgres raises an error because search_path needs session pooling"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A leaked connection sits 'idle in transaction' overnight. Effect on Postgres MVCC?",
+      "options": [
+        "None, because idle transactions consume no server resources at all",
+        "Vacuum can't clear dead rows visible to its snapshot; bloat grows",
+        "It blocks all writes to every table the transaction previously read",
+        "WAL archiving pauses entirely until that transaction commits"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

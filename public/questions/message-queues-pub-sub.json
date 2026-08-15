@@ -1,0 +1,225 @@
+{
+  "topic": "Message queues & pub/sub",
+  "questions": [
+    {
+      "q": "What does at-least-once delivery guarantee?",
+      "options": [
+        "Every message is delivered exactly one time to exactly one consumer",
+        "Every message is eventually delivered, though consumers may see duplicates",
+        "Messages may be dropped, but any delivered message arrives only once",
+        "Messages arrive in the exact order producers originally sent them"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In pub/sub, what happens when a message is published to a topic?",
+      "options": [
+        "It goes to a single subscriber selected round-robin for fairness",
+        "It is stored until one subscriber explicitly requests and removes it",
+        "It is routed only to the subscriber that has been idle the longest",
+        "Every subscription attached to the topic receives its own copy"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the purpose of a consumer group (as in Kafka)?",
+      "options": [
+        "To share a topic's partitions among members so each message is handled once per group",
+        "To duplicate every message to every member so the group tolerates individual crashes",
+        "To batch acknowledgements from many consumers into one network round trip",
+        "To encrypt traffic between the broker and a trusted set of consumers"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a dead-letter queue (DLQ) for?",
+      "options": [
+        "Holding messages whose TTL expired before any consumer came online",
+        "Archiving every successfully processed message for compliance audits",
+        "Parking messages that repeatedly failed processing for later inspection",
+        "Buffering messages during broker restarts so none are dropped"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the core difference between a queue and a pub/sub topic?",
+      "options": [
+        "Queues always preserve strict global ordering while topics deliver messages in arbitrary order",
+        "A queue delivers each message to one consumer; a topic fans out to many subscribers",
+        "Topics persist messages to disk while queues are strictly memory-only",
+        "Queues scale horizontally while topics are limited to a single broker"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do brokers require consumer acknowledgements?",
+      "options": [
+        "So a message can be redelivered if the consumer dies before finishing it",
+        "So the broker can bill producers accurately for each delivered message",
+        "So consumers can veto messages they consider malformed or hostile",
+        "So the broker knows when to compress older segments of the log"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does backpressure mean in a messaging pipeline?",
+      "options": [
+        "Consumers replay old messages backward to rebuild corrupted state",
+        "The broker transparently compresses queued messages whenever its memory begins running low",
+        "Producers retry failed sends with exponentially growing delays",
+        "Downstream slowness propagates upstream, forcing producers to slow or buffer"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where is ordering typically guaranteed in Kafka-style logs?",
+      "options": [
+        "Across the whole topic regardless of how many partitions it has",
+        "Across all topics owned by the same producer application",
+        "Within a single partition, for messages sharing that partition",
+        "Nowhere; consumers must reorder using timestamps in each message"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A consumer crashes after processing but before acking. With at-least-once delivery, what happens?",
+      "options": [
+        "The message is redelivered and gets processed a second time",
+        "The broker detects completion via a heartbeat and drops the message",
+        "The message routes straight to the DLQ as a poisoned message",
+        "The whole partition pauses until the crashed consumer rejoins"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Orders for each customer must be processed in sequence, with high throughput overall. Best approach?",
+      "options": [
+        "Use a single partition for the entire topic to enforce global order",
+        "Attach sequence numbers and have every consumer buffer and reorder events indefinitely",
+        "Partition by customer ID so each customer's events stay in one ordered stream",
+        "Timestamp each event and rely on the broker to sort before delivery"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "One member of a Kafka consumer group is much slower than the rest. What is the effect?",
+      "options": [
+        "The broker shrinks its partition count until the slow member recovers",
+        "Other members steal individual messages from the slow member's partitions",
+        "The group coordinator throttles fast members so all progress evenly",
+        "Lag builds on its partitions while other members' partitions stay current"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A message keeps failing and being redelivered forever (a poison pill). What is the standard remedy?",
+      "options": [
+        "Lower the broker's replication factor so the message expires faster",
+        "Cap retry attempts, then route the message to a dead-letter queue",
+        "Skip acknowledgements entirely so the broker stops redelivering it",
+        "Restart the consumer group so offsets reset past the bad message"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why can an exactly-once delivery claim be misleading?",
+      "options": [
+        "Brokers cannot deduplicate anything because unique message identifiers get stripped during transit",
+        "It requires perfectly synchronized clocks, which no realistic distributed system can provide",
+        "It typically means effectively-once via dedup or transactions, not zero duplicates on the wire",
+        "It only works when there is exactly one producer and one consumer"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Producers outpace consumers for hours and queue depth keeps growing. Which mitigation attacks the root cause?",
+      "options": [
+        "Raise the broker's disk quota so the backlog can grow for longer",
+        "Shorten message TTLs so old work silently expires from the queue",
+        "Enable gzip compression so the backlog fits in less memory",
+        "Scale out consumers or shed load at the producer side"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why prefer log-based brokers (Kafka) over classic queues for event sourcing and replay?",
+      "options": [
+        "Consumers keep offsets into a retained log, so history can be re-read at will",
+        "Log brokers push messages faster because they skip consumer acknowledgements",
+        "Classic queues cannot fan a message out to more than one consumer",
+        "Log brokers guarantee global ordering across every partition and topic"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Twelve services need the same order events. Why publish once to a topic rather than send twelve queue messages?",
+      "options": [
+        "Queues would reorder the events differently for every downstream team",
+        "Producers stay decoupled from the subscriber list, which can change freely",
+        "Topic delivery is guaranteed exactly-once while queue delivery is not",
+        "A topic lets subscribers share one consumer offset, halving broker storage"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Frequent consumer restarts cause repeated Kafka rebalances. What is the impact and mitigation?",
+      "options": [
+        "Every in-flight message is permanently lost during each rebalance; enabling producer idempotence recovers them",
+        "Offsets reset to zero each time; shrink retention so replay stays cheap",
+        "The broker leader flaps; move the cluster to a single beefier broker",
+        "Processing pauses during reassignment; use cooperative rebalancing and static membership"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You need strict ordering AND horizontal scale for a payments stream. What is the realistic design?",
+      "options": [
+        "Global FIFO across the entire topic, achieved by routing all traffic through a single partition and consumer",
+        "Per-key ordering: partition by account so each account is sequential while accounts run in parallel",
+        "Broker-side reordering driven by synchronized timestamps across all producers",
+        "Consumer-side sorting with a five-minute buffering window before applying events"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "An at-least-once consumer writes to a non-idempotent downstream API. What is the safest pattern?",
+      "options": [
+        "Deduplicate with a persisted processed-ID store checked before each downstream call",
+        "Switch the subscription to at-most-once delivery so duplicate messages become impossible",
+        "Retry the downstream call until it succeeds, then ack the message twice",
+        "Batch downstream calls so duplicates land in the same HTTP request"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A broker cluster sits at 80% disk, consumers lag by hours, and producers spike 3x for a day. What likely fails first?",
+      "options": [
+        "Consumer group coordination collapses entirely because member heartbeats begin timing out under load",
+        "Producer batching stops working, tripling the request rate to the broker",
+        "Retention or disk limits are hit, forcing eviction or producer throttling before lag clears",
+        "Partition leaders migrate continuously, halving the cluster's throughput"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

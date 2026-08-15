@@ -1,0 +1,225 @@
+{
+  "topic": "Caching",
+  "questions": [
+    {
+      "q": "In cache-aside (lazy loading), what happens on a cache miss?",
+      "options": [
+        "The cache itself fetches the value from the database",
+        "The request fails and the client retries later",
+        "A background job repopulates the whole cache from the database on a schedule",
+        "The application reads the database, then stores the value in the cache"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In write-through caching, a write is acknowledged when?",
+      "options": [
+        "It reaches the backing store, bypassing the cache entirely on the way",
+        "After both the cache and the backing store are updated",
+        "Once the cache holds it, with the store updated later",
+        "After the entire cache is invalidated"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which eviction policy removes the entry that has gone unused for the longest time?",
+      "options": [
+        "FIFO (first-in, first-out)",
+        "LFU (least frequently used)",
+        "LRU (least recently used)",
+        "Random replacement"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main risk of write-back (write-behind) caching?",
+      "options": [
+        "Losing acknowledged writes if the cache fails before flushing",
+        "Consistently higher write latency than write-through caching on every operation",
+        "Every subsequent read becoming a cache miss",
+        "Duplicate keys accumulating inside the cache"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does setting a TTL on a cache entry accomplish?",
+      "options": [
+        "It tracks how many times each key was hit for eviction decisions",
+        "It bounds staleness by expiring the entry after a set time",
+        "It encrypts the value at rest",
+        "It reserves memory ahead of future writes"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A CDN primarily caches what, and where?",
+      "options": [
+        "Database rows, colocated inside the application tier",
+        "User sessions, stored only in the browser",
+        "Static or cacheable content, at edge locations near users",
+        "Write buffers, held durably in regional data centers close to origins"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A cache serves 900 of 1,000 reads without touching the database. What is the hit ratio?",
+      "options": [
+        "90%",
+        "10%",
+        "9%",
+        "0.9%"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which data is the best fit for aggressive caching?",
+      "options": [
+        "Bank account balances during active transfers",
+        "A user's unread-message counter",
+        "Shopping cart contents during checkout",
+        "Product catalog pages read by millions"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A hot key expires and 10,000 concurrent requests all miss and hit the database at once. Name and fix?",
+      "options": [
+        "Cache poisoning; fixed by checksumming values",
+        "Cache eviction pressure; fixed by adding much more RAM to the cluster",
+        "A cache stampede; mitigated with locks, request coalescing, or staggered TTLs",
+        "A hot partition; fixed by resharding the database tier"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You update a database row while the cache still holds the old value with 10 minutes of TTL left. Best practice?",
+      "options": [
+        "Invalidate or update the cache entry as part of the write path",
+        "Simply wait for the TTL to expire naturally, since caches are best-effort",
+        "Restart the cache cluster to clear stale entries",
+        "Shorten every TTL globally to one second"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why can CDN caching break personalized pages?",
+      "options": [
+        "CDNs cannot serve HTTPS content at the edge",
+        "Personalized pages are too small to be worth caching",
+        "Edge servers strip session cookies from every response they forward downstream",
+        "One user's cached response may be served to other users"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Cache-aside: server A updates the DB then deletes the key; server B read the old DB value just before. What can happen?",
+      "options": [
+        "A deadlock between the two servers",
+        "B repopulates the cache with the stale value after A's delete",
+        "The key gets deleted twice and corrupts the cache",
+        "The database rejects A's write because of B's concurrently held read lock"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Repeated lookups for nonexistent users keep hammering your database. A standard fix?",
+      "options": [
+        "Cache the 'not found' result briefly (negative caching)",
+        "Add an index on every column of the users table",
+        "Retry the lookups with exponential backoff",
+        "Route the lookups to a read replica"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Compared with an in-process per-instance cache, a shared cache like Redis offers?",
+      "options": [
+        "Lower access latency than local memory",
+        "Zero network overhead for hot keys",
+        "Automatic, guaranteed consistency with the backing database on every write",
+        "A consistent view across app instances at the cost of a network hop"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Every entry was cached at deploy time with the same one-hour TTL. What happens an hour later?",
+      "options": [
+        "Nothing; caches automatically stagger expirations",
+        "Synchronized mass expiry hammers the origin; add jitter to TTLs",
+        "The cache compacts itself in the background and no action is needed",
+        "Entries refresh silently in the background by default"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A read-heavy service has a 95% hit ratio and its database tops out at 500 QPS. Sustainable total read QPS?",
+      "options": [
+        "About 5,000",
+        "About 525",
+        "About 10,000",
+        "About 100,000"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An LFU cache keeps serving last week's viral story while today's rising story keeps missing. Root cause?",
+      "options": [
+        "LFU evicts the most frequently used entries first",
+        "Accumulated frequency counts let old popular items crowd out newcomers",
+        "LFU degenerates into LRU under skewed workloads",
+        "TTL expiry is fundamentally incompatible with maintaining LFU frequency counters"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Sessions live in one Redis node with persistence disabled; it restarts and users are logged out. What would have prevented this?",
+      "options": [
+        "Longer TTLs on all session keys",
+        "Switching the eviction policy from LFU to LRU on the node",
+        "Replication with failover, or a durable store behind the cache",
+        "Raising maxmemory on the node"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why is 'cache everything with long TTLs' wrong for a read-mostly system with occasional critical updates?",
+      "options": [
+        "Staleness windows on critical data can break correctness, and invalidation is genuinely hard",
+        "Cache memory costs grow without any upper bound over time",
+        "Cached reads end up slower than direct database reads",
+        "Redis and Memcached cap TTLs at sixty seconds"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A cache holds 1M entries; 10M distinct keys are requested uniformly at random. Expected steady-state hit ratio?",
+      "options": [
+        "About 90% in steady state",
+        "About 50% in steady state",
+        "Nearly 100% once the cache warms up",
+        "About 10% in steady state"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

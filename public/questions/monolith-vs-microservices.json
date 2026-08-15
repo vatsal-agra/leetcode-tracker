@@ -1,0 +1,225 @@
+{
+  "topic": "Monolith vs microservices",
+  "questions": [
+    {
+      "q": "What is the defining property of a well-built modular monolith?",
+      "options": [
+        "Each internal module is deployed on its own dedicated server for isolation",
+        "One deployable unit with internal module boundaries enforced in code",
+        "A single process that deliberately forbids any internal code boundaries",
+        "Multiple databases, one per module, joined together at query time"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the primary organizational benefit claimed for microservices?",
+      "options": [
+        "Every team writes in one mandated language, which eases hiring",
+        "There are fewer repositories to maintain across the organization",
+        "Teams can deploy and scale their services independently",
+        "All services share one database schema, which eases joins"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What immediate cost appears when an in-process call becomes a network hop?",
+      "options": [
+        "It can fail, time out, or be slow, and needs retries and monitoring",
+        "It must be rewritten in a compiled language to stay fast enough",
+        "It requires a message broker placed between every pair of services",
+        "It doubles the number of database connections each service holds"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do microservices typically avoid sharing one database?",
+      "options": [
+        "Databases cannot accept connections from more than one service",
+        "Shared databases are inherently slower than dedicated per-service databases by design",
+        "Database licensing usually charges per connecting application",
+        "Shared schemas couple services, so one team's change breaks others"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In a monolith, how do modules typically communicate?",
+      "options": [
+        "Through HTTP calls routed via the operating system's loopback",
+        "Through a shared message broker embedded inside the process",
+        "Through in-process function calls, cheap and transactional",
+        "Through files written into a shared temporary directory"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which deployment property do monoliths retain that microservices lose?",
+      "options": [
+        "The ability to roll back any component without redeploying anything else",
+        "Atomic releases: all code ships together at one consistent version",
+        "Zero-downtime deploys via rolling replacement of instances",
+        "The ability to canary a release to a small fraction of traffic"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which scenario genuinely favors extracting a module into its own service?",
+      "options": [
+        "A module whose formatting and code style differ noticeably from the rest of the codebase",
+        "A module whose unit tests run slower than the others in CI",
+        "A module maintained by the same team as all of its callers",
+        "A module with resource needs wildly different from the rest, like GPU inference"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a distributed monolith?",
+      "options": [
+        "Services so entangled they must be deployed and changed together",
+        "A monolith replicated across regions behind a global balancer",
+        "A monolith whose modules run in separate operating system threads",
+        "Any system mixing REST calls with message-based communication"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Checkout spans orders, payments, and inventory services. What replaces the monolith's single ACID transaction?",
+      "options": [
+        "A distributed lock held across all three services during checkout",
+        "Two-phase commit coordinated by the API gateway on every request",
+        "Eventual consistency achieved by retrying the whole checkout nightly",
+        "A saga: local transactions with compensating actions on failure"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A startup has 6 engineers and unclear domain boundaries. Why start with a monolith?",
+      "options": [
+        "Boundaries are still shifting; refactoring in-process is far cheaper than redrawing service contracts",
+        "Monolithic architectures handle strictly more traffic than microservices at every conceivable scale",
+        "Microservices cannot be built by engineering teams smaller than ten people",
+        "Investors and auditors generally require a single deployable artifact"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A shared library of domain models is used by 15 services. What is the hidden danger?",
+      "options": [
+        "Library code runs measurably slower than service-local code due to linking",
+        "Every model change forces coordinated upgrades, re-coupling the services",
+        "Shared libraries cannot be versioned in modern package managers",
+        "It prevents the services from ever being written in the same language"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A page now fans out to 8 sequential service calls of ~25ms each; the monolith took 30ms total. What is the lesson?",
+      "options": [
+        "Network fan-out is free once HTTP/2 multiplexing has been enabled",
+        "The services simply need a faster serialization format, which will restore the original 30ms",
+        "In-process calls became network hops; latency adds up and needs parallelism or aggregation",
+        "Latency is unrelated to architecture and comes entirely from the database"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Debugging a failed request now spans six services. What tooling becomes essential?",
+      "options": [
+        "Distributed tracing with correlation IDs propagated across calls",
+        "A shared debugger attached to all six processes at once",
+        "Verbose logging enabled permanently at debug level everywhere",
+        "A scheduled job that diffs each service's database nightly"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Traffic doubles, the team is 5 people, and the bottleneck is one SQL query. Why avoid splitting into services?",
+      "options": [
+        "Because microservices cannot run on ordinary cloud virtual machines",
+        "Because service extraction always requires a full rewrite of the data layer",
+        "The bottleneck is a query; splitting adds operational load without fixing it",
+        "Because the database cannot be accessed by two services at once"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What does Conway's law imply for choosing service boundaries?",
+      "options": [
+        "Service boundaries should precisely follow the foreign keys between database tables",
+        "Each service should be small enough for one engineer to rewrite in two weeks",
+        "Boundaries should be drawn to minimize the total number of services",
+        "Architecture mirrors team communication, so align services with team ownership"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What is the recommended pattern for safely extracting the first service from a monolith?",
+      "options": [
+        "Big-bang rewrite: freeze the monolith and rebuild everything as services",
+        "Strangler fig: route traffic incrementally to the new service behind a facade",
+        "Fork the monolith into two full copies and split the traffic by user ID",
+        "Extract the database first, then move the application code six months later"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An org runs 40 services with 5 engineers; delivery is slow and the pager never stops. What is the root issue?",
+      "options": [
+        "Too few services; finer granularity would isolate the failures better",
+        "A missing service mesh; sidecar proxies would eliminate the operational toil",
+        "Service count wildly exceeds team capacity; operational overhead dominates feature work",
+        "Wrong language choices; consolidating onto one runtime fixes the pager load"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A service writes its database then publishes an event, and can crash in between. What is the robust fix?",
+      "options": [
+        "Wrap the database write and the broker publish inside one XA transaction spanning both systems",
+        "Publish the event first, then perform the database write inside the event handler",
+        "Add a retry loop around the publish until it succeeds at least once",
+        "Transactional outbox: write the event to the DB atomically, relay it asynchronously"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A monolith ran at 60% CPU on 20 VMs. Split into 8 services with the same traffic, total footprint grows. Why?",
+      "options": [
+        "Per-service overhead (runtimes, sidecars, headroom) and serialization costs multiply across services",
+        "Cloud providers charge a per-service premium on otherwise identical VMs",
+        "Microservices require synchronous replication of every incoming request",
+        "Every mainstream orchestrator reserves one full virtual machine per service by default"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A flow degrades when any of 5 chained services is slow; each meets a 99.9% SLO. What is the effect and lever?",
+      "options": [
+        "Availability multiplies out to 99.9% overall, so no action is needed beyond monitoring",
+        "Tail latencies compound across the chain; cut serial depth, add hedging or caching",
+        "Only the slowest single service matters; tune that one and every SLO is met",
+        "The gateway absorbs the slowness, so SLOs only apply to edge services"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

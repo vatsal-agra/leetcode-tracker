@@ -1,0 +1,225 @@
+{
+  "topic": "Database schema design",
+  "questions": [
+    {
+      "q": "What problem does normalization primarily solve?",
+      "options": [
+        "Slow reads caused by too many indexes on one table",
+        "Storage exhaustion from keeping large binary files in rows",
+        "Queries failing because column types are inconsistent",
+        "Update anomalies from the same fact stored in multiple places"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How is a many-to-many relationship modeled in a relational schema?",
+      "options": [
+        "A junction table holding foreign keys to both related tables",
+        "A comma-separated list of IDs in a text column",
+        "Duplicated rows in both of the tables, one copy per relationship pair",
+        "A nullable foreign key on whichever table is larger"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What makes a good primary key?",
+      "options": [
+        "A value users recognize, like an email address",
+        "A stable, unique, compact value that never needs to change",
+        "The row's creation timestamp captured at full millisecond precision",
+        "A hash of all the row's columns concatenated"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why choose a surrogate key (auto-ID) over a natural key like email?",
+      "options": [
+        "Surrogate integer keys compress better inside backups and archives",
+        "Natural keys cannot be indexed efficiently by B-trees",
+        "Natural attributes change; a surrogate stays stable across those changes",
+        "Surrogate keys are required by the SQL standard"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a foreign key constraint actually enforce?",
+      "options": [
+        "Referenced rows must exist, blocking orphaned references",
+        "Both tables must physically reside on the same disk volume together",
+        "Joins between the two tables will always use an index",
+        "The referencing column is automatically made unique"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is denormalization?",
+      "options": [
+        "Removing all constraints so writes never fail",
+        "Splitting wide tables into many narrower ones to improve cache efficiency",
+        "Converting a relational schema to a document schema",
+        "Deliberately duplicating data to make specific reads cheaper"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A soft delete marks rows with deleted_at instead of removing them. What is the main operational catch?",
+      "options": [
+        "Storage grows without bound and the space can never be reclaimed afterward",
+        "Foreign keys stop working on soft-deleted rows",
+        "Every query must remember to filter deleted rows, or leaks occur",
+        "Soft-deleted rows lock their pages until purged"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Third normal form (3NF) mainly eliminates what?",
+      "options": [
+        "Repeating groups of similar columns packed inside a single row",
+        "Non-key columns depending on other non-key columns",
+        "Multi-valued dependencies between candidate keys",
+        "Composite keys with more than two columns"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "An orders table stores product price at purchase time, though products has price. Why is this duplication correct?",
+      "options": [
+        "Order history must reflect the price paid, even after the catalog price changes",
+        "It saves one join, which is always worth the storage",
+        "Product prices cannot be indexed for historical queries",
+        "A foreign key into products would lock the entire catalog during each checkout"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your users table has 40 mostly-NULL columns like 'fax_number2'. What schema smell is this?",
+      "options": [
+        "Excessive normalization that splits the data into overly fine pieces",
+        "A god table accreting unrelated optional attributes over time",
+        "Index bloat from over-indexing sparse columns",
+        "Improper sharding of a wide-column store"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does the entity-attribute-value (EAV) pattern usually backfire?",
+      "options": [
+        "Attribute names inevitably collide across entity types, silently corrupting stored data",
+        "EAV tables cannot be backed up consistently",
+        "Databases limit tables to 1,000 rows of metadata",
+        "Simple queries become sprawling self-joins, and types and constraints go unenforced"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A migration must add a NOT NULL column (no static default fits) to a 500M-row hot table. Safe approach?",
+      "options": [
+        "Add it NOT NULL immediately; the database will backfill the value automatically",
+        "Schedule a full maintenance window, because large schema changes always require downtime",
+        "Add it nullable, backfill in batches, then enforce NOT NULL once every row is set",
+        "Copy into a new table and swap a view over the top in one step"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Comments belong to posts, and a post renders with its latest 3 comments. What is the standard relational model?",
+      "options": [
+        "A comments array column on posts, updated by trigger",
+        "A comments table with a post_id foreign key, joined with ORDER BY and LIMIT",
+        "A physically separate database for comments, isolating their write load from posts",
+        "Copying the latest three comments into the posts row"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do append-only (event-sourced) schemas store immutable events instead of updating rows in place?",
+      "options": [
+        "Full history is preserved, and state can be rebuilt or audited at any past point",
+        "Append operations are the only writes that SQL guarantees to be fully atomic",
+        "Immutable rows compress to zero bytes after archival",
+        "Updates are forbidden once a table has a clustered index"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A status column holds 'active', 'actve', 'ACTIVE' across rows. Which design would have prevented this?",
+      "options": [
+        "Storing the status as a small integer with its meanings documented in the team wiki",
+        "A trigger that lowercases all text columns on insert",
+        "A constrained type: enum, CHECK constraint, or lookup table with a foreign key",
+        "Weekly data-quality jobs that fix drifted values"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When is denormalizing a read-heavy aggregate (like post like_counts) into a column justified?",
+      "options": [
+        "Whenever any query is slower than 100 ms",
+        "Only inside document databases, since relational engines forbid such duplication",
+        "Whenever the underlying count is written far more often than it is ever read",
+        "When counting on demand is too costly and slightly stale counts are acceptable"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Multi-tenant SaaS: single shared tables with tenant_id versus schema-per-tenant. What chiefly argues for shared tables at 50k tenants?",
+      "options": [
+        "Shared tables encrypt each tenant's rows separately by default",
+        "Per-tenant schemas give better cache utilization at scale",
+        "Migrations and connection pooling stay manageable; 50k schemas overwhelm tooling and catalogs",
+        "Shared tables make noisy-neighbor isolation automatic"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You must rename a heavily-used column with zero downtime. Standard multi-step pattern?",
+      "options": [
+        "Rename it inside one transaction; the lock makes the change invisible to all clients",
+        "Rename in the ORM only, keeping the database column forever",
+        "Announce a maintenance window and rename during low traffic",
+        "Add new column, dual-write, backfill, migrate readers, then drop the old one"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "An audit requirement demands provable knowledge of a row's state on any past date. Which schema approach fits?",
+      "options": [
+        "Nightly full-table dumps retained for ninety days",
+        "Temporal (system-versioned) tables recording validity ranges per row version",
+        "A last_modified timestamp column on every table",
+        "The database write-ahead log at its default retention, replayed whenever auditors ask"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Your M2M junction table (user_id, group_id) now needs 'role within group' and 'joined date'. Correct evolution?",
+      "options": [
+        "Add them as columns on the junction table, which models the membership itself",
+        "Create one additional junction table for each newly required membership attribute",
+        "Move role and date onto the users table as arrays",
+        "Denormalize memberships into a JSON column on groups"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    }
+  ]
+}

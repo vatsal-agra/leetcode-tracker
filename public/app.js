@@ -312,7 +312,24 @@ function drawDonut() {
 }
 
 /* ------------------------------------------------------------------ system design */
+const slugify = n => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null };
+S._qbank = {};
+
+function sdFind(name) {
+  const sd = S.state.sysdesign;
+  return [...sd.concepts, ...sd.problems].find(t => t.name === name);
+}
+
 function renderSysdesign(el) {
+  const mode = S.sd.mode;
+  if (mode === "topic") return renderSdTopic(el);
+  if (mode === "test") return renderSdTest(el);
+  if (mode === "result") return renderSdResult(el);
+  renderSdGrid(el);
+}
+
+function renderSdGrid(el) {
   const sd = S.state.sysdesign;
   const remaining = [...sd.concepts, ...sd.problems].filter(t => !t.done).map(t => t.name);
   const section = (title, items, hint) => `
@@ -324,6 +341,8 @@ function renderSysdesign(el) {
           <button class="sd-chip ${t.done ? "done" : ""} ${sd.pick === t.name ? "picked" : ""}" data-name="${esc(t.name)}">
             <span class="sd-tick"><svg><use href="#i-check"/></svg></span>
             <span class="sd-name">${esc(t.name)}</span>
+            ${t.score != null && !t.done ? `<span class="sd-score fail">best ${t.score}%</span>` : ""}
+            ${t.done ? `<span class="sd-score pass">${t.score != null ? t.score + "%" : "✓"}</span>` : ""}
             ${sd.pick === t.name ? '<span class="sd-flag">current pick</span>' : ""}
           </button>`).join("")}
       </div>
@@ -332,48 +351,201 @@ function renderSysdesign(el) {
   el.innerHTML = `
   <div class="card picker-card">
     <div class="picker-left">
-      <div class="kpi-label">${sd.pick ? "Current pick — learn this, then tick it" : "No pick yet"}</div>
+      <div class="kpi-label">${sd.pick ? "Current pick — study it, then test out of it" : "No pick yet"}</div>
       <div class="picker-name ${sd.pick ? "" : "empty"}" id="picker-name">
-        ${sd.pick ? esc(sd.pick) : remaining.length ? "spin to get today's topic" : "everything is ticked — you absolute legend"}
+        ${sd.pick ? esc(sd.pick) : remaining.length ? "spin to get today's topic" : "all 43 passed — you absolute legend"}
       </div>
       <div class="picker-actions">
         ${sd.pick ? `
-          <button class="btn btn-primary" id="pick-done"><svg><use href="#i-check"/></svg>Learned it — tick it off</button>
+          <button class="btn btn-primary" id="pick-test"><svg><use href="#i-bolt"/></svg>I'm ready — take the test</button>
           <button class="btn btn-ghost" id="pick-again"><svg><use href="#i-sync"/></svg>Spin again</button>` : `
           <button class="btn btn-primary btn-spin" id="btn-spin" ${remaining.length ? "" : "disabled"}>
             <svg><use href="#i-sync"/></svg>Spin the picker</button>`}
       </div>
     </div>
     <div class="picker-right">
-      <div class="picker-count"><b>${sd.done}</b><span>/ ${sd.total} topics<br>mastered</span></div>
+      <div class="picker-count"><b>${sd.done}</b><span>/ ${sd.total} topics<br>passed</span></div>
       <div class="bar" style="width:150px"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
     </div>
   </div>
-  ${section("Core concepts", sd.concepts, "click to tick")}
-  ${section("Design problems", sd.problems, "full mock designs")}`;
+  ${section("Core concepts", sd.concepts, "enter a card to take its test")}
+  ${section("Design problems", sd.problems, "full mock designs")}
+  <p style="font-size:11.5px;color:var(--dim);margin-top:14px">a topic only ticks when you score <b>≥ ${sd.pass_mark}%</b> on its 20-question test — 8 easy · 8 medium · 4 hard, no explanations given, missed ones are yours to research.</p>`;
 
-  $$(".sd-chip", el).forEach(chip => chip.onclick = async () => {
+  $$(".sd-chip", el).forEach(chip => chip.onclick = () => {
     if (S._spinning) return;
-    const name = chip.dataset.name;
-    try {
-      await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "toggle", name }) });
-      const t = [...S.state.sysdesign.concepts, ...S.state.sysdesign.problems].find(x => x.name === name);
-      toast(t && t.done ? `Unticked ${name}` : `${name} — mastered ✓`);
-      await reload();
-    } catch (e) { if (e.message !== "locked") toast("Failed: " + e.message, false); }
+    S.sd = { mode: "topic", topic: chip.dataset.name, attempt: null, answers: {}, result: null };
+    renderSysdesign($("#view-sysdesign"));
   });
   const spinBtn = $("#btn-spin", el);
   if (spinBtn) spinBtn.onclick = () => runSpin(el, remaining);
   const again = $("#pick-again", el);
   if (again) again.onclick = () => runSpin(el, remaining.filter(n => n !== sd.pick));
-  const doneBtn = $("#pick-done", el);
-  if (doneBtn) doneBtn.onclick = async () => {
-    try {
-      await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "toggle", name: sd.pick }) });
-      toast(`${sd.pick} — mastered ✓ (${sd.done + 1}/${sd.total})`);
-      await reload();
-    } catch (e) { if (e.message !== "locked") toast("Failed: " + e.message, false); }
+  const testBtn = $("#pick-test", el);
+  if (testBtn) testBtn.onclick = () => {
+    S.sd = { mode: "topic", topic: sd.pick, attempt: null, answers: {}, result: null };
+    renderSysdesign($("#view-sysdesign"));
   };
+}
+
+function renderSdTopic(el) {
+  const sd = S.state.sysdesign;
+  const t = sdFind(S.sd.topic);
+  if (!t) { S.sd.mode = "grid"; return renderSdGrid(el); }
+  const status = t.done
+    ? `<span class="chip complete">passed · ${t.score != null ? t.score + "%" : "done"}</span>`
+    : t.score != null
+      ? `<span class="chip missed">best ${t.score}% — below the ${sd.pass_mark}% bar</span>`
+      : `<span class="chip upcoming">not attempted yet</span>`;
+  el.innerHTML = `
+  <a class="sd-back" id="sd-back">← all topics</a>
+  <div class="card picker-card" style="margin-top:12px">
+    <div class="picker-left">
+      <div class="kpi-label" style="display:flex;gap:10px;align-items:center">Topic test ${sd.pick === t.name ? '<span class="sd-flag">current pick</span>' : ""}</div>
+      <div class="picker-name">${esc(t.name)}</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">${status}</div>
+      <div class="picker-actions">
+        <button class="btn btn-primary btn-spin" id="sd-start"><svg><use href="#i-bolt"/></svg>${t.score != null && !t.done ? "Retake the test" : t.done ? "Take it again (for pride)" : "Start the test"}</button>
+      </div>
+    </div>
+    <div class="picker-right" style="max-width:300px">
+      <div style="font-size:11.5px;color:var(--mut);line-height:1.75">
+        <b style="color:var(--text)">20 questions</b> — 8 easy · 8 medium · 4 hard<br>
+        pass at <b style="color:var(--text)">≥ ${sd.pass_mark}%</b> to tick the topic<br>
+        no explanations — missed questions are<br>yours to research afterwards
+      </div>
+    </div>
+  </div>`;
+  $("#sd-back", el).onclick = () => { S.sd.mode = "grid"; renderSysdesign(el); };
+  $("#sd-start", el).onclick = async () => {
+    const slug = slugify(t.name);
+    try {
+      if (!S._qbank[slug]) {
+        const r = await fetch(`/questions/${slug}.json`);
+        if (!r.ok) throw new Error(`questions not found (${r.status})`);
+        S._qbank[slug] = await r.json();
+      }
+      const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const groups = { easy: [], medium: [], hard: [] };
+      S._qbank[slug].questions.forEach(q => (groups[q.difficulty] || groups.easy).push(q));
+      const seq = [...shuf(groups.easy), ...shuf(groups.medium), ...shuf(groups.hard)];
+      S.sd.attempt = seq.map(q => {
+        const om = shuf([0, 1, 2, 3]);
+        return { q: q.q, difficulty: q.difficulty, opts: om.map(o => q.options[o]), correct: om.indexOf(q.answer) };
+      });
+      S.sd.answers = {};
+      S.sd.mode = "test";
+      renderSysdesign(el);
+      $("#view-sysdesign").scrollIntoView();
+    } catch (e) { toast("Couldn't load the test: " + e.message, false); }
+  };
+}
+
+function renderSdTest(el) {
+  const t = S.sd;
+  const total = t.attempt.length;
+  const answered = Object.keys(t.answers).length;
+  el.innerHTML = `
+  <div class="test-head card">
+    <div>
+      <div class="kpi-label">Test in progress</div>
+      <div style="font-size:16px;font-weight:800;margin-top:3px">${esc(t.topic)}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="test-progress" id="test-progress">${answered} / ${total} answered</span>
+      <button class="btn btn-ghost" id="test-abandon">Abandon</button>
+      <button class="btn btn-primary" id="test-submit" ${answered === total ? "" : "disabled"}>Submit</button>
+    </div>
+  </div>
+  ${t.attempt.map((q, i) => `
+    <div class="card q-card" data-i="${i}">
+      <div class="q-head"><span class="q-num">${String(i + 1).padStart(2, "0")}</span>
+        <span class="pill ${q.difficulty === "easy" ? "Easy" : q.difficulty === "medium" ? "Medium" : "Hard"}">${q.difficulty}</span></div>
+      <div class="q-text">${esc(q.q)}</div>
+      <div class="q-opts">
+        ${q.opts.map((o, oi) => `
+          <button class="opt ${t.answers[i] === oi ? "sel" : ""}" data-oi="${oi}">
+            <span class="opt-letter">${"ABCD"[oi]}</span><span>${esc(o)}</span>
+          </button>`).join("")}
+      </div>
+    </div>`).join("")}
+  <div class="test-foot">
+    <button class="btn btn-primary btn-spin" id="test-submit-2" ${answered === total ? "" : "disabled"}>Submit test</button>
+  </div>`;
+
+  const refresh = () => {
+    const n = Object.keys(t.answers).length;
+    $("#test-progress", el).textContent = `${n} / ${total} answered`;
+    const ok = n === total;
+    $("#test-submit", el).disabled = !ok;
+    $("#test-submit-2", el).disabled = !ok;
+  };
+  $$(".q-card", el).forEach(card => {
+    const qi = +card.dataset.i;
+    $$(".opt", card).forEach(opt => opt.onclick = () => {
+      t.answers[qi] = +opt.dataset.oi;
+      $$(".opt", card).forEach(o => o.classList.toggle("sel", o === opt));
+      refresh();
+    });
+  });
+  const submit = async () => {
+    if (Object.keys(t.answers).length !== total) return;
+    const missed = [];
+    let correct = 0;
+    t.attempt.forEach((q, i) => {
+      if (t.answers[i] === q.correct) correct++;
+      else missed.push({ q: q.q, yours: q.opts[t.answers[i]], difficulty: q.difficulty });
+    });
+    const pct = Math.round(correct / total * 100);
+    let resp = null;
+    try {
+      resp = await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "score", name: t.topic, pct }) });
+    } catch (e) { if (e.message !== "locked") toast("Score not saved: " + e.message, false); }
+    t.result = { pct, correct, total, missed, passed: resp ? resp.passed : pct >= (S.state.sysdesign.pass_mark || 75) };
+    t.mode = "result";
+    try { S.state = await api("/api/state"); } catch {}
+    renderChrome();
+    renderSysdesign(el);
+    window.scrollTo(0, 0);
+    $("#view-sysdesign").scrollIntoView();
+  };
+  $("#test-submit", el).onclick = submit;
+  $("#test-submit-2", el).onclick = submit;
+  $("#test-abandon", el).onclick = () => {
+    if (!confirm("Abandon this attempt? Nothing will be recorded.")) return;
+    S.sd = { mode: "topic", topic: t.topic, attempt: null, answers: {}, result: null };
+    renderSysdesign(el);
+  };
+}
+
+function renderSdResult(el) {
+  const t = S.sd, r = t.result;
+  el.innerHTML = `
+  <div class="card result-card ${r.passed ? "pass" : "fail"}">
+    <div class="result-pct">${r.pct}%</div>
+    <div class="result-verdict">${r.passed ? "PASSED — topic ticked ✓" : `NOT YET — the bar is ${S.state.sysdesign.pass_mark || 75}%`}</div>
+    <div class="result-sub">${r.correct} of ${r.total} correct · ${esc(t.topic)}</div>
+    <div class="picker-actions" style="justify-content:center;margin-top:18px">
+      ${r.passed ? "" : `<button class="btn btn-primary" id="res-retake"><svg><use href="#i-sync"/></svg>Retake when ready</button>`}
+      <button class="btn ${r.passed ? "btn-primary" : "btn-ghost"}" id="res-back">Back to topics</button>
+    </div>
+  </div>
+  ${r.missed.length ? `
+  <div class="card mt">
+    <div class="card-h"><svg><use href="#i-flag"/></svg>You missed ${r.missed.length} — go find out why<span class="spacer"></span>
+      <span style="letter-spacing:0;text-transform:none;font-weight:600">no answers given, that's the point</span></div>
+    <div class="card-b">
+      ${r.missed.map(m => `
+        <div class="missed-row">
+          <span class="pill ${m.difficulty === "easy" ? "Easy" : m.difficulty === "medium" ? "Medium" : "Hard"}">${m.difficulty}</span>
+          <div><div class="missed-q">${esc(m.q)}</div>
+          <div class="missed-a">your answer: ${esc(m.yours)}</div></div>
+        </div>`).join("")}
+    </div>
+  </div>` : `<div class="card mt"><div class="empty"><b>Flawless.</b>not a single miss — that's how it's done.</div></div>`}`;
+  const retake = $("#res-retake", el);
+  if (retake) retake.onclick = () => { S.sd = { mode: "topic", topic: t.topic, attempt: null, answers: {}, result: null }; renderSysdesign(el); };
+  $("#res-back", el).onclick = () => { S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null }; renderSysdesign(el); };
 }
 
 function runSpin(el, remaining) {
@@ -726,8 +898,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 
 /* refresh the "synced Xm ago" label every minute */
 setInterval(() => { if (S.state) renderChrome(); }, 60000);
-/* background: re-pull state every 5 min so an auto-sync shows up */
-setInterval(async () => { try { S.state = await api("/api/state"); render(S.view); } catch {} }, 300000);
+/* background: re-pull state every 5 min so an auto-sync shows up (never mid-test) */
+setInterval(async () => {
+  if (S.sd.mode === "test") return;
+  try { S.state = await api("/api/state"); render(S.view); } catch {}
+}, 300000);
 
 (async function boot() {
   try {

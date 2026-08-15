@@ -1,0 +1,210 @@
+{
+  "topic": "Transactions, locking & concurrency control",
+  "questions": [
+    {
+      "q": "A transaction reads a row twice and sees different committed values each time. Which anomaly is this?",
+      "options": ["Non-repeatable read", "Dirty read", "Phantom read", "Lost update"],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does MVCC fundamentally allow?",
+      "options": [
+        "Writers to skip WAL logging for versioned rows entirely",
+        "Automatic escalation from row locks to table locks",
+        "Readers to see a consistent snapshot without blocking writers",
+        "Transactions to commit out of submission order safely"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Optimistic concurrency control fits best when...",
+      "options": [
+        "many writers hammer the same hot row constantly all day",
+        "every worker competes to claim the same queue head row",
+        "bulk loads need exclusive table access anyway",
+        "conflicts are rare, so most transactions commit without retries"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Transaction B reads a value written by uncommitted transaction A; A then rolls back. B experienced a...",
+      "options": ["phantom read", "dirty read", "lost update", "write skew anomaly"],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the classic condition that produces a deadlock between two transactions?",
+      "options": [
+        "Both hold shared locks on one row simultaneously",
+        "One transaction exceeds the configured lock wait timeout limit and gets rolled back",
+        "Each holds a lock the other needs, acquired in opposite order",
+        "Both attempt to write the same index page concurrently"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does SELECT ... FOR UPDATE do?",
+      "options": [
+        "Locks the returned rows so concurrent writers block until commit",
+        "Copies the rows into a temporary editing table for safety",
+        "Silently upgrades the transaction to serializable isolation",
+        "Prevents other transactions from even reading those rows"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In two-phase commit, what does the coordinator's first phase do?",
+      "options": [
+        "Applies all writes on every participant immediately",
+        "Asks participants to prepare and durably vote yes or no",
+        "Elects a standby backup coordinator from among the voting participants",
+        "Acquires a global read lock across all involved shards"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Per the SQL standard, which isolation level still permits phantom reads?",
+      "options": [
+        "Serializable isolation",
+        "Snapshot isolation as implemented in Postgres",
+        "No level does; phantoms are always blocked",
+        "Repeatable read"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Two doctors each verify 'someone else is on call', then both remove themselves; both commit under snapshot isolation. This anomaly is...",
+      "options": ["a dirty write", "a non-repeatable read", "a phantom read", "write skew"],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Code reads a balance, computes, then writes the result back. Concurrent runs lose an update under READ COMMITTED. Best fix?",
+      "options": [
+        "Raise the isolation level to repeatable read for the initial read statement only",
+        "Use atomic updates (balance = balance - x) or SELECT FOR UPDATE",
+        "Add a covering index so the read is always current",
+        "Retry the read until two consecutive values match exactly"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How do databases typically resolve a detected deadlock?",
+      "options": [
+        "Abort one victim so the rest proceed; the application retries it",
+        "Suspend both competing transactions until the lock wait timeout fully elapses",
+        "Merge the conflicting write sets into a single commit",
+        "Escalate both to table locks, forcing serial execution"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An optimistic-lock update fails its version check. What should the application do?",
+      "options": [
+        "Increment the version column manually and force the write through anyway",
+        "Retry the exact same UPDATE immediately without re-reading",
+        "Re-read the row, reapply the change, then retry or surface a conflict",
+        "Wait for the competing transaction's row lock to release"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Physically, what does an UPDATE do in Postgres under MVCC?",
+      "options": [
+        "Overwrites the row in place, saving the old image to an undo log",
+        "Writes a new row version; vacuum later reclaims the old one",
+        "Moves the row into a dedicated undo tablespace",
+        "Latches the page and rewrites it synchronously to disk"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do long-running read-only transactions still hurt an MVCC database?",
+      "options": [
+        "Their shared row locks block every concurrent writer's progress until they commit",
+        "Each of their reads forces a WAL flush for consistency",
+        "They pin the query plan cache, evicting hotter plans",
+        "Old row versions must be kept for their snapshot, bloating storage"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Debit a row on shard 1 and credit a row on shard 2 atomically via 2PC. Why is this operationally painful?",
+      "options": [
+        "2PC cannot span more than two participant nodes at once",
+        "Participants deadlock against themselves during the prepare phase",
+        "A crashed coordinator leaves participants blocked, holding locks until recovery",
+        "The prepare round merely doubles commit latency and nothing else changes"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How does Postgres SERIALIZABLE (SSI) differ from classic two-phase locking?",
+      "options": [
+        "It tracks read-write dependencies and aborts risky transactions instead of blocking",
+        "It takes coarser table-level locks up front to be safe",
+        "It funnels all serializable transactions through one queue",
+        "It blocks every reader until all concurrent writers commit"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A 1-second ALTER TABLE (ACCESS EXCLUSIVE) queues behind a long-running query. What happens to new short SELECTs meanwhile?",
+      "options": [
+        "They proceed normally, since readers never wait behind merely pending locks",
+        "They fail instantly with lock-not-available errors by default",
+        "They queue behind the waiting exclusive lock, stalling all table access",
+        "They deadlock with the ALTER and one side gets killed"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why must a serialization-failure retry rerun the entire transaction, not just the failed statement?",
+      "options": [
+        "Earlier statements read a snapshot now known to be inconsistent",
+        "The database automatically replays the earlier statements for you first",
+        "Locks from the earlier statements persist until the retry finishes",
+        "Only the final statement was rolled back by the abort"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Service X locks rows in ascending account_id order; service Y locks in arbitrary order. Deadlocks occur. Cheapest robust fix?",
+      "options": [
+        "Serialize all writes through a single worker thread",
+        "Add NOWAIT to every lock acquisition and retry each failure in a loop",
+        "Shorten the database's deadlock detection interval significantly",
+        "Make Y acquire its row locks in the same sorted order as X"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Under InnoDB REPEATABLE READ, a ranged UPDATE blocks new inserts into that range. Which mechanism causes this?",
+      "options": [
+        "Predicate locking that is normally available only at the serializable level",
+        "Next-key locks covering the index gaps in the scanned range",
+        "MVCC snapshot advancement pausing during the update",
+        "Page-level latch escalation on the clustered index"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

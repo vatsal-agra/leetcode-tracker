@@ -1,0 +1,225 @@
+{
+  "topic": "News feed",
+  "questions": [
+    {
+      "q": "In fanout-on-write, what happens at the moment a user publishes a post?",
+      "options": [
+        "Followers' clients pull the post the next time the app opens",
+        "The post is ranked lazily whenever each follower requests a feed",
+        "The post is cached once in a global store and merged into each follower's feed at read time",
+        "The post ID is inserted into every follower's precomputed feed store"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the primary advantage of fanout-on-read (the pull model)?",
+      "options": [
+        "Feed reads complete with a single key lookup per user",
+        "Posting is cheap, and no work is wasted on inactive followers",
+        "It removes the need for a separate ranking service entirely",
+        "It provides stronger ordering guarantees than push-based models"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a precomputed per-user feed cache typically contain?",
+      "options": [
+        "Fully rendered HTML for each post in the feed",
+        "Complete post bodies with their media attachments stored inline for single-lookup reads",
+        "Post IDs, with content hydrated from a post store at read time",
+        "Follower graph edges used as inputs for ranking"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the celebrity problem in news feed design?",
+      "options": [
+        "A single post triggering millions of per-follower feed writes",
+        "Celebrities' own feeds becoming too long to paginate efficiently",
+        "Hot celebrity posts evicting everything else from the feed cache",
+        "Celebrities following too many accounts to merge at read time"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the standard hybrid solution to the celebrity problem?",
+      "options": [
+        "Push fanout for most users, pull-and-merge for celebrity authors",
+        "Pull for most users, with push fanout reserved for celebrities",
+        "Rate limiting how often celebrity accounts are allowed to post",
+        "Dedicated shards that replicate celebrity feeds synchronously worldwide"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is cursor-based pagination preferred over offset pagination for feeds?",
+      "options": [
+        "Offsets cannot exceed ten thousand rows in most database engines",
+        "Cursors compress into shorter URLs than numeric offsets do",
+        "New items shift offsets, causing duplicates or gaps; cursors anchor to a stable position",
+        "Offset-based queries cannot be cached anywhere at the edge"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which storage system is the canonical choice for per-user precomputed feed lists?",
+      "options": [
+        "A relational table joined against the follow graph on every read",
+        "An object storage bucket holding one feed file per user",
+        "A columnar warehouse optimized for large analytical scans",
+        "An in-memory store like Redis sorted sets keyed by user ID"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In a modern ranked feed pipeline, what is the typical order of stages?",
+      "options": [
+        "Scoring, then candidate generation, then filtering at the end",
+        "Candidate generation, filtering, scoring, then diversity re-ranking",
+        "Diversity re-ranking first, scoring next, then candidate retrieval as the final stage",
+        "Filtering, diversity re-ranking, retrieval, and scoring last"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do feed services perform fanout through an async queue of workers rather than synchronously in the post request?",
+      "options": [
+        "Queues automatically deduplicate posts before they reach followers",
+        "Synchronous fanout would corrupt the ranking model's features",
+        "The post request returns fast while workers absorb the write burst",
+        "Async fanout provides exactly-once delivery guarantees to feeds"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why skip fanout writes entirely for followers who have been inactive for months?",
+      "options": [
+        "Their feed caches would eventually exceed per-key size limits",
+        "Stale feeds would skew the ranking model's engagement features",
+        "Fanout to inactive users creates hot partitions and memory pressure in the cache tier",
+        "The writes are wasted; rebuild their feed by pull if they ever return"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A user opens the app and their precomputed feed cache entry was evicted. What happens?",
+      "options": [
+        "The service pulls followees' recent posts, merges and ranks them, then repopulates the cache",
+        "The user sees an empty feed until newly created posts arrive",
+        "The service replays the entire historical fanout log from the start",
+        "The request is rerouted to a replica that still holds the cache"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A user posts and immediately refreshes, but their own post is missing from the feed. What is the standard fix?",
+      "options": [
+        "Switch the entire feed path to strongly consistent quorum reads",
+        "Ensure read-your-writes by injecting the author's own posts at read time",
+        "Reduce the fanout queue's batch size so writes land sooner",
+        "Invalidate every CDN cache entry each time a user posts"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A post goes viral and its ID hammers one post-store partition. What is the standard mitigation?",
+      "options": [
+        "Migrate the viral post's row onto a larger dedicated shard",
+        "Replicate the hot post across cache nodes and add local in-process caches",
+        "Disable caching for viral posts so the load spreads to replicas",
+        "Reshard the post's row by follower ID to distribute the reads"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "In the hybrid model, how do celebrity posts end up in a follower's feed response?",
+      "options": [
+        "Nightly batch jobs append them to every follower's cached feed",
+        "The client fetches a public celebrity feed from the CDN and interleaves it",
+        "The service merges the precomputed feed with recent posts from followed celebrities at read time",
+        "They overwrite the oldest entries of each follower's push feed"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why cap each precomputed feed at a few hundred entries?",
+      "options": [
+        "It bounds cache memory, since deep scrolls are rare and can fall back to pull",
+        "Ranking models cannot score candidate sets larger than a few hundred",
+        "Redis sorted sets degrade sharply once they pass roughly five hundred entries per key",
+        "Longer feed lists break cursor pagination beyond the cap"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "The same reshared article appears five times in a user's candidate set from different followees. Which stage should collapse these?",
+      "options": [
+        "Candidate generation, by refusing to retrieve reshared posts from the follow graph at all",
+        "The client, by hiding repeated URLs after they render",
+        "The fanout workers, by skipping all reshare writes upstream",
+        "A dedup step in filtering, collapsing duplicates before scoring"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A network has 100M daily users averaging 200 followers and 2 posts per day. Roughly how many feed-cache writes does full push fanout generate daily?",
+      "options": [
+        "About 400 million",
+        "About 4 billion",
+        "About 40 billion",
+        "About 400 billion"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why can't final feed ranking simply be precomputed at write time during fanout?",
+      "options": [
+        "Scores depend on read-time context and recency decay, so write-time ranking goes stale",
+        "Write-time ranking needs the follow graph, which fanout workers cannot access",
+        "Precomputed ranking scores cannot be represented in sorted set entries",
+        "Ranking during fanout roughly doubles the write amplification, which cache clusters cannot absorb"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "The fanout queue develops a growing backlog because workers lag behind. What symptom do users observe?",
+      "options": [
+        "Posting fails with timeouts for every user until the backlog drains",
+        "Feed read latency grows in proportion to the queue backlog depth",
+        "Duplicate copies of the same post start appearing in feeds",
+        "Posts appear in followers' feeds with growing delay while posting itself stays fast"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A user blocks an author, but that author's older entries remain in the user's precomputed feed cache. What is the standard handling?",
+      "options": [
+        "Rewrite all affected feed caches synchronously inside the block request",
+        "Keep cache entries but apply block-list filtering at read time",
+        "Flush every user's feed cache so the author is fully purged",
+        "Delete the blocked author's posts from the central post store"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

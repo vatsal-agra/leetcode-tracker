@@ -1,0 +1,225 @@
+{
+  "topic": "Notification system",
+  "questions": [
+    {
+      "q": "Why place a provider abstraction layer between your notification service and APNs, FCM, or SMS vendors?",
+      "options": [
+        "It encrypts notification payloads uniformly across every channel",
+        "It merges all channels into one shared delivery queue so cross-channel ordering is preserved",
+        "It decouples core logic from third-party APIs, enabling failover and swaps",
+        "It guarantees exactly-once delivery across all downstream providers"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What role does a message queue play between the notification service and channel workers?",
+      "options": [
+        "It absorbs bursts and decouples senders from slow third-party providers",
+        "It ranks pending notifications by predicted user engagement",
+        "It serves as the durable long-term system of record for registered device tokens",
+        "It converts payloads between the different channel formats"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What exactly is a push device token?",
+      "options": [
+        "The user's hashed account identifier shared across devices",
+        "A platform-issued handle addressing one app install on one device",
+        "A session cookie that gets refreshed on every app launch",
+        "The device's hardware serial number registered with the OS vendor at activation time"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which channel's strict per-message cost makes deduplication and throttling most financially important?",
+      "options": [
+        "In-app inbox",
+        "Web push",
+        "Email",
+        "SMS texts"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a quiet hours feature do in a notification system?",
+      "options": [
+        "Blocks every notification permanently for users who opted out",
+        "Defers non-urgent notifications during the user's configured local-time window",
+        "Batches all notifications into a single weekly digest email",
+        "Mutes only the channels showing low engagement scores"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where should user notification preferences be enforced?",
+      "options": [
+        "Server-side in the pipeline before enqueueing to channel workers",
+        "On the device after delivery, by hiding the unwanted notifications",
+        "At the provider, using per-token filtering rules they maintain",
+        "In the analytics pipeline once sends have been recorded"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a dead-letter queue used for in a notification pipeline?",
+      "options": [
+        "Storing notifications addressed to deleted user accounts",
+        "Ordering pending retries according to their priority class before redelivery",
+        "Holding messages that failed all retries for later inspection or replay",
+        "Archiving successfully delivered notifications for audits"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does notification collapsing mean?",
+      "options": [
+        "Compressing each notification payload's bytes before handing it off to the providers",
+        "Silently dropping any notification older than one hour",
+        "Merging the queues of multiple channels into a single stream",
+        "Replacing several related pending notifications with a single summary"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "FCM responds that a device token is unregistered. What should your system do?",
+      "options": [
+        "Remove the token from the registry so future sends skip it",
+        "Retry with exponential backoff until the token re-registers itself",
+        "Fall back to delivering that notification over SMS instead",
+        "Rotate the server's API credentials and resend the message"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A send request to a provider times out and your worker immediately retries. What risk does this create?",
+      "options": [
+        "Token expiry, since repeated retries invalidate device tokens",
+        "Duplicate notifications, because the timed-out attempt may have actually succeeded",
+        "A deadlock between the retry topic and the main delivery topic",
+        "A provider ban for exceeding the allowed concurrent connections"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "The same business event triggers notification requests from two producer services. What is the standard guard against double-sending?",
+      "options": [
+        "Serialize both producers through a single queue partition so events arrive in a strict order",
+        "Let the client suppress alerts that look visually identical",
+        "Hash the payload bytes and have the provider drop equal hashes",
+        "An event-derived dedupe key checked against a recent-delivery store before send"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should per-user notification frequency capping be implemented?",
+      "options": [
+        "Through the provider's built-in API quotas applied at the sending account level",
+        "In the client app, by hiding alerts beyond a daily threshold",
+        "Per-user caps in the pipeline, with overrides for critical classes",
+        "By slowing overall queue consumption whenever volume spikes"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "During a large marketing blast, how do you keep OTP delivery latency low?",
+      "options": [
+        "Separate priority queues so transactional sends never wait behind bulk campaigns",
+        "Send OTPs exclusively over SMS, which delivers faster than push",
+        "Temporarily increase worker count across the whole pipeline",
+        "Tag OTP messages with a higher-priority collapse key"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your email provider reports a hard bounce for an address. What is the correct handling?",
+      "options": [
+        "Schedule weekly retries with backoff in case the mailbox comes back online",
+        "Move the user to a different email provider and resend",
+        "Ignore it, since bounce management is provider-internal",
+        "Add the address to a suppression list to protect sender reputation"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Where should message templates and localization be applied?",
+      "options": [
+        "In each producing service, embedding final text into the event",
+        "In the notification service at send time, using the user's locale and channel template",
+        "On the device, which ships with every template preinstalled",
+        "At the provider, which localizes payloads automatically"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should a broadcast notification to 50 million users be dispatched?",
+      "options": [
+        "One multicast API call carrying all fifty million device tokens",
+        "A synchronous loop inside the API request that triggered the broadcast",
+        "A batch job streams user segments into queues with rate control against provider limits",
+        "Devices hold persistent server connections and receive one broadcast frame"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A push provider degrades and aggressive retries from your workers deepen the outage. What is the right defense?",
+      "options": [
+        "Reroute all pending traffic into the dead-letter queue until the provider fully recovers",
+        "Raise the per-message retry count so everything eventually lands",
+        "Switch workers to synchronous sends to preserve strict ordering",
+        "Backoff with jitter plus a circuit breaker that pauses sends to the sick provider"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "After a long outage you replay the dead-letter queue. What risk must be handled first?",
+      "options": [
+        "Replayed messages may be stale; enforce per-message TTLs and drop expired ones",
+        "Replay reorders the queues; re-sort every message by its original enqueue timestamp",
+        "Replay double-counts delivery analytics; recompute metrics afterward",
+        "Replay may overload the DLQ itself; shard it before starting"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A user reinstalls the app, and pushes sent to the old token silently vanish. What practice prevents this?",
+      "options": [
+        "Nothing is needed, since tokens never change for a given device",
+        "Re-register on each app start and retire older tokens recorded for that device",
+        "Providers automatically forward old-token sends to the new install",
+        "Encrypt device tokens so that stale copies fail decryption and get purged automatically"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A notification pipeline advertises exactly-once delivery to devices. Why is that claim unsound?",
+      "options": [
+        "Queues cannot persist messages durably enough to support exactly-once",
+        "Device tokens rotate too frequently for acknowledgments to bind",
+        "End-to-end acks across providers and devices are not transactional, so at-least-once plus dedupe is the practical bound",
+        "Exactly-once requires synchronized clocks, which mobile devices lack"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

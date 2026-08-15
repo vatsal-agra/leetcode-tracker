@@ -1,0 +1,225 @@
+{
+  "topic": "Pagination & cursors",
+  "questions": [
+    {
+      "q": "Why does OFFSET-based pagination get slower as the offset grows?",
+      "options": [
+        "Later pages are stored on slower disk segments than earlier pages",
+        "Each page request must reopen and re-authenticate the database connection",
+        "The engine scans and discards every row before the requested offset",
+        "Deep pages bypass the buffer pool, forcing reads straight from disk"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does keyset pagination fetch the next page?",
+      "options": [
+        "Filter rows beyond the last seen sort-key value, then apply a limit",
+        "Skip a row count computed from the page number, then apply a limit",
+        "Look up precomputed page boundaries stored in a separate mapping table",
+        "Re-run the full query and slice the desired page in application code"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why should a keyset-paginated query sort on a unique column or add a tiebreaker?",
+      "options": [
+        "Unique columns compress better, which keeps encoded cursor payloads small",
+        "The optimizer refuses to use indexes on non-unique sorting columns",
+        "Unique sorts let the database parallelize the scan across many workers",
+        "Ties make ordering ambiguous, so rows can repeat or vanish across pages"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A user pages through a feed while new items are inserted. With OFFSET pagination, what happens?",
+      "options": [
+        "The database blocks new inserts until the paginating session closes",
+        "Rows shift across page boundaries, so items repeat or get skipped",
+        "The offset is recalculated automatically to keep pages consistent",
+        "New items are held in a staging area until the session ends"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does an opaque pagination cursor typically encode?",
+      "options": [
+        "A server-side session ID pointing at a stored result snapshot",
+        "The complete SQL text of the query that generated the previous page",
+        "The sort-key values of the last row returned on the previous page",
+        "A checksum of every row already delivered to the client"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do APIs return opaque, encoded cursors instead of raw column values?",
+      "options": [
+        "Encoding compresses the cursor so responses stay under size limits",
+        "It hides internals so clients can't tamper and the format can evolve",
+        "Raw values would leak the database engine's version to attackers",
+        "Opaque cursors are required by the HTTP specification for list endpoints"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which pagination style suits an infinite-scroll feed best?",
+      "options": [
+        "Offset pagination, because page numbers map directly to scroll position",
+        "Random sampling, because feeds don't need a deterministic order",
+        "Server-side HTML pagination with numbered links rendered per request",
+        "Cursor pagination, since it stays fast and stable as items arrive"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What ability do you give up when moving from OFFSET to keyset pagination?",
+      "options": [
+        "Jumping directly to an arbitrary page number",
+        "Sorting results by any indexed column",
+        "Returning consistent page sizes to the client",
+        "Paginating tables larger than available memory"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "An API sorts by created_at only, and many rows share timestamps. Pages sometimes skip rows. What's the fix?",
+      "options": [
+        "Add a unique column like id as a secondary sort key inside the cursor",
+        "Increase the page size so ties always fall inside a single page",
+        "Switch the timestamp column to millisecond precision instead",
+        "Cache each page server-side so repeated requests return identical rows"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A dashboard needs 'go to page 47 of 3,000'. Which approach fits?",
+      "options": [
+        "Keyset pagination with cursors chained from page 1 up to page 47",
+        "Streaming the full result set and discarding rows client-side",
+        "A separate search cluster that materializes each page as a document",
+        "OFFSET pagination, accepting the scan cost for random page access"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your cursor encodes {last_id: 900}. Row 900 is deleted before the next request. What does a well-built keyset query do?",
+      "options": [
+        "Fails with a 410 Gone error because the anchor row can no longer be found",
+        "Works fine, since it filters on values, not the anchor row's existence",
+        "Restarts from the first page to rebuild a consistent snapshot",
+        "Returns an empty page until the client requests a fresh cursor"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Search results use offset pagination over lagging replicas. Users see duplicates across pages. Why?",
+      "options": [
+        "Replicas rebuild their indexes on read, temporarily reordering rows",
+        "The load balancer caches page one and serves it for later offsets",
+        "Different replicas see different data, so offsets point at shifted rows",
+        "Offset queries bypass replicas and race against the primary's writes"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You must paginate a feed ranked by a score that changes between requests. What's a common practical approach?",
+      "options": [
+        "Snapshot the ranking (score and id at request time) into the cursor",
+        "Re-rank on every request and trust offsets to stay aligned",
+        "Lock the scoring job while any user is mid-pagination",
+        "Round all scores to integers so ordering changes less often between pages"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An endpoint returns next_cursor even when no more rows exist, and clients loop forever. What's the standard fix?",
+      "options": [
+        "Return HTTP 204 for every page after the first empty one",
+        "Have clients stop after a fixed maximum number of pages",
+        "Fetch limit+1 rows; only emit a cursor when an extra row exists",
+        "Encode the total row count into every cursor for client-side checks"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Cursors your API issued last month break after you rename an internal sort column. What practice would have prevented client-visible failures?",
+      "options": [
+        "Storing cursors client-side in localStorage with an expiry timestamp",
+        "Publishing the internal cursor format so clients could migrate stored values themselves",
+        "Using shorter cursor strings so old values remained parseable",
+        "Versioning the cursor payload and keeping decode support for old versions"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "For a keyset query filtering (created_at, id) < (?, ?) ordered by both descending, which index serves it best?",
+      "options": [
+        "A hash index on id, since the tiebreaker drives the lookup",
+        "A composite B-tree index on (created_at, id) matching the sort order",
+        "Separate single-column indexes on created_at and on id",
+        "A full-text index covering both columns to allow flexible range matching"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A public API gets scraped via deep pagination, causing heavy load. Which mitigation preserves legitimate use while cutting the scan cost?",
+      "options": [
+        "Cap OFFSET at ten thousand and reject deeper requests with an error",
+        "Move to cursor pagination so every page is an index seek, then rate-limit",
+        "Add a CAPTCHA challenge before serving any page past the first",
+        "Shrink the page size so each individual request scans fewer rows"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Total-count display ('page 3 of 812') on a 500M-row filtered table is timing out. Which tradeoff do large systems usually pick?",
+      "options": [
+        "Precompute exact counts for every possible filter combination nightly",
+        "Run COUNT(*) in a transaction at a higher isolation level for speed",
+        "Shard the table so each shard's count stays under the timeout",
+        "Show an estimate or 'many results' and drop exact deep counts"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You paginate across shards by fanning out and merging. What must each shard request include so the merged stream stays correct?",
+      "options": [
+        "The global cursor's sort-key bound, applied identically on every shard",
+        "The page number, so each shard can skip the same number of rows",
+        "A shard-local row offset tracked separately for every shard",
+        "The merged result of the previous page for deduplication on the shard"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A cursor API must tolerate the client retrying the same page request. Why are cursors naturally better here than offsets under concurrent writes?",
+      "options": [
+        "Cursors take row-level locks on the underlying rows until the client acknowledges",
+        "Offsets are mutable server state, while cursors are stored in the database",
+        "The same cursor re-runs the same bounded query, so retries can't skip rows",
+        "Cursor requests are cached by the CDN, so retries never hit the database"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

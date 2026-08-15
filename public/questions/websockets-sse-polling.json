@@ -1,0 +1,225 @@
+{
+  "topic": "WebSockets / SSE / polling",
+  "questions": [
+    {
+      "q": "What is the defining feature of WebSockets compared with HTTP request/response?",
+      "options": [
+        "Guaranteed reliable message delivery with broker-grade acknowledgement semantics",
+        "Automatic reconnection managed entirely by the browser runtime",
+        "Text-only frames, making binary data transfer impossible",
+        "A persistent bidirectional connection where either side sends anytime"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is Server-Sent Events (SSE)?",
+      "options": [
+        "A UDP-based push channel offering at-most-once delivery",
+        "A long-lived HTTP response streaming server-to-client events",
+        "A bidirectional binary protocol negotiated via HTTP upgrade",
+        "A polling convenience library that ships built into every modern browser"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is short polling's main inefficiency?",
+      "options": [
+        "Many requests return empty because nothing changed between polls",
+        "Each poll permanently invalidates the server's response cache",
+        "Polling requires sticky sessions to be configured on every load balancer",
+        "Responses cannot be compressed when requests are repeated"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does long polling differ from short polling?",
+      "options": [
+        "It opens one connection per event type instead of one connection total",
+        "It polls on a fixed schedule but batches multiple responses together",
+        "The server holds the request open until data arrives or a timeout hits",
+        "It uses HTTP/2 push frames instead of ordinary responses"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which transport is one-directional (server to client) by design?",
+      "options": [
+        "WebSocket connections",
+        "SSE event streams",
+        "WebRTC data channels",
+        "Raw TCP socket links"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which use case most clearly needs WebSockets rather than SSE?",
+      "options": [
+        "A news ticker pushing fresh headlines to readers",
+        "A monitoring dashboard streaming server CPU metrics down to viewers",
+        "A stock price feed updating a user's watch list",
+        "A multiplayer game sending frequent input in both directions"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Built-in reconnection with Last-Event-ID resume is a native feature of which transport?",
+      "options": [
+        "WebSockets, via the browser's socket API",
+        "Short polling, via ETag revalidation",
+        "SSE, via the browser's EventSource API",
+        "gRPC streams, via HTTP/1.1 trailers"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do WebSockets complicate classic HTTP load balancing?",
+      "options": [
+        "Connections are long-lived and stateful, so per-request balancing no longer applies",
+        "Load balancers cannot parse WebSocket URLs because those URLs omit the scheme entirely",
+        "Each frame requires a fresh TLS handshake at the balancer",
+        "WebSockets bypass DNS and connect by raw IP address only"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "10k dashboard viewers need server metrics every 2 seconds, with no client-to-server messages. Best fit?",
+      "options": [
+        "SSE: simple HTTP, native reconnection, one direction matches the need",
+        "WebSockets: bidirectionality is required for acknowledgements",
+        "Short polling every 2 seconds, since it holds far fewer connections than streaming",
+        "WebRTC: peer-to-peer delivery offloads the server entirely"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Long polling runs behind a proxy with a 30-second idle timeout. What is the symptom and fix?",
+      "options": [
+        "Every request is rejected instantly; enabling HTTP/2 bypasses the proxy's idle timeouts",
+        "The proxy caches the empty responses; disable caching for that URL",
+        "Held requests die at 30s; set the poll timeout below the proxy's and reissue",
+        "Clients receive duplicate responses; deduplicate using response ETags"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A server holds one million concurrent WebSocket clients. What is the dominant cost?",
+      "options": [
+        "CPU consumed by continuously re-parsing full HTTP headers on every single frame",
+        "Disk I/O from journaling every frame for later replay",
+        "TLS re-handshakes, which recur every few seconds per client",
+        "Memory and file descriptors for every open connection's state"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You are deploying new code to servers holding WebSocket connections. What must the rollout handle?",
+      "options": [
+        "Nothing special, because load balancers transparently replay in-flight frames after restarts",
+        "Draining: notify clients and let them reconnect elsewhere before instance shutdown",
+        "Doubling connection limits so the old and new versions can share sockets",
+        "Pausing DNS resolution so no new clients arrive during the deploy"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "In a chat app, messages must reach users connected to other server instances. Standard architecture?",
+      "options": [
+        "Instances write messages to shared disk, which peers poll for changes",
+        "Each client opens one socket per online friend for direct delivery",
+        "A gossip protocol running between browsers propagates the messages",
+        "A pub/sub backplane (e.g., Redis) fans messages out across instances"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why can SSE over HTTP/1.1 hit browser connection limits, and what helps?",
+      "options": [
+        "Browsers cap ~6 connections per host; HTTP/2 multiplexing lifts the constraint",
+        "SSE reserves two dedicated sockets per stream; disabling automatic retries frees one of them",
+        "EventSource forbids concurrent streams; web workers can add more",
+        "Proxies collapse SSE streams per origin; unique query strings help"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Mobile clients use WebSockets on flaky networks. Which client-side mechanisms are essential?",
+      "options": [
+        "Immediate zero-delay reconnect loops, minimizing the number of missed frames",
+        "Heartbeats to detect dead links, jittered backoff reconnects, and resume from the last message",
+        "Switching to raw TCP, which the operating system reconnects automatically",
+        "Longer TLS session tickets so that reconnects can skip DNS resolution"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When does short polling actually beat a streaming transport?",
+      "options": [
+        "When updates are frequent and every millisecond of latency matters",
+        "When the server cannot set custom HTTP headers on its responses",
+        "Infrequent updates with cheap cacheable responses and simple infrastructure",
+        "When the clients are mostly desktop browsers rather than mobile"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "500k connections, heartbeats every 30s, pushes are rare. What dominates capacity and how do you scale?",
+      "options": [
+        "Bandwidth dominates; add compression to shrink the heartbeat frames",
+        "CPU dominates; move heartbeat handling onto GPU worker threads",
+        "Idle connection state dominates; scale on memory and FD limits, tune keepalive intervals",
+        "Disk dominates; heartbeats are journaled and need faster SSDs"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A gateway restart triggers 300k simultaneous reconnects. Which mitigations address the thundering herd?",
+      "options": [
+        "Jittered client backoff, staggered drains, and connection-rate limits at the edge",
+        "Reject every reconnect attempt for ten full minutes so the herd disperses naturally",
+        "Switch all clients to short polling permanently after any disconnect",
+        "Increase heartbeat frequency so dead clients are detected faster"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A client disconnects for 20 seconds during a live auction. What design avoids missed bids?",
+      "options": [
+        "Nothing is needed, since TCP itself guarantees delivery of every bid",
+        "Server-side buffering keyed by stream position so clients resume with replay",
+        "Reducing the heartbeat interval to one second so disconnects cannot happen",
+        "Sending each bid twice over two separate sockets for redundancy"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why does SSE often work through strict enterprise middleboxes where WebSockets fail?",
+      "options": [
+        "SSE frames are encrypted at a layer that proxies cannot inspect",
+        "WebSockets always use nonstandard ports that corporate firewalls block by default",
+        "SSE traffic is whitelisted automatically under IANA registry rules",
+        "SSE is plain HTTP, while the WebSocket Upgrade handshake gets dropped by strict intermediaries"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

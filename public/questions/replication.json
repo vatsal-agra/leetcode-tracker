@@ -1,0 +1,225 @@
+{
+  "topic": "Replication",
+  "questions": [
+    {
+      "q": "In leader-follower replication, why do writes go only to the leader?",
+      "options": [
+        "A single write point gives one authoritative ordering of changes",
+        "Followers lack the storage engine needed to persist writes",
+        "Network routes to follower nodes are read-optimized and silently drop writes",
+        "The leader holds the only copy of the table schema"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does synchronous replication guarantee that asynchronous does not?",
+      "options": [
+        "The leader can serve reads without touching its local disk at all",
+        "Followers apply writes in a different order for load balancing",
+        "An acknowledged write already exists on a follower, surviving leader loss",
+        "Replication traffic is encrypted between the leader and followers"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is replication lag?",
+      "options": [
+        "The measured round-trip network latency between any two replicas in the cluster",
+        "The delay between a write on the leader and its visibility on a follower",
+        "The time a follower needs to complete its initial full data copy",
+        "The pause writes experience while a new follower is added"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why add read replicas to a database?",
+      "options": [
+        "They accept writes in parallel, multiplying write throughput",
+        "They validate each transaction a second time, catching corruption",
+        "They shrink the dataset by storing only frequently read rows",
+        "They spread read traffic across copies, offloading the primary"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A follower crashes and restarts. How does it typically catch up?",
+      "options": [
+        "It performs a full copy of the leader's data from scratch every time",
+        "It promotes itself to leader until it has verified its local data",
+        "It requests changes after the last log position it had applied",
+        "It serves stale reads permanently until an operator reseeds it"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is failover in a replicated database?",
+      "options": [
+        "Promoting a follower to leader after the current leader becomes unavailable",
+        "Redirecting reads to the leader when followers are overloaded",
+        "Archiving the write-ahead log into cold object storage for later disaster recovery",
+        "Splitting the leader into two nodes to double write capacity"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is asynchronous replication the common default despite its risks?",
+      "options": [
+        "It guarantees zero data loss without any latency penalty on commits",
+        "Asynchronous followers can also accept writes, adding cluster capacity",
+        "It compresses the replication stream better than synchronous modes do",
+        "Writes commit without waiting on followers, keeping latency low and tolerating slow replicas"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In multi-leader replication, when do write conflicts arise?",
+      "options": [
+        "Whenever any two writes occur anywhere in the cluster at the same second",
+        "When the same record is modified concurrently on different leaders",
+        "Only when a follower applies replicated changes out of order",
+        "When a leader's clock drifts more than the replication interval"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A user posts a comment, refreshes, and the comment is gone, then reappears. Likely cause?",
+      "options": [
+        "The comment table's index was rebuilt between the two page loads",
+        "An anti-spam filter quarantined the comment until moderation finished",
+        "The browser cached the pre-comment page and replayed it on refresh",
+        "Successive reads hit different replicas, some behind the leader"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How does a 'read-your-writes' guarantee typically get implemented?",
+      "options": [
+        "All reads go to the leader for every user at all times",
+        "Route the writer's subsequent reads to the leader or a caught-up replica",
+        "Followers block all reads until every pending write is applied",
+        "Every write is duplicated into a per-user client cache that overrides later reads"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why can promoting an asynchronous follower during failover lose data?",
+      "options": [
+        "Writes the old leader acknowledged may not have reached the promoted follower",
+        "Followers store their data in a lossy columnar format until promotion",
+        "Promotion wipes the follower's replication log to guarantee a clean start",
+        "All clients must reconnect during promotion, and their in-flight reads get counted as lost writes"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Two leaders concurrently update the same profile field. 'Last write wins' resolves it. What is the hidden cost?",
+      "options": [
+        "Both writes are kept forever, doubling storage for that record",
+        "Conflict resolution acquires a global lock, briefly pausing writes across the whole cluster",
+        "One acknowledged write is silently discarded based on unreliable timestamps",
+        "Clocks must be perfectly synchronized or the cluster halts"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What problem does a replication quorum (W + R > N) solve?",
+      "options": [
+        "It compresses replication traffic exchanged between the write and read node sets",
+        "Read and write sets overlap, so a read sees at least one latest copy",
+        "It elects a permanent leader without any coordination service",
+        "It caps replica count so lag can never exceed one write"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "During a network blip, two nodes both believe they are leader ('split brain'). Chief danger?",
+      "options": [
+        "Reads slow down noticeably because clients must query both leaders on every request",
+        "The cluster permanently loses the ability to elect any leader",
+        "Followers refuse to replicate from either node, freezing all traffic",
+        "Both accept conflicting writes, diverging the dataset irrecoverably"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do many systems use semi-synchronous replication (one sync follower, rest async)?",
+      "options": [
+        "It bounds data loss without paying full synchronous latency on every follower",
+        "It doubles the effective read throughput served by the single synchronous follower",
+        "It lets the asynchronous followers skip conflict detection entirely",
+        "It removes the need for failover automation and monitoring"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A monitoring dashboard shows follower lag climbing steadily under normal traffic. Most likely cause?",
+      "options": [
+        "The leader batches its log shipping into hourly windows under the default configuration",
+        "TLS handshakes are being repeated for every replicated row",
+        "The follower applies the single-threaded log slower than the leader generates it",
+        "Lag metrics are cumulative and always climb until a restart"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An RPO of zero (no lost writes) is mandated across two regions 80 ms apart. What is the unavoidable consequence?",
+      "options": [
+        "Reads served from the remote region become inconsistent and must therefore be disabled",
+        "Zero RPO across separated regions is impossible under any replication scheme",
+        "Every commit pays cross-region latency, since writes must be durable in both",
+        "The follower region can never be promoted without operator sign-off"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why is automatic failover dangerous with aggressive (short) failure-detection timeouts?",
+      "options": [
+        "A slow but healthy leader may be demoted, and repeated flapping can lose or fork writes",
+        "Short timeouts overload DNS, since each liveness check requires a fresh lookup",
+        "Followers cannot be promoted more than once per hour safely",
+        "The write-ahead log truncates whenever detection fires, corrupting replicas"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Compared with last-write-wins, what do version vectors add to multi-leader conflict handling?",
+      "options": [
+        "They synchronize physical clocks so timestamps become trustworthy",
+        "They serialize all writes through a single elected arbiter node",
+        "They shrink conflict metadata down to a single integer per record",
+        "They detect concurrent updates so conflicts surface instead of being silently dropped"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You must scale writes for a workload with heavy per-record contention across regions. Why does multi-leader replication help less than hoped?",
+      "options": [
+        "Multi-leader clusters cap out at exactly two regions in practice",
+        "Contended records conflict constantly, and resolution costs erase the write gains",
+        "Each leader must hold the full dataset in memory to accept writes",
+        "Cross-region links cannot carry replication and client traffic together"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

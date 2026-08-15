@@ -1,0 +1,225 @@
+{
+  "topic": "Rate limiter",
+  "questions": [
+    {
+      "q": "Which algorithm allows short bursts of traffic while still enforcing a long-term average request rate?",
+      "options": [
+        "Fixed window counter",
+        "Sliding window log",
+        "Token bucket",
+        "Leaky bucket with a constant drain rate"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main weakness of the fixed window counter algorithm?",
+      "options": [
+        "Bursts straddling a window boundary can pass nearly double the limit",
+        "It requires storing a separate timestamp for every single request in the window",
+        "It cannot be implemented with simple key expiry in Redis",
+        "It drains requests at a constant rate regardless of load"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the defining behavior of the leaky bucket algorithm?",
+      "options": [
+        "It refills credits at a fixed rate and lets accumulated bursts pass through",
+        "It emits requests at a constant rate, smoothing bursts through a queue",
+        "It counts requests in discrete non-overlapping time intervals",
+        "It stores one timestamp per request for exact rolling accounting"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which HTTP status code should a rate limiter return when a client exceeds its quota?",
+      "options": [
+        "403 Forbidden",
+        "503 Service Unavailable",
+        "401 Unauthorized",
+        "429 Too Many Requests"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does the Retry-After response header communicate to a throttled client?",
+      "options": [
+        "How many requests remain available in the current window",
+        "How long the client should wait before sending its next request",
+        "Which rate limit tier applies to the client's API key",
+        "The timestamp when the server last reset all of its rate-limit counters globally"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where is a rate limiter typically placed in a service architecture?",
+      "options": [
+        "In an API gateway or middleware before requests reach application logic",
+        "Inside each database shard, throttling queries after business logic runs",
+        "Only in client SDKs, trusting each caller to self-throttle honestly",
+        "In the TLS termination handshake before any HTTP parsing occurs"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does the sliding window log algorithm store for each client?",
+      "options": [
+        "A single counter that resets at fixed intervals",
+        "A token count plus the time of the last refill",
+        "A timestamp for every request inside the current window",
+        "A weighted average of the request counts from the previous two windows"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does the sliding window counter algorithm approximate a rolling limit cheaply?",
+      "options": [
+        "It keeps per-request timestamps but compresses them into buckets",
+        "It slowly drains a queue of pending requests at a constant rate configured per client key",
+        "It resets its counter early whenever traffic briefly drops to zero",
+        "It blends the previous window's count, weighted by overlap, with the current count"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Each API node keeps rate-limit counters in local memory behind a round-robin load balancer. What is the consequence?",
+      "options": [
+        "The effective global limit becomes roughly N times the intended limit across N nodes",
+        "Requests get rejected roughly N times more often than the configured rate-limit policy intends",
+        "Counting stays accurate because round-robin spreads each client's load evenly",
+        "Latency rises sharply because nodes must synchronize on every request"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why implement check-and-increment as a Lua script in Redis rather than separate commands?",
+      "options": [
+        "Lua bytecode executes measurably faster than native Redis commands",
+        "The script runs atomically, preventing races between concurrent check-and-increment operations",
+        "Lua lets counters shard themselves across cluster slots automatically",
+        "Redis persists Lua results to disk so counters survive restarts"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A team implements the limit check as a GET followed by a separate INCR call. Under high concurrency, what happens?",
+      "options": [
+        "Redis pipelines the two calls together so no race can occur",
+        "The second call fails because Redis locks the key after a read",
+        "Requests serialize on the key, doubling latency but keeping the count strictly correct",
+        "Concurrent clients can both read a stale count and slip past the limit"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A rate limiter's Redis backend goes down and the limiter is configured to fail open. What results?",
+      "options": [
+        "All requests are rejected until the Redis backend fully recovers",
+        "Requests queue inside the limiter until counters become reachable again",
+        "All traffic passes unthrottled, preserving availability but losing overload protection",
+        "The limiter falls back to exact sliding-window logs kept locally"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "For a login endpoint, should the rate limiter fail open or fail closed when its backing store is unreachable?",
+      "options": [
+        "Fail closed, since unlimited attempts would enable credential-stuffing attacks",
+        "Fail open, since login availability always outweighs any abuse risk",
+        "Fail open, because authentication servers already throttle failed attempts themselves downstream",
+        "Neither one; disable login rate limits and rely entirely on CAPTCHAs"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An API sees abuse from many accounts behind one corporate NAT. What would limiting by IP address alone do?",
+      "options": [
+        "Have no effect, because NAT rewrites source ports rather than addresses",
+        "Stop the abusive accounts precisely with no collateral impact on anyone",
+        "Only work if the limiter is deployed at the CDN edge locations",
+        "Punish legitimate users who share that IP along with the abusers"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A token bucket has capacity 100 and refills at 10 tokens per second. What traffic does it permit?",
+      "options": [
+        "Bursts of at most 10 requests at a time, with a sustained rate of 100 per second",
+        "Bursts up to 100 requests at once, with a sustained rate of 10 per second",
+        "Exactly 100 requests per second at all times regardless of history",
+        "Up to 110 requests every second until the bucket fully empties"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A service wants approximately global rate limiting while adding minimal latency to each request. What is the best approach?",
+      "options": [
+        "Run synchronous consensus through a Raft quorum on every request",
+        "Guard a single SQL counter row with SELECT FOR UPDATE per request",
+        "Keep local counters and sync deltas to a shared store periodically, accepting small overshoot",
+        "Fan out each request to every peer node and wait for agreement"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When does the sliding window counter's weighted estimate misjudge traffic the most?",
+      "options": [
+        "When traffic is perfectly uniform across both measured windows",
+        "When the window length is configured much larger than one second",
+        "When the counters live in Redis rather than in local node memory",
+        "When previous-window requests clustered near one edge, breaking the uniformity assumption"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why can a multi-key rate-limiting Lua script fail when moved from a single Redis node to Redis Cluster?",
+      "options": [
+        "Its keys can hash to different slots, and scripts require all keys in one slot",
+        "Cluster mode disables Lua scripting entirely for consistency reasons",
+        "Scripts cannot run on replicas, and cluster mode always routes reads to replicas",
+        "EVAL loses its atomicity guarantee in cluster mode, reintroducing races"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why is a sliding window log prohibitively expensive at 10 million clients sending 100 requests per minute each?",
+      "options": [
+        "Each lookup costs O(n log n) time, saturating CPU long before memory matters",
+        "It keeps around a billion timestamps in memory, versus one or two counters per client",
+        "Redis caps sorted sets at one million entries per key, forcing key splitting",
+        "The timestamps must be replicated synchronously to every node in the cluster"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Thousands of throttled clients receive 429 responses carrying identical Retry-After values. What failure follows, and what is the standard fix?",
+      "options": [
+        "Retries interleave naturally over time, so no fix is actually needed",
+        "Connections stay pinned open awaiting retry, which is fixed by shortening keep-alive timeouts",
+        "A synchronized retry spike arrives all at once; adding jitter to retry delays spreads it",
+        "DNS caches expire simultaneously across clients, fixed by lengthening record TTLs"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

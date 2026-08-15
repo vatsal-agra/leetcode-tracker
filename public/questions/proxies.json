@@ -1,0 +1,225 @@
+{
+  "topic": "Proxies",
+  "questions": [
+    {
+      "q": "Forward vs reverse proxy: on whose behalf does each act?",
+      "options": [
+        "Forward proxies serve servers; reverse proxies serve clients",
+        "Both act for clients; the word reverse refers to response direction",
+        "A forward proxy acts for clients; a reverse proxy fronts servers",
+        "Both act for servers; the word forward refers to request direction"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is TLS termination at a reverse proxy?",
+      "options": [
+        "The proxy decrypts client TLS, then forwards traffic to backends, often re-encrypted",
+        "The proxy blocks all encrypted TLS traffic, permitting only unencrypted plaintext HTTP through",
+        "The proxy rejects expired certificates and drops those client connections",
+        "The proxy tunnels the encrypted bytes untouched through to the backend"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a common use of a forward proxy in a corporate network?",
+      "options": [
+        "Distributing inbound traffic across the company's public web servers",
+        "Terminating TLS for the company's customer-facing website",
+        "Caching database query results for internal applications",
+        "Filtering and logging employees' outbound internet access"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why does a backend behind a reverse proxy see the proxy's IP as the peer address?",
+      "options": [
+        "NAT at the ISP rewrites all source addresses along the path",
+        "The proxy opens its own TCP connection to the backend",
+        "The backend's firewall rewrites source headers on arrival",
+        "HTTP hides client IP addresses by default for privacy"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which header conventionally carries the original client IP through proxies?",
+      "options": [
+        "X-Forwarded-For, or the standardized Forwarded header",
+        "Host, which accumulates a list of every hop the request has traversed",
+        "User-Agent, which each proxy appends its address to",
+        "Content-Location, which records the request's source"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a sidecar proxy?",
+      "options": [
+        "A standby backup proxy instance that activates only when the main gateway has failed entirely",
+        "A browser extension that routes user traffic through a VPN",
+        "A single proxy shared by all services running on one physical rack",
+        "A per-service proxy deployed alongside each instance, handling its network traffic"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which set of responsibilities typically belongs to a reverse proxy?",
+      "options": [
+        "Compiling the application's source code and serving the resulting build artifacts",
+        "Load balancing, TLS termination, caching, and request routing",
+        "Managing database transactions on behalf of the application",
+        "Allocating virtual machine capacity for backend autoscaling"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does it mean for a proxy to be transparent?",
+      "options": [
+        "It only forwards HTTPS traffic and never plain unencrypted HTTP",
+        "Its entire configuration is stored on disk in human-readable plain text files",
+        "Traffic is intercepted without client configuration; clients are unaware",
+        "It is engineered to add zero measurable latency to any request"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "The backend logs every request as coming from the proxy's IP. What restores real client IPs?",
+      "options": [
+        "Enable TCP keepalive on the proxy so the original source address persists downstream",
+        "Have the proxy set X-Forwarded-For and make the backend trust it from that hop",
+        "Switch the proxy to UDP transport, which preserves source addresses",
+        "Run the backend on the same host so that no proxy hop is needed"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why is blindly trusting X-Forwarded-For dangerous?",
+      "options": [
+        "The header is encrypted and cannot be validated by backends",
+        "Intermediate proxies always strip it, so it never reaches the backend application anyway",
+        "Clients can spoof it, defeating IP allowlists and rate limits keyed on it",
+        "It doubles the request size, degrading throughput measurably"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You need L7 routing at the proxy plus encrypted links to backends. What is the standard setup?",
+      "options": [
+        "Terminate TLS at the edge, then re-encrypt proxy-to-backend (or mTLS via a mesh)",
+        "Use full end-to-end TLS passthrough so the proxy never decrypts any client traffic at any point",
+        "Encrypt only the requests carrying cookies or authorization headers",
+        "Use IPsec tunnels between users and backends, skipping the proxy"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Service mesh sidecars (like Envoy) add what capability, at what cost?",
+      "options": [
+        "Kernel-bypass networking for every service, at the cost of installing custom NIC hardware",
+        "Automatic schema validation for APIs, at the cost of slower deploys",
+        "Free horizontal scaling of services, at the cost of vendor lock-in",
+        "Uniform mTLS, retries, and telemetry, at the cost of extra hops and resource overhead"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A reverse proxy buffers slow client uploads before forwarding them. What does this protect against?",
+      "options": [
+        "Cross-site scripting payloads embedded in multipart uploads",
+        "DNS rebinding attacks targeting internal backend services on private networks",
+        "Backend workers being tied up by slow clients (slowloris-style exhaustion)",
+        "TLS downgrade attacks against resumed client sessions"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does a backend behind a TLS-terminating proxy need X-Forwarded-Proto?",
+      "options": [
+        "To know the original scheme (https) for redirects and secure cookies despite plain HTTP internally",
+        "To choose a response compression codec that matches the client's originally negotiated TLS version",
+        "To reject any request that arrived over IPv6 at the edge",
+        "To measure the proxy's added latency on each request hop"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why must proxies strip hop-by-hop headers (those listed in Connection)?",
+      "options": [
+        "They contain credentials that must never leave the first hop",
+        "They are compressed differently and would corrupt the body length",
+        "Keeping them doubles the total header size at every successive hop",
+        "They describe one connection only; forwarding them can confuse downstream behavior"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A reverse proxy's health check marks a backend unhealthy. What should the proxy do?",
+      "options": [
+        "Return 500 for the share of traffic that backend would have served",
+        "Stop routing to it and redistribute traffic until its checks pass again",
+        "Restart the backend process over SSH automatically",
+        "Cache the backend's last responses and serve them indefinitely"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A proxy keeps a keepalive pool of 100 connections; the backend's concurrency limit is 80. What happens under burst?",
+      "options": [
+        "The pool renegotiates a fresh TLS handshake per request, tripling CPU usage at the edge",
+        "Backends silently drop the keepalive connections, causing DNS storms",
+        "The proxy dedupes concurrent identical requests, corrupting responses",
+        "Excess in-flight requests exceed the backend limit, causing queuing or 503s"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A layer-4 proxy forwards raw TCP, losing client IPs. How is client identity commonly preserved?",
+      "options": [
+        "By embedding the client IP into the TCP sequence numbers",
+        "PROXY protocol: a preamble carrying original addresses, understood by the backend",
+        "By reusing the client's ephemeral port on the backend connection",
+        "By GRE-tunneling every single flow so the original headers stay intact end to end"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A shared proxy fleet fronts 200 services; one bad rewrite rule loops requests back to the proxy. Blast radius and guard?",
+      "options": [
+        "Only that one service breaks; loops are confined by per-service TLS certificates",
+        "Nothing breaks; proxies detect forwarding loops via TCP TTL automatically",
+        "The whole fleet can saturate; guard with loop-detection headers (Via) and hop limits",
+        "Only DNS suffers; the correct fix is lowering record TTLs during incidents"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "What is the realistic cost of running mTLS everywhere via sidecar proxies?",
+      "options": [
+        "Extra CPU for crypto, added per-hop latency, and cert-rotation operational burden",
+        "No measurable cost, since modern NICs offload all TLS work in hardware",
+        "Purely a memory cost: every sidecar must hold the complete mesh topology in RAM",
+        "Doubled bandwidth usage, because mTLS encrypts each packet twice"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    }
+  ]
+}

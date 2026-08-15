@@ -1,0 +1,225 @@
+{
+  "topic": "Time-series & high-write workloads",
+  "questions": [
+    {
+      "q": "Why do LSM-tree storage engines handle heavy write loads well?",
+      "options": [
+        "Writes go to memory and an append-only log, deferring sorted-file merges",
+        "They update rows in place, avoiding any write amplification",
+        "They automatically shard every incoming write across all disks in the machine",
+        "They skip the write-ahead log, halving the I/O per insert"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Compared with LSM trees, what is a B-tree engine's typical strength?",
+      "options": [
+        "Much faster sustained ingestion of random writes at very high data volumes",
+        "Lower disk usage because pages never fragment",
+        "Efficient point reads and range scans without merging multiple files",
+        "No need for background maintenance processes"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is downsampling in a time-series database?",
+      "options": [
+        "Dropping every record older than the retention window immediately",
+        "Replacing old raw points with lower-resolution aggregates like 5-minute rollups",
+        "Sampling a fraction of incoming writes to reduce the ingest load",
+        "Compressing timestamps by storing deltas instead of absolutes"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a retention policy in a time-series store control?",
+      "options": [
+        "Which users may query each measurement and tag",
+        "How database replicas resynchronize after a temporary network partition",
+        "The maximum cardinality allowed per tag key",
+        "How long data is kept before automatic expiry or deletion"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In time-series data models, what is 'tag cardinality'?",
+      "options": [
+        "The number of data points stored per series each second",
+        "The number of distinct values a tag key can take across series",
+        "The maximum count of tag keys permitted on any single measurement",
+        "The ratio of tags to fields in each written point"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why are time-series writes considered append-friendly?",
+      "options": [
+        "Points are keyed randomly, spreading writes evenly across pages",
+        "Old points are rewritten each time a newer point arrives",
+        "Each incoming write updates an aggregate row in place",
+        "New points mostly carry recent timestamps, extending the series' end"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a common first-line technique to survive write spikes to a time-series store?",
+      "options": [
+        "Synchronous writes straight to the storage nodes for durability",
+        "Read replicas that absorb the extra write traffic",
+        "Buffering through a message queue that smooths bursts",
+        "Doubling the retention period so data spreads over more disk"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which compression trick exploits the shape of typical metric data?",
+      "options": [
+        "Delta-of-delta timestamps and XOR-encoded float values",
+        "Dictionary-encoding each measurement name per data point",
+        "Encrypting repeated values so they deduplicate in storage",
+        "Row-level gzip applied independently to every point"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Ingest slows and read latency spikes while background disk I/O is saturated on an LSM store. What is the likely cause?",
+      "options": [
+        "The WAL is replaying because a replica restarted",
+        "B-tree page splits are cascading through the index",
+        "Compaction is falling behind, piling up SSTables and read amplification",
+        "The block cache keeps evicting hot pages because of large scans"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You add request_id as a tag on every metric point. Weeks later the TSDB's memory explodes. Why?",
+      "options": [
+        "Each unique tag value creates a new series, and series indexes live in memory",
+        "Tag values are stored uncompressed on disk, roughly doubling the footprint of every point",
+        "request_id values collide across shards, forcing constant rebalancing",
+        "High-frequency writes bypass the buffer and fragment the WAL"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Partitioning a metrics table by metric_name sends 40% of traffic to one node. Which repartitioning usually fixes this?",
+      "options": [
+        "Partition by ingestion server hostname instead of the metric",
+        "Partition by metric_name plus a random suffix on every write",
+        "Move the hot metric to its own dedicated cluster permanently",
+        "Partition by a composite of series key and time bucket"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Queries for 'last 5 minutes' dashboards are fast, but 90-day trend queries crush the cluster. Which design addresses the trend queries?",
+      "options": [
+        "Increase scrape frequency so trends need fewer points",
+        "Precomputed rollups at hourly resolution queried instead of raw data",
+        "A much larger block cache dedicated to holding raw historical blocks",
+        "Query-time sampling that reads every tenth raw point"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does time-based partitioning (one partition per day) make retention cheap?",
+      "options": [
+        "Old rows compress better once the partition is a day old",
+        "Queries never touch old partitions, so deletes are invisible",
+        "Each daily partition maintains its own write-ahead log that expires automatically",
+        "Expiry becomes dropping whole partitions instead of row-by-row deletes"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A write-heavy IoT platform sees 10x write amplification on a B-tree store. What mostly drives that amplification?",
+      "options": [
+        "Foreign-key checks executed for every single inserted reading",
+        "Random-key inserts dirtying and rewriting many pages plus index updates",
+        "Compaction rewriting SSTables at each level of the tree",
+        "Timestamps stored as strings inflating each row's size"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Dashboard queries using regex over metric names are slow at high series counts. What's the underlying reason?",
+      "options": [
+        "Regex matching must scan the series index rather than seek exact keys",
+        "Regex forces the store to decompress every data block fully",
+        "The query planner serializes all regex queries onto one thread",
+        "Metric names are hashed, so regex requires rebuilding names from hashes"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You must keep raw data 7 days, 1-minute rollups 90 days, hourly rollups 2 years. What implements this cleanly?",
+      "options": [
+        "One table with a TTL column checked by every query",
+        "Client-side filtering that ignores data past each horizon",
+        "Tiered retention policies with continuous or scheduled aggregation jobs",
+        "Nightly exports of old raw data into CSV archives kept on object storage"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An LSM store shows fast writes but p99 reads degrade over weeks. Compaction is keeping up. What subtler cause fits?",
+      "options": [
+        "The WAL has grown past the operating system's page cache size",
+        "Bloom filters and indexes for many levels no longer fit in memory",
+        "Tombstones from TTL deletes are pinned in level zero forever",
+        "Timestamp compression breaks once epochs exceed 32 bits"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Sizing: 200k devices send one 100-byte point every 10 seconds. Roughly what sustained write rate must the cluster absorb?",
+      "options": [
+        "About 20k points/sec, roughly 2 MB/sec before replication",
+        "About 2k points/sec, roughly 200 KB/sec before replication",
+        "About 200k points/sec, roughly 20 MB/sec before replication",
+        "About 1.2M points/sec, roughly 120 MB/sec before replication"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A multi-tenant TSDB lets one tenant register unbounded tag values, degrading everyone. Which control is most effective?",
+      "options": [
+        "Per-tenant rate limits on write requests per second",
+        "Per-tenant disk usage quotas enforced strictly at the storage layer",
+        "Per-tenant series-cardinality limits enforced at ingestion",
+        "Per-tenant query timeouts that kill expensive scans"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Writes arrive mostly in time order, but 2% are days late (device backfill). Why do very late writes hurt LSM/TSDB performance disproportionately?",
+      "options": [
+        "Late points must be encrypted separately from their block",
+        "The WAL must be replayed from the late point's timestamp forward",
+        "Late points force the query planner to disable index usage",
+        "They land in already-compacted or sealed time blocks, forcing rewrites or overlaps"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

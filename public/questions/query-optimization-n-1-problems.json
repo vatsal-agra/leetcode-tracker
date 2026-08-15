@@ -1,0 +1,220 @@
+{
+  "topic": "Query optimization & N+1 problems",
+  "questions": [
+    {
+      "q": "An ORM loads 50 blog posts, then lazily fetches each post's author inside a loop. How many queries typically execute?",
+      "options": ["2", "50", "51", "100"],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which change most directly eliminates an N+1 pattern when loading orders with their customers?",
+      "options": [
+        "Eager-load the association via a join or batched IN query",
+        "Add an index on the customers table primary key column",
+        "Wrap the per-order lookups inside a single database transaction",
+        "Increase the connection pool so the lookups run in parallel"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "EXPLAIN shows a sequential scan on a 50-million-row table for a highly selective WHERE clause. Most likely explanation?",
+      "options": [
+        "The optimizer preferred parallel workers over index access for speed",
+        "No usable index exists on the filtered column",
+        "Row-level locks are forcing the planner to avoid the index",
+        "The filter predicate is being applied after aggregation"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why can SELECT * hurt performance even when the WHERE clause is fully indexed?",
+      "options": [
+        "It disables statistics collection for the optimizer on that table",
+        "It acquires broader read locks than a column list would",
+        "It always bypasses the shared buffer cache on reads",
+        "It drags unneeded columns, blocking index-only scans"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where do the row estimates in an EXPLAIN plan come from?",
+      "options": [
+        "Statistics collected by ANALYZE-style sampling of the table",
+        "A fast count(*) the planner executes before optimization begins",
+        "The row counts observed during the previous execution",
+        "The table's file size divided by the average row width"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "When is one JOIN query clearly better than several separate queries?",
+      "options": [
+        "When the tables live on different physical shards",
+        "When the join would duplicate each parent row thousands of times",
+        "When related rows are needed together on indexed keys",
+        "When the application already caches each row individually"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A composite B-tree index exists on (customer_id, created_at). Which query can use it efficiently?",
+      "options": [
+        "WHERE created_at > now() - interval '7 days'",
+        "WHERE customer_id = 42 AND created_at > '2026-01-01'",
+        "WHERE created_at = '2026-01-01' OR customer_id = 42",
+        "ORDER BY created_at DESC LIMIT 10 with no filter at all"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the standard fix for N+1 queries inside GraphQL field resolvers?",
+      "options": [
+        "Persisted queries compiled ahead of time on the server",
+        "Response caching for the whole query at the CDN edge",
+        "Schema stitching so each service resolves its own fields",
+        "Per-request dataloaders that batch and dedupe key lookups"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A read query got slower right after you added an index it now uses. Most likely cause?",
+      "options": [
+        "Indexes slow all reads once tables pass a certain size threshold",
+        "The planner picked the low-selectivity index over a cheaper scan",
+        "The index doubled the row count the query must visit",
+        "New indexes invalidate the buffer pool until it rewarms fully"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Logs show one query for users, then 200 identical queries differing only by user_id. Best immediate fix?",
+      "options": [
+        "Batch them into one query with WHERE user_id IN (...)",
+        "Add an index on user_id so each individual lookup gets faster",
+        "Move the whole loop into a database stored procedure",
+        "Turn on statement caching so repeats skip the parser"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A join of two large tables shows a nested loop with a sequential scan on the inner side. What should you check first?",
+      "options": [
+        "Whether the outer table needs vacuuming to clear dead tuples",
+        "Whether work_mem is set too high, biasing toward nested loops",
+        "Whether the inner table's join column has a usable index",
+        "Whether the join should become a UNION of two separate scans"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Fetching one post plus its 5,000 comments with a single JOIN mainly risks what, versus two queries?",
+      "options": [
+        "Losing snapshot consistency between the two result sets",
+        "The optimizer refusing index use across the joined tables",
+        "Row locks held on all comments for the query duration",
+        "The post's wide columns transferred 5,000 times over the wire"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "EXPLAIN ANALYZE shows estimated 100 rows but actual 2 million at a filter node. Most productive response?",
+      "options": [
+        "Lower the planner's random_page_cost until the plan changes shape",
+        "Pin the current plan with optimizer hints permanently",
+        "Refresh statistics; add extended statistics for correlated columns",
+        "Partition the table on the filtered column right away"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Eager loading is configured, yet N+1 queries persist in production. Which pattern explains this?",
+      "options": [
+        "The template iterates the preloaded association collection more than once",
+        "Per-item scoped queries that bypass the preloaded association",
+        "The parent rows are iterated twice within one request",
+        "The association is serialized to JSON after being loaded"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "95% of rows have status 'active'. Why does the planner skip the status index for WHERE status = 'active'?",
+      "options": [
+        "Reading most rows via the index costs more than scanning",
+        "B-tree indexes store repeated values poorly beyond a threshold",
+        "String equality comparisons cannot use B-tree indexes at all",
+        "The index serves only ORDER BY clauses, never WHERE filters"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Wrapping 200 small SELECTs in one transaction barely helps latency. Why?",
+      "options": [
+        "Transactions disable the buffer cache to guarantee consistency",
+        "The isolation level forces each read to re-check row visibility",
+        "The pool must revalidate the connection for every statement",
+        "Each statement still pays a network round trip plus parse cost"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A request runs 1 parent query plus 100 child queries; each takes 1 ms server-side over a 2 ms round-trip network. Roughly how much latency does collapsing to 2 queries save?",
+      "options": [
+        "About 300 ms saved per request",
+        "About 100 ms saved per request",
+        "About 30 ms saved per request",
+        "Almost nothing, since the database overlaps the requests"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Postgres chooses an index-only scan, yet still reads heap pages. Why?",
+      "options": [
+        "Index-only scans are restricted to primary key indexes only",
+        "Pages not marked all-visible require heap visibility checks",
+        "TOASTed values force heap access for every matched row",
+        "The executor always verifies the first row on the heap"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You replace an N+1 with one SELECT ... WHERE id IN (list of 10,000). What new problem can appear?",
+      "options": [
+        "The database silently truncates IN lists at 1,000 entries",
+        "IN predicates always degrade to full sequential scans",
+        "Plan quality and protocol parameter limits degrade with huge lists",
+        "Result ordering becomes tied to the transaction snapshot instead"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "WHERE lower(email) = $1 ignores the B-tree index on email. Which fix actually works?",
+      "options": [
+        "Rewrite the predicate as email = upper($1) so the index applies",
+        "Replace the B-tree with a hash index on the email column",
+        "CLUSTER the table physically on the existing email index",
+        "Create an expression index on lower(email), or use citext"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

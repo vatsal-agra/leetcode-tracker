@@ -1,0 +1,225 @@
+{
+  "topic": "Ride-sharing",
+  "questions": [
+    {
+      "q": "Why do ride-sharing systems index driver locations with geohash, quadtree, or H3 cells?",
+      "options": [
+        "The cells encrypt exact positions, protecting driver privacy from riders",
+        "Cells turn 2-D proximity search into cheap key lookups of nearby buckets",
+        "Cells compress GPS traces efficiently for long-term archival",
+        "Cells guarantee equal driver counts in every region"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How often do driver apps typically report location, and how?",
+      "options": [
+        "Once per trip, bundled with the final receipt upload",
+        "Continuously, via HTTP long-polling connections initiated by the server",
+        "Every few seconds via lightweight pings over a persistent connection",
+        "Only when the driver manually refreshes the app"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where does the freshest driver-location state usually live?",
+      "options": [
+        "In the relational trips table, updated on every location ping",
+        "In each rider's app, synced peer-to-peer",
+        "In a data warehouse fed by hourly batches",
+        "In an in-memory store keyed by geo cell, with short TTLs"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the basic matching flow after a rider requests a pickup?",
+      "options": [
+        "Query nearby cells for candidate drivers, rank them, offer the job",
+        "Broadcast the pickup request to every online driver in the city at once",
+        "Assign the driver who has been idle longest anywhere",
+        "Queue the request until a driver searches for riders"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is straight-line (haversine) distance a poor ETA basis?",
+      "options": [
+        "GPS coordinates drift too much for reliable distance math",
+        "It ignores the earth's curvature over city scales",
+        "It cannot be computed quickly at matching volume",
+        "Roads, one-ways, and traffic make travel distance and time differ from it"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is surge pricing's primary system purpose?",
+      "options": [
+        "Balance supply and demand by pricing when riders outnumber drivers",
+        "Recover the platform's infrastructure costs during recurring traffic peaks",
+        "Reward loyal riders with predictable peak pricing",
+        "Throttle API traffic during major city events"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Rider apps show the driver's car moving smoothly toward pickup. What powers this?",
+      "options": [
+        "The rider's app extrapolates positions from the trip's original route plan",
+        "A peer-to-peer link established between the two phones",
+        "Server-pushed location updates over a socket, interpolated client-side",
+        "Frequent full-page refreshes against a REST endpoint"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which pair of state machines sits at the heart of the trip domain?",
+      "options": [
+        "Payment ledger states and invoice states",
+        "Driver states (offline/available/on-trip) and trip states (requested to completed)",
+        "Map tile states and route cache states",
+        "Session states for the rider app and push-token states"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A downtown cell floods with drivers; neighbor cells are empty. Fixed search over one cell misses matches. What's the standard fix?",
+      "options": [
+        "Expand the search ring over neighboring cells until enough candidates found",
+        "Shrink the global cell size so that the dense cell splits automatically",
+        "Cache the last successful match radius per rider",
+        "Reassign idle drivers' cells randomly every minute"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Location pings arrive at 1M/sec citywide. Which ingestion design fits?",
+      "options": [
+        "Direct synchronous writes into a relational database per ping",
+        "Batching pings hourly into object storage before matching",
+        "One WebSocket server instance holding all driver state",
+        "A partitioned stream/queue feeding in-memory geo indexes"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Two matchers concurrently offer the same driver to two riders. What prevents a double booking?",
+      "options": [
+        "Riders confirm manually, resolving conflicts by phone",
+        "An atomic claim (lock or compare-and-set) on the driver's state before dispatch",
+        "Randomized offer delays that make collisions unlikely",
+        "Eventually consistent replication that later merges both trip records into one"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Choosing between geohash and H3 for supply indexing, what is H3's noted advantage?",
+      "options": [
+        "H3 cell identifiers are strings, so they sort lexicographically by proximity",
+        "H3 is lossless while geohash truncates coordinates",
+        "Hexagonal cells have more uniform neighbor distances than rectangles",
+        "H3 requires no library support in mobile clients"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "ETA service must respond in ~50ms during matching. Full shortest-path routing is too slow. What's the standard approach?",
+      "options": [
+        "Run Dijkstra on the raw road graph for every request",
+        "Ask drivers to self-report their expected arrival times",
+        "Precomputed hierarchical routing (contraction hierarchies) plus live traffic adjustments",
+        "Straight-line distance divided by the city's average speed"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Surge computation needs demand per zone in near real time. Which pipeline fits?",
+      "options": [
+        "Nightly batch jobs recomputing zone multipliers",
+        "Windowed stream aggregation of requests and supply per cell",
+        "Synchronous counting inside the matching transaction",
+        "Sampling one percent of ride requests and extrapolating on a weekly basis"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A driver's phone loses connectivity mid-trip for 3 minutes. What should the system do?",
+      "options": [
+        "Cancel the trip and refund the rider automatically",
+        "Immediately reassign the trip to the nearest available driver",
+        "Mark the driver banned pending a support review",
+        "Keep trip state server-side, tolerate the gap, reconcile pings on reconnect"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Matching optimizes for nearest driver, but city-wide efficiency sometimes prefers a slightly farther driver. Why?",
+      "options": [
+        "Global assignment can cut total wait: greedy local picks strand later riders",
+        "Farther drivers accept offers at higher rates in all markets",
+        "Nearest-driver assignment logic violates fairness regulations in most large cities",
+        "GPS error makes the nearest driver impossible to determine"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Capacity: 300k concurrent drivers ping every 4 seconds. What ingest rate must location intake sustain?",
+      "options": [
+        "About 1,200 pings per second",
+        "About 7,500 pings per second",
+        "About 300,000 pings per second",
+        "About 75,000 pings per second"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "The geo index node for the airport cell keeps hot-spotting during holiday peaks. Which mitigation preserves query correctness?",
+      "options": [
+        "Split the hot cell to a finer resolution and spread sub-cells across nodes",
+        "Drop every other ping from airport drivers at ingestion",
+        "Route airport queries to a read replica lagging by a minute",
+        "Serve matching during peaks from a cached copy of yesterday's airport driver list"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Trip events (request, accept, pickup, dropoff) feed billing, analytics, and safety, which need them reliably and in order per trip. Which backbone fits?",
+      "options": [
+        "Fire-and-forget UDP multicast to all consumer groups",
+        "Direct synchronous REST calls from the trip service to every consumer",
+        "A partitioned event log keyed by trip ID with consumer offsets",
+        "A shared table each consumer polls and deletes rows from"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "During a citywide outage of the matching service, which degradation preserves the most business value?",
+      "options": [
+        "Reject all new ride requests instantly so riders switch to competitors' apps",
+        "Queue requests with honest wait estimates and match when capacity returns",
+        "Silently accept requests and match them in random order later",
+        "Fail over matching into the rider mobile apps via peer discovery"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+{
+  "topic": "Web crawler",
+  "questions": [
+    {
+      "q": "What is the URL frontier in a web crawler?",
+      "options": [
+        "The set of pages that have already been fetched and parsed",
+        "The queue of discovered URLs awaiting fetch, with priority and politeness scheduling",
+        "The index mapping content hashes back to their source URLs",
+        "The cache of hostnames the crawler has already resolved via DNS"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a site's robots.txt file communicate to a crawler?",
+      "options": [
+        "A complete listing of every URL available on the site",
+        "API credentials the crawler must present to fetch pages",
+        "The cache TTLs that proxies should apply to the site's pages",
+        "Which paths a given crawler user-agent may or may not fetch"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does politeness mean in crawler design?",
+      "options": [
+        "Capping request rate per host so the crawler doesn't overwhelm servers",
+        "Honoring nofollow attributes when extracting outbound links",
+        "Fetching each site's pages only during its off-peak hours",
+        "Identifying the crawler honestly through its User-Agent header on every request"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does a crawler detect that two fetched pages have identical content at scale?",
+      "options": [
+        "Compare the full HTML byte-by-byte against every previously stored page",
+        "Compare page titles together with their content lengths",
+        "Compute a content hash and check membership in a seen-hash store",
+        "Compare rendered screenshots using perceptual image diffing"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which structure is commonly used for the URL-seen test when memory is constrained?",
+      "options": [
+        "A sorted append-only log scanned linearly on each lookup",
+        "An LRU cache in fetcher memory holding only the most recent million URLs",
+        "A per-host trie storing every previously crawled path",
+        "A Bloom filter, trading small false positives for compact memory"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the standard processing order once a crawler downloads a page?",
+      "options": [
+        "Parse links, fetch them all immediately, deduplicate, then enqueue the survivors",
+        "Fetch, parse and extract links, normalize and dedupe them, then enqueue",
+        "Enqueue raw links, dedupe the frontier, then fetch and parse",
+        "Fetch, enqueue the page itself, parse later, normalize last"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is DNS resolution a notable crawler bottleneck, and what is the common fix?",
+      "options": [
+        "Synchronous lookups per URL stall fetchers; a local DNS cache removes most of them",
+        "Public resolvers rate-limit crawlers after a few thousand queries",
+        "Resolvers return stale IP addresses for frequently updated sites",
+        "Every TCP handshake triggers repeated reverse PTR lookups"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a spider trap?",
+      "options": [
+        "A page that blocks automated crawlers behind a CAPTCHA challenge before serving content",
+        "Malware served specifically to known crawler user agents",
+        "A site generating endless URL variations that can occupy a crawler indefinitely",
+        "A honeypot page that logs crawler IPs so the site can ban them"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does a multi-threaded crawler enforce per-host politeness in its frontier?",
+      "options": [
+        "A global FIFO with random worker pulls spreads hosts out naturally",
+        "Per-host queues, each assigned to one fetcher enforcing a delay between requests",
+        "Workers take an exclusive lock on the entire shared frontier during each page fetch",
+        "URLs are hashed by path so no two workers ever share a page"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should a crawler consult robots.txt efficiently across billions of fetches?",
+      "options": [
+        "Cache it per host with an expiry and check rules before every fetch",
+        "Fetch it once when a host is first seeded and never again",
+        "Check it only for URLs that appear to be behind authentication",
+        "Bake its rules into the frontier at discovery time and trust them forever"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why must URLs be normalized before the URL-seen test runs?",
+      "options": [
+        "Browsers refuse to open URLs that are not in normalized form",
+        "Normalization compresses frontier storage by roughly half",
+        "Hash functions used by the seen test require fixed-length canonical input strings",
+        "Equivalent URL variants would evade the seen test and be fetched repeatedly"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should URLs be partitioned across machines in a distributed crawler?",
+      "options": [
+        "Hash by full URL so the fetch load spreads as evenly as possible across all nodes",
+        "Round-robin each new URL to whichever node is least loaded",
+        "Partition by host so one node owns a site's politeness and robots state",
+        "Broadcast every URL to all nodes and deduplicate afterward"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should a crawler decide when to revisit already-crawled pages?",
+      "options": [
+        "Recrawl the entire corpus on a uniform weekly cycle",
+        "Recrawl only when sitemaps or RSS feeds explicitly announce a content change",
+        "Recrawl in original discovery order, oldest fetch first",
+        "Adapt per-page revisit rates from observed change frequency and importance"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which combination of mechanisms defends a crawler against spider traps?",
+      "options": [
+        "Depth and per-host page budgets plus URL-length caps to bound infinite spaces",
+        "Restricting the crawl to URLs listed in official sitemaps",
+        "Rendering JavaScript on every page to detect dynamic loops",
+        "Limiting the crawl to hosts that serve valid HTTPS certificates signed by trusted CAs"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A URL chain issues 30 consecutive redirects. What should the crawler do?",
+      "options": [
+        "Keep following the chain until a terminal status code arrives",
+        "Retry the original URL from a different crawler node instead",
+        "Stop after a small hop limit and record the URL as failed",
+        "Switch to HEAD requests to resolve the chain more cheaply"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Two pages differ only in navigation boilerplate, so exact hashing misses the duplication. What is the standard fix?",
+      "options": [
+        "Compare the depth and shape of each page's DOM tree",
+        "Locality-sensitive fingerprints like SimHash over shingles to catch near-duplicates",
+        "Strip all HTML tags and compare the remaining byte lengths",
+        "Crawl suspected mirrors from the same node and diff them directly"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "In a crawler's URL-seen Bloom filter, what does a false positive cause?",
+      "options": [
+        "A few never-crawled URLs are wrongly treated as seen and never fetched",
+        "Some URLs get crawled twice, wasting bandwidth on duplicates",
+        "The filter silently drops older entries whenever it becomes fully saturated",
+        "Frontier priority ordering degrades until it becomes random"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A high-priority host has millions of pages but demands a 10-second crawl delay. What follows?",
+      "options": [
+        "Adding more fetcher threads will clear the host's backlog quickly",
+        "Priority queue weighting can override politeness for important hosts",
+        "Throughput on that host is capped by the delay, so its backlog drains slowly no matter the cluster size",
+        "Moving the host's queue to the fastest node restores throughput"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A fetcher node dies while holding thousands of frontier URLs. How does a robust design recover them?",
+      "options": [
+        "The lost URLs get rediscovered organically through other pages' links",
+        "Peer nodes detect the death and immediately rehash all outstanding URLs",
+        "The URL-seen filter is rolled back to the last consistent checkpoint",
+        "Frontier leases expire and the dead node's URLs are reassigned, tolerating occasional refetches"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Headless-browser rendering costs 10-100x more than plain fetching. When is it justified in a crawl?",
+      "options": [
+        "For every page, since modern sites all require JavaScript to render",
+        "Selectively, for valuable pages whose content appears only after client-side rendering",
+        "Never, because the server-sent HTML always contains the real content",
+        "Only for paginated listing pages that hide their content behind infinite scroll widgets"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

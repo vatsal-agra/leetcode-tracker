@@ -1,0 +1,225 @@
+{
+  "topic": "Database indexing",
+  "questions": [
+    {
+      "q": "Why do relational databases favor B-tree indexes over hash indexes for general use?",
+      "options": [
+        "B-trees hash their keys internally, giving strictly faster point lookups",
+        "B-trees fit entirely in memory while hash tables must stay on disk",
+        "B-trees keep keys ordered, supporting range scans and prefix matches",
+        "B-trees never need rebalancing after inserts or deletes"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a database actually do with an index during a point query like WHERE id = 42?",
+      "options": [
+        "Scans the whole index sequentially, which is faster than scanning the table",
+        "Descends the tree to the key, then follows a pointer to the row",
+        "Loads the index into RAM, then binary-searches the raw table file",
+        "Rewrites the query into a join between the index and the table"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Adding an index to a table speeds up certain reads. What is the unavoidable cost?",
+      "options": [
+        "Reads that do not use the index become slower as well",
+        "The table's rows must be physically re-sorted after every single insert",
+        "Storage doubles because the index copies every column",
+        "Every insert, update, and delete must also maintain the index"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which column is the worst candidate for a standalone index?",
+      "options": [
+        "A boolean flag that is true for half the rows",
+        "A unique email address column used for every login lookup",
+        "A timestamp column filtered by date ranges",
+        "A foreign key column used in frequent joins"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A composite index on (last_name, first_name) exists. Which query can use it efficiently?",
+      "options": [
+        "WHERE first_name = 'Ana' alone, since it appears in the index",
+        "WHERE last_name = 'Silva' AND first_name > 'M'",
+        "WHERE first_name = 'Ana' OR last_name = 'Silva'",
+        "WHERE UPPER(last_name) = 'SILVA' with no expression index"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What makes an index 'covering' for a given query?",
+      "options": [
+        "It covers every row of the table, including NULL values in any column",
+        "It is declared UNIQUE, letting the planner stop at the first match",
+        "It is the clustered index, so rows and index live together on disk",
+        "It contains every column the query needs, so the table is never touched"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why does index selectivity matter to the query planner?",
+      "options": [
+        "Low-selectivity indexes return so many rows that a table scan is often cheaper",
+        "Selectivity determines how many levels deep the B-tree is allowed to grow before splitting",
+        "High selectivity forces the planner to use hash joins exclusively",
+        "Selectivity controls the on-disk compression ratio of the index"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In which order do B-tree leaf pages store index entries?",
+      "options": [
+        "Strict insertion order, so recently written rows always land on the rightmost page",
+        "Random order, with a hash directory mapping keys to pages",
+        "Sorted key order, with sibling links enabling in-order range scans",
+        "Physical row order, mirroring the heap file exactly"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why can adding five secondary indexes noticeably slow a write-heavy table?",
+      "options": [
+        "Each write must update every index, multiplying random I/O per row change",
+        "The optimizer must re-plan queries after each write to a secondary index",
+        "Secondary indexes force full table locks during any insert",
+        "Each index doubles the WAL size regardless of columns touched"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A query filters on status ('active' = 95% of rows). The planner ignores your status index. Why is that reasonable?",
+      "options": [
+        "The index is likely corrupt and needs a full REINDEX before the planner trusts it",
+        "Indexes on text columns are unusable without a functional index",
+        "The planner only uses one index per table and picked the primary key",
+        "Fetching 95% of rows via the index costs more than scanning the table"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A query needs columns a, b, and c; you have an index on (a, b). What does adding c as an INCLUDE column achieve?",
+      "options": [
+        "It lets the index enforce a uniqueness constraint spanning all three columns together",
+        "It makes the index covering, eliminating per-row heap or clustered-index lookups",
+        "It reorders the index to (a, b, c), speeding range scans on c",
+        "It compresses the index by deduplicating repeated values of c"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why might a range query on the second column of a composite index (a, b) perform poorly?",
+      "options": [
+        "Composite indexes physically store only the first column's values inside their leaf pages",
+        "Range predicates are illegal on any column after the first",
+        "Without an equality filter on a, matching b values are scattered across the index",
+        "The second column is stored unsorted to save page space"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Bulk-loading 100M rows into a table with six indexes is crawling. Common mitigation?",
+      "options": [
+        "Raise the transaction isolation level so the loader takes fewer row locks overall",
+        "Shrink the B-tree fill factor to zero so pages never split",
+        "Switch the table to a hash index during the load window",
+        "Drop or disable the indexes, load the data, then rebuild them once"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An index on created_at exists, but WHERE DATE(created_at) = '2026-08-16' scans the table. Why?",
+      "options": [
+        "Wrapping the column in a function hides it from the index unless an expression index exists",
+        "DATE() returns a string, and string comparisons cannot use B-trees",
+        "Timestamps are stored as integers, so date filters require a cast scan",
+        "The index only covers rows created after it was built"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What is write amplification in the context of an LSM-tree storage engine?",
+      "options": [
+        "Writes amplify read latency by evicting hot pages out of the shared buffer pool",
+        "The WAL records each write twice, once per replica, doubling disk traffic",
+        "One logical write is rewritten multiple times as compaction merges levels",
+        "Deletes expand into tombstones larger than the original values"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When is a partial (filtered) index the right tool?",
+      "options": [
+        "When the table is small enough that any index fits in a single page",
+        "When queries target a small, well-defined slice, like unshipped orders",
+        "When you need to index every column but storage is limited",
+        "When the optimizer refuses hints and you must force index usage"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A UUIDv4 primary key on a clustered-index engine (InnoDB) causes heavy write degradation at scale. Root cause?",
+      "options": [
+        "UUID comparisons are lexicographic, so each lookup descends twice as many tree levels",
+        "Random key order scatters inserts across pages, causing splits and cache misses",
+        "UUIDs exceed the 8-byte key limit, forcing overflow pages per row",
+        "The engine hashes UUIDs before storing, adding CPU per insert"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Index-only scans sometimes still hit the heap in Postgres. Why?",
+      "options": [
+        "The planner always verifies 10% of rows against the heap for safety",
+        "Covering indexes exclude NULLs, so NULL rows require heap access",
+        "Pages not marked all-visible force heap checks to confirm tuple visibility",
+        "TOASTed column values always live in the heap even when the index covers that column"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You must support queries filtering on any 2 of 8 columns. Indexing every 2-column combination is infeasible. Reasonable approach?",
+      "options": [
+        "Index each column singly and let the planner combine them with bitmap AND",
+        "Create a single eight-column composite index ordered by descending column popularity",
+        "Use a hash index per column pair, since hash indexes are tiny",
+        "Add a trigger that builds temporary indexes per incoming query"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A 500 GB table gets a new index; the build locks writes for hours. What do modern databases offer to avoid this?",
+      "options": [
+        "Building the index purely in memory and persisting it at the next restart",
+        "Indexing a 1% sample of rows and backfilling the remainder lazily on access",
+        "Queueing all writes in the WAL until the build completes, then replaying them",
+        "An online build that tracks concurrent table changes and applies them at the end"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

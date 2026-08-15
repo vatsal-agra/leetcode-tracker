@@ -1,0 +1,225 @@
+{
+  "topic": "Service discovery & API gateway",
+  "questions": [
+    {
+      "q": "In client-side discovery, which component picks the specific instance for a request?",
+      "options": [
+        "A central hardware load balancer in front of the fleet",
+        "The DNS resolver, via round-robin records",
+        "The service registry itself, which proxies and forwards the call onward",
+        "The calling client, using instance data fetched from the registry"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does server-side discovery route a request?",
+      "options": [
+        "The client caches the entire instance list and rotates through it with local logic",
+        "The client calls a router or load balancer that queries the registry and forwards",
+        "The registry pushes each request to a chosen instance",
+        "A sidecar rewrites DNS answers inside the client pod"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do registries require heartbeats or health checks from instances?",
+      "options": [
+        "So dead or unhealthy instances stop receiving traffic promptly",
+        "To measure per-instance latency percentiles for capacity dashboards",
+        "To authenticate services before they join the mesh",
+        "To decide which instance owns each data shard"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which concern belongs in an API gateway rather than inside each microservice?",
+      "options": [
+        "Validating the business rules of an order",
+        "Managing database transaction boundaries for every downstream write",
+        "Edge authentication, rate limiting, and request routing",
+        "Publishing domain events after state changes"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main point of the Backend-for-Frontend (BFF) pattern?",
+      "options": [
+        "Sharing one perfectly generic API across every client type the company supports",
+        "Giving each client type an API shaped to its specific needs",
+        "Caching frontend assets closer to users",
+        "Moving business logic into the CDN edge"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main drawback of plain DNS for service discovery?",
+      "options": [
+        "DNS cannot return more than one address per name",
+        "DNS requires TCP connections for every lookup",
+        "Internal hostnames leak to public resolvers by default",
+        "Cached TTLs delay clients noticing instance changes"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which tool is purpose-built as a service registry with built-in health checking?",
+      "options": [
+        "Kafka",
+        "Redis",
+        "Consul",
+        "Nginx"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In the self-registration pattern, which component writes the instance's address into the registry?",
+      "options": [
+        "The service instance itself, on startup",
+        "The deployment orchestrator's control loop",
+        "The API gateway during its first probe",
+        "A registrar sidecar watching the container runtime for new workloads"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Your single API gateway saturates CPU at peak. Best structural fix?",
+      "options": [
+        "Run several stateless gateway replicas behind a load balancer",
+        "Move authentication down into every backend service",
+        "Pin the heaviest clients to a dedicated gateway using sticky sessions",
+        "Scale the gateway vertically and cap client connections"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Instances sometimes crash without deregistering, and clients hit dead addresses briefly. What bounds this window?",
+      "options": [
+        "Longer DNS TTLs so clients refresh less often",
+        "Client retry loops that keep attempting addresses until a healthy node answers",
+        "Heartbeat leases with TTL expiry evicting silent instances",
+        "Gateway-level caching of successful responses"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Compared with server-side discovery, what does client-side discovery mainly trade?",
+      "options": [
+        "Registry consistency guarantees in exchange for a much simpler gateway tier",
+        "Security controls for raw connection speed",
+        "Fewer moving parts for higher latency",
+        "One less network hop against discovery logic duplicated in every client"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Every instance goes unhealthy simultaneously whenever the shared database blips, causing a full outage. Likely cause?",
+      "options": [
+        "The heartbeat interval is far too long",
+        "Deep health checks include the shared DB, so one blip fails every instance at once",
+        "The registry lost quorum during the blip",
+        "The gateway's health probe timeout is shorter than the database's normal response time"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A service mesh sidecar primarily handles which traffic, versus an API gateway?",
+      "options": [
+        "Client-to-edge traffic entering the platform",
+        "Outbound egress toward third-party internet APIs",
+        "Internal service-to-service (east-west) traffic",
+        "CDN origin-pull requests for static assets"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Where should per-customer API rate limits live so every backend is protected uniformly?",
+      "options": [
+        "At the gateway, before requests fan out to services",
+        "In middleware replicated inside each service so limits sit closest to the work",
+        "In the database as row-level quotas",
+        "In the client SDK's request scheduler"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A mobile app issues six sequential API calls to render one screen over high-latency links. Standard fix?",
+      "options": [
+        "Enable HTTP/2 so all six calls multiplex over a single connection",
+        "A BFF endpoint that aggregates the six calls into one response",
+        "Raise pagination sizes so each call returns more data",
+        "Cache all six responses on the device for reuse"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "During a network partition, what does an AP registry like Eureka prefer to do?",
+      "options": [
+        "Halt all discovery responses to preserve consistency",
+        "Elect a new leader before serving any reads",
+        "Aggressively evict every instance it cannot reach until the partition heals",
+        "Keep serving possibly stale instance lists so discovery still works"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Dozens of teams push routing and transformation logic into one shared gateway. What risk emerges?",
+      "options": [
+        "TLS termination overhead grows quadratically",
+        "The gateway becomes a deploy bottleneck and shared blast radius for every team",
+        "Registry lookups begin timing out under the weight of accumulated configuration",
+        "East-west traffic bypasses the mesh entirely"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Rolling deploys cause brief 502s even though replacement instances pass health checks. What step is likely missing?",
+      "options": [
+        "A startup health gate before new instances join the pool",
+        "A blue-green DNS swap between complete fleets instead of rolling replacement",
+        "Canary analysis on the first replica",
+        "Deregistering old instances and draining in-flight requests before stopping them"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Heartbeats arrive every 30s and eviction requires 3 consecutive misses. Roughly how long can a dead instance keep receiving traffic?",
+      "options": [
+        "About 90 seconds of continued traffic",
+        "About 30 seconds of continued traffic",
+        "About 3 seconds of continued traffic",
+        "Until the next full deploy replaces the registry state"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "The gateway authenticates users, then forwards the user ID in a plain header that services trust. Vulnerability?",
+      "options": [
+        "Header size limits truncate long identifiers",
+        "Tokens replay across concurrent sessions",
+        "Anyone reaching a service directly can forge the header — sign it or isolate the network",
+        "Clock skew between gateway and services eventually invalidates every forwarded claim"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

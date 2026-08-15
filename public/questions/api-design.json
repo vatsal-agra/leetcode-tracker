@@ -1,0 +1,225 @@
+{
+  "topic": "API design",
+  "questions": [
+    {
+      "q": "Which HTTP method is idempotent by contract?",
+      "options": [
+        "POST, because servers deduplicate repeated form submissions automatically",
+        "PATCH, because partial updates always converge to one final state",
+        "PUT, because replaying the same full replacement yields the same state",
+        "CONNECT, because tunnels are established at most one time per client"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A request lacks valid credentials vs a valid user lacking permission. Which codes apply?",
+      "options": [
+        "400 for missing credentials, 401 for missing permission",
+        "401 for missing or invalid credentials, 403 for insufficient permission",
+        "403 for missing credentials, 404 to hide protected resources",
+        "401 for both cases, distinguished only by the response body"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In REST semantics, what should GET requests never do?",
+      "options": [
+        "Return different representations based on Accept headers",
+        "Include query parameters that filter the returned collection",
+        "Return large paginated collections without compression enabled",
+        "Cause observable state changes on the server beyond logs or caching"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main reason to version a public API (e.g., /v2/)?",
+      "options": [
+        "To ship breaking changes while existing clients keep working",
+        "To let the server cache each client's responses separately",
+        "To meet HTTP requirements that URLs must encode a version",
+        "To reduce payload sizes by silently dropping deprecated fields"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is offset pagination's basic mechanism?",
+      "options": [
+        "The server streams the whole collection and clients discard the extras",
+        "Clients pass how many rows to skip and how many rows to return",
+        "The server remembers each client's position in a session store",
+        "Clients pass the ID of the last seen row to anchor the next page"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which is a defining trait of gRPC compared with typical REST/JSON?",
+      "options": [
+        "gRPC responses are human-readable text, easing debugging in browsers",
+        "gRPC requires no schema, while REST mandates an OpenAPI contract",
+        "gRPC runs only over UDP for lower latency than TCP-based REST",
+        "gRPC uses binary protobuf over HTTP/2 with generated client stubs"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why should DELETE be idempotent?",
+      "options": [
+        "Retries after timeouts must converge to the same end state safely",
+        "Servers are required to return 200 on every repeated delete attempt",
+        "Clients are technically unable to send the same request twice",
+        "Proxies automatically replay DELETE requests to improve reliability"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the purpose of a machine-readable error body (e.g., problem+json)?",
+      "options": [
+        "It lets proxies rewrite error responses into redirects automatically",
+        "It replaces HTTP status codes, which clients are meant to ignore",
+        "Clients can branch on stable error codes instead of parsing prose",
+        "It hides stack traces by encrypting diagnostic details for support staff"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A user pages through offset-paginated results while rows are being inserted. What symptom appears?",
+      "options": [
+        "The database locks the table until the client finishes paging",
+        "Rows shift between pages, so items repeat or get skipped",
+        "Offsets beyond 1000 return errors on most SQL databases",
+        "Responses interleave rows from other users' concurrent sessions"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do cursor (keyset) APIs typically not support jumping straight to page N?",
+      "options": [
+        "Cursors encode a position, not an ordinal; reaching page N means walking pages in order",
+        "Cursors expire after one use, so page numbers cannot be revisited later",
+        "Serving page N would require the server to hold a long-lived read transaction open per client",
+        "Keyset queries only support descending sort orders on primary keys"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A client retries POST /payments after a timeout. How does an Idempotency-Key header help?",
+      "options": [
+        "It instructs the gateway to convert the POST into a safe PUT request",
+        "It makes the server reject all duplicate submissions with 400 errors permanently",
+        "The server stores the first result per key and replays it for retries",
+        "It forces the client to wait for a webhook instead of a response"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When is gRPC a poor fit versus REST/JSON?",
+      "options": [
+        "Internal microservice calls that need low latency and typed contracts",
+        "Streaming telemetry between backend services in one data center",
+        "Polyglot service meshes where teams want generated client stubs",
+        "Public browser-facing APIs where plain HTTP and JSON tooling matter"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which of these changes to a stable API is a breaking change?",
+      "options": [
+        "Adding a new optional field to an existing response object",
+        "Adding a new endpoint under the same version prefix",
+        "Documenting an existing but previously undocumented header",
+        "Renaming an existing response field consumed by clients"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What is the semantic difference between PUT and PATCH?",
+      "options": [
+        "PUT replaces the full resource; PATCH applies a partial modification",
+        "PUT creates only; PATCH is the only method allowed to update",
+        "PATCH is idempotent by contract while PUT is explicitly not",
+        "PUT is for JSON bodies while PATCH is reserved for form encoding"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An API returns 200 with an error field in the body on failures. Why is this harmful?",
+      "options": [
+        "Because the HTTP specification strictly forbids returning response bodies for failed requests",
+        "Monitoring, caches, and retry logic keyed on status codes misread failures as successes",
+        "Clients cannot parse JSON bodies once a request has actually failed",
+        "Load balancers drop 200 responses that contain error fields in the body"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What should a well-designed 429 rate-limit response include?",
+      "options": [
+        "A permanent ban notice so abusive clients stop retrying forever",
+        "An alternate mirror URL that clients can hit while throttled",
+        "A Retry-After hint and stable error code so clients back off correctly",
+        "A reduced-quality response body instead of an outright rejection"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A bulk update of 500 items partially succeeds. What is the best response design?",
+      "options": [
+        "Per-item results with stable codes (207-style) so clients retry only failures",
+        "Return 200 whenever any item succeeded, listing the failed IDs inside a response header",
+        "Return 400 for the whole batch whenever any single item fails",
+        "Process asynchronously and always return 202 with no status endpoint"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A REST API fronts a long-running video transcode. What is the standard pattern?",
+      "options": [
+        "Hold the original HTTP connection open until the transcode finishes, however many minutes that takes",
+        "Return 200 immediately and let clients guess when the output is ready",
+        "Require clients to open a WebSocket for every submitted transcode job",
+        "Return 202 with an operation URL clients poll (or a webhook) for completion"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "URL versioning vs header versioning: what is the honest tradeoff?",
+      "options": [
+        "Header versioning breaks HTTP caching entirely and is therefore never used in practice",
+        "URL versioning lets a single client freely mix API versions per request, while header versioning cannot",
+        "URL versions are explicit and cache-friendly but multiply endpoints; header versions keep URLs stable yet are easy to miss",
+        "URL versioning requires a separate DNS zone per version, which header versioning avoids"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Mobile clients on flaky networks call six endpoints to render one screen. What is the best remedy?",
+      "options": [
+        "Raise per-endpoint rate limits so all six calls can complete faster",
+        "Provide an aggregated endpoint (or BFF) returning the screen's data in one round trip",
+        "Migrate all six endpoints to gRPC bidirectional streaming so they can share one TLS session",
+        "Cache each endpoint's response in localStorage for later offline reuse"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

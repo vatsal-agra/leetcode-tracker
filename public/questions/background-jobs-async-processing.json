@@ -1,0 +1,220 @@
+{
+  "topic": "Background jobs & async processing",
+  "questions": [
+    {
+      "q": "Why push work like email sending onto a background queue instead of doing it in the request?",
+      "options": [
+        "Queues guarantee each email is delivered exactly once to recipients",
+        "The request returns quickly while slow, retryable work happens async",
+        "Background workers are exempt from provider rate limits",
+        "SMTP connections require a dedicated long-lived process anyway"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "At-least-once delivery means job handlers must be...",
+      "options": [
+        "idempotent, because the same job can arrive more than once",
+        "acknowledged before any processing work begins",
+        "strictly ordered by their enqueue timestamps",
+        "stateless, holding no data whatsoever between successive executions"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A job fails with a transient network timeout. Standard first response?",
+      "options": [
+        "Move it directly to the dead-letter queue for manual review",
+        "Drop it and rely on the producer to resend eventually",
+        "Halt the entire queue until an operator investigates",
+        "Retry it with exponential backoff and jitter"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A malformed job crashes its worker on every attempt and keeps getting redelivered. This is called...",
+      "options": ["a zombie job", "a tombstone message", "a poison message", "a livelocked consumer"],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why acknowledge a message only after processing finishes?",
+      "options": [
+        "A worker crash mid-job then causes redelivery instead of loss",
+        "It keeps the consumer's committed offset strictly monotonic",
+        "Brokers require late acknowledgments to preserve FIFO ordering",
+        "Late acks reduce network chatter between polling cycles"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a dead-letter queue for?",
+      "options": [
+        "Buffering in-flight messages while the broker restarts",
+        "Holding low-priority jobs until off-peak hours arrive",
+        "Replicating critical jobs across availability zones",
+        "Parking jobs that exhausted retries, for inspection and replay"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why add jitter to retry backoff delays?",
+      "options": [
+        "To randomize job priorities so no single tenant starves",
+        "To keep each retry pinned to its original worker",
+        "To desynchronize retry storms hammering a recovering dependency",
+        "To make retry timestamps unique for distributed tracing"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where should a large video live when you enqueue a transcoding job?",
+      "options": [
+        "Inline in the message body, base64-encoded for transport safety",
+        "In object storage, with the message carrying only a reference",
+        "On the producing server's local disk until a worker connects back",
+        "Split across a numbered sequence of chunked messages"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A service enqueues 'send confirmation' inside a DB transaction that later rolls back, but the message was already published. Fix?",
+      "options": [
+        "Use a transactional outbox so publish happens only after commit",
+        "Rely on the broker to garbage-collect messages for missing orders",
+        "Publish before opening the transaction so ordering is preserved",
+        "Have consumers ignore messages older than the transaction timeout"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "With the outbox pattern, how do events actually reach the broker?",
+      "options": [
+        "A commit hook publishes them synchronously inside the transaction",
+        "The broker polls an HTTP endpoint the application exposes",
+        "A relay (poller or CDC) reads committed outbox rows and publishes them",
+        "Consumers query the outbox table directly instead of subscribing to a broker"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A worker charges a card, then crashes before acking. The message is redelivered. What prevents double billing?",
+      "options": [
+        "The broker suppresses redelivery once side effects are detected",
+        "An idempotency key so the payment provider dedupes the charge",
+        "At-least-once semantics, which only ever duplicate reads, never writes",
+        "The card network's automatic same-amount deduplication window"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Queue depth grows steadily while workers run at 100% utilization. What is the real lever?",
+      "options": [
+        "Increase message TTL so nothing expires while queued",
+        "Switch dequeueing from FIFO to LIFO ordering",
+        "Compress payloads so the backlog drains faster",
+        "Add consumers or cut per-job time; arrivals exceed service rate"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "One tenant enqueues a million jobs, starving everyone on the shared queue. Best structural fix?",
+      "options": [
+        "Raise the global queue size limit substantially",
+        "Sort the whole queue by enqueue timestamp instead of priority",
+        "Per-tenant queues or weighted fair dequeueing across tenants",
+        "Have workers skip any batch larger than a threshold"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "After scheduler failover, two schedulers fire the same nightly job. What prevents double execution?",
+      "options": [
+        "A unique run-key claim (lock) that only one instance can win",
+        "Tight NTP clock synchronization between the scheduler hosts",
+        "Staggering the schedule to a less contended time window",
+        "The queue's FIFO ordering guarantee on message delivery"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which failure should NOT be retried automatically?",
+      "options": [
+        "An HTTP 503 from a downstream dependency",
+        "A network timeout while talking to the database",
+        "A deadlock-victim error returned by the database",
+        "A validation error proving the payload can never succeed"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A job's processing time exceeds the queue's visibility timeout. What happens?",
+      "options": [
+        "The broker deletes the message as expired",
+        "It becomes visible again and another worker may process it concurrently",
+        "The broker keeps extending the timeout automatically until the worker completes",
+        "The ack fails and the job is instantly dead-lettered"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An outbox relay publishes, crashes before marking rows sent, then republishes on restart. Net delivery guarantee?",
+      "options": [
+        "Exactly-once, since the outbox table itself is transactional",
+        "At-most-once, since unsent rows may be skipped on restart",
+        "Per-aggregate ordered delivery with duplicates fully suppressed",
+        "At-least-once; consumers still need idempotent handling"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "100k jobs fail together during a 10-minute dependency outage, all on fixed 30-second retry. What happens at recovery?",
+      "options": [
+        "The backlog drains smoothly since queues absorb bursts by design",
+        "Synchronized retry waves can re-topple the dependency; add jitter and caps",
+        "All 100k jobs dead-letter simultaneously when the outage ends",
+        "Nothing notable; fixed intervals are self-desynchronizing over time"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You need each job's effect applied exactly once end-to-end over an at-least-once queue. What is achievable?",
+      "options": [
+        "Effectively-once via idempotent handlers or dedup keys; transport stays at-least-once",
+        "True exactly-once, if broker acknowledgments are made transactional",
+        "Exactly-once, provided every consumer runs single-threaded",
+        "Exactly-once, whenever FIFO queues with dedup windows are used"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A job writes database state and calls an unrevertible external API. Sound approach?",
+      "options": [
+        "Call the API first so the database only ever reflects reality",
+        "Span both operations in one distributed transaction with the provider",
+        "Commit state first, then call the API idempotently with retries and reconciliation",
+        "Interleave the two and lean on the queue's retry semantics"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

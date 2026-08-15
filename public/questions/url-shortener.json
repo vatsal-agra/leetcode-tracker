@@ -1,0 +1,225 @@
+{
+  "topic": "URL shortener",
+  "questions": [
+    {
+      "q": "Why is base62 commonly used to encode short URL keys?",
+      "options": [
+        "It encrypts the underlying numeric ID so users cannot guess other links",
+        "It is the densest encoding that URLs can legally carry",
+        "It avoids collisions by construction, unlike hashing",
+        "It packs IDs into short strings using only URL-safe alphanumerics"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Roughly how many distinct 7-character base62 codes exist?",
+      "options": [
+        "About 62 times 7, on the order of hundreds",
+        "62^7, on the order of trillions",
+        "7^62, an astronomically larger number",
+        "2^7, exactly 128 possible codes"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the core read-path flow when a user hits a short link?",
+      "options": [
+        "Recompute a hash of the short code to mathematically derive the original URL",
+        "Query the analytics store, then reconstruct the target from logs",
+        "Look up the code in a key-value store and issue an HTTP redirect",
+        "Proxy the target page's content through the shortener's servers"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is a URL shortener's workload described as read-heavy?",
+      "options": [
+        "Each link is created once but may be clicked thousands of times",
+        "Redirect responses are larger than link-creation requests",
+        "Analytics writes are batched, leaving reads as the only online path",
+        "Browsers prefetch every short link before users click it"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which storage model fits the core mapping of a URL shortener?",
+      "options": [
+        "A graph database relating codes to users to campaigns",
+        "A document store holding one JSON blob per customer",
+        "A key-value store mapping short code to long URL",
+        "A columnar warehouse partitioned by creation date"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A 301 redirect differs from a 302 mainly in that browsers will:",
+      "options": [
+        "Cache the 301 and often skip contacting the shortener next time",
+        "Display an interstitial warning page before following any 301 redirect",
+        "Refuse to follow 301s across different domains",
+        "Retry a 301 with POST if the first request used GET"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why does hashing the long URL (MD5, then truncating) require collision handling?",
+      "options": [
+        "Hash outputs vary between servers, so codes are irreproducible",
+        "MD5 is slow enough to bottleneck the write path at scale",
+        "Truncation makes codes case-sensitive, which URLs forbid",
+        "Different URLs can truncate to the same short code"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the simplest collision-free key generation scheme?",
+      "options": [
+        "Hash the URL and probe until an unused code is found",
+        "Encode a globally unique auto-incrementing ID in base62",
+        "Generate random codes without checking the database",
+        "Derive the code from the request's timestamp in milliseconds"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "You want click analytics per link but chose 301 redirects. What's the standard resolution?",
+      "options": [
+        "Parse browser cache logs shipped nightly by a client-side script",
+        "Use 302/307 so each click reaches the server, trading redirect caching away",
+        "Keep 301 but ask CDNs to forward their access logs weekly",
+        "Embed a tracking pixel into every destination page at the exact moment of redirect"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A single-range auto-increment counter becomes a write bottleneck and single point of failure. What's the common fix?",
+      "options": [
+        "Locking the counter row in a serializable transaction per write",
+        "Switching to UUIDv4 codes truncated to seven characters",
+        "A ticket/segment service that leases ID ranges to app servers",
+        "Hashing timestamps with server IDs to avoid coordination"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Redirect p99 latency must stay near 20ms globally. Which architecture serves that best?",
+      "options": [
+        "Cache hot mappings at edge locations or CDN with the store as origin",
+        "One strongly consistent primary region with very fast SSDs",
+        "Client-side resolution using a downloaded mapping bundle",
+        "Synchronous multi-region writes so all replicas stay identical"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Users can pick custom aliases. Two requests race for 'summer-sale'. What prevents both from succeeding?",
+      "options": [
+        "Optimistic retries that regenerate a random alias for the loser",
+        "Application-level check-then-insert performed inside a cache",
+        "Sharding aliases so racing requests land on different nodes",
+        "A unique constraint or atomic conditional insert in the store"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Deleting or expiring short links complicates one design choice above others. Which one?",
+      "options": [
+        "301 permanent redirects already cached by browsers and CDNs",
+        "Base62 encoding, since its alphabet cannot represent expiry timestamps",
+        "Key-value storage, which lacks any delete operation",
+        "Read replicas, which never receive tombstone records"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A celebrity tweets one short link; traffic spikes 10,000x on that key. Which layer absorbs this best?",
+      "options": [
+        "The primary database, scaled vertically for the event",
+        "A queue that buffers redirects until load subsides",
+        "Consistent hashing, which spreads a single key across many storage nodes",
+        "An in-memory cache layer (and CDN) serving that hot mapping"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Rate limiting link creation matters most to prevent what?",
+      "options": [
+        "Redirect latency spikes caused by bursts of clicks",
+        "Cache stampedes that occur when many codes expire simultaneously",
+        "Abuse: spam and phishing farms mass-generating disposable links",
+        "Exhaustion of the 62-character encoding alphabet"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do many shorteners pre-generate unused codes into a 'key pool'?",
+      "options": [
+        "Pooling lets codes be encrypted in batches for safety",
+        "Creation just pops a ready key, avoiding hash retries or counter contention",
+        "Unused codes must age before browsers will accept them",
+        "It guarantees codes sort chronologically for analytics"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Estimate storage: 100M new links/year, about 500 bytes per mapping with metadata. Ignoring replication, five years is roughly:",
+      "options": [
+        "2.5 GB, easily fitting in one server's memory",
+        "25 GB, requiring a small dedicated disk array",
+        "250 GB, manageable on a single modern database node",
+        "250 TB, demanding a large distributed storage cluster"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Sequential base62 codes let attackers enumerate links. Which mitigation keeps O(1) generation without a collision-check loop?",
+      "options": [
+        "Apply a keyed permutation/bijection of the counter before encoding",
+        "Truncate a salted SHA-256 hash of the URL and retry whenever collisions occur",
+        "Randomize only the first character of each sequential code",
+        "Encrypt stored URLs so enumeration reveals nothing useful"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You must guarantee a redirect is never served for a link deleted for phishing, while keeping edge caches. Which design meets it?",
+      "options": [
+        "Keeping long TTLs at the edge plus running a weekly purge of flagged codes",
+        "Short TTLs plus active invalidation/purge of flagged codes at the edge",
+        "Serving all flagged domains from a separate analytics cluster",
+        "Moving flagged mappings to a slower storage tier immediately"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Multi-region active-active: a link created in Europe is clicked in Asia 100ms later and must resolve. Which approach handles this with lowest write latency?",
+      "options": [
+        "Synchronous cross-region quorum writes on every single creation",
+        "A single global primary region handling all link creations",
+        "Creating links only in the region where clicks are expected",
+        "Async replication plus fallback read to the origin region on local miss"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    }
+  ]
+}

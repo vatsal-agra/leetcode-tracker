@@ -1,0 +1,225 @@
+{
+  "topic": "Load balancing",
+  "questions": [
+    {
+      "q": "Which capability distinguishes an L7 load balancer from a pure L4 one?",
+      "options": [
+        "Routing requests based on URL path or HTTP headers",
+        "Distributing TCP connections across backend servers",
+        "Terminating client TCP connections",
+        "Running periodic health checks against registered backends"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "When is least-connections a better choice than round-robin?",
+      "options": [
+        "When all requests take an identical, predictable amount of time",
+        "When backends must be chosen by client IP",
+        "When request durations vary widely between requests",
+        "When session stickiness is strictly required"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the purpose of an active health check from a load balancer?",
+      "options": [
+        "To measure client-perceived latency from the edge",
+        "To balance load according to CPU usage",
+        "To encrypt all traffic flowing between the balancer and backends",
+        "To probe backends and stop routing to failing ones"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What problem do sticky sessions solve?",
+      "options": [
+        "Uneven CPU utilization across heterogeneous backend servers",
+        "Keeping a user's requests on the server holding their session state",
+        "Rotating TLS certificates without downtime",
+        "Slow DNS propagation between regions"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the main benefit of consistent hashing for backend selection?",
+      "options": [
+        "Encrypting the hash of every request",
+        "Guaranteeing perfectly equal load distribution across every backend server",
+        "Eliminating the need for health checks",
+        "Minimizing remapping when servers are added or removed"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A balancer that decides using only IP addresses and TCP/UDP ports operates at which layer?",
+      "options": [
+        "Layer 7",
+        "Layer 4",
+        "Layer 2",
+        "Layer 5"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do L4 load balancers generally push more throughput than L7 proxies?",
+      "options": [
+        "They skip parsing application payloads and simply forward packets or connections",
+        "They cache HTTP responses at the edge",
+        "They compress all forwarded traffic",
+        "They use UDP instead of TCP for internal forwarding"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In weighted round-robin, a server weighted 3 versus others at 1 will?",
+      "options": [
+        "Get three retry attempts per request",
+        "Receive one-third of the total traffic",
+        "Receive about three times as many requests",
+        "Be probed three times during every health-check cycle"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A backend passes TCP health checks but its application is deadlocked and returns nothing. What helps?",
+      "options": [
+        "Lower the TCP health-check interval so failures are detected much sooner",
+        "Use HTTP health checks that verify a real application response",
+        "Add several more backends to the pool",
+        "Switch the balancer from L7 to L4 mode"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Sticky sessions are enabled and one backend dies. What typically happens to its users?",
+      "options": [
+        "Nothing happens, because sessions replicate automatically between all backends through the balancer itself",
+        "Their requests hang until the server returns",
+        "The balancer restores their sessions from its own memory",
+        "They get rerouted and lose in-memory session state unless it's stored externally"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Under plain round-robin one backend becomes five times slower but stays healthy. The effect?",
+      "options": [
+        "The balancer automatically detects the slowdown and shifts new traffic away from it immediately",
+        "Requests to it fail fast with 503 responses",
+        "In-flight requests pile up on it while it still receives an equal share",
+        "Health checks eject it within one cycle"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A single load balancer is a single point of failure. The standard remedy?",
+      "options": [
+        "Run redundant balancer pairs with failover via a VIP, DNS, or anycast",
+        "Move the balancing logic into the database tier",
+        "Use one much larger balancer instance",
+        "Have every client library retry failed requests until the single balancer restarts itself"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "All employees behind one corporate NAT hash to the same backend under source-IP affinity. Consequence?",
+      "options": [
+        "Perfect load spread, since IP hashing is uniform",
+        "TLS handshakes fail for those specific clients",
+        "That backend becomes a hot spot carrying the whole office's traffic",
+        "The NAT gateway automatically rewrites their requests to reach other backends instead"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What is a key limitation of DNS-based (GSLB) load balancing?",
+      "options": [
+        "Cached DNS answers make traffic shifts slow and unreliable to propagate",
+        "It cannot return multiple IP addresses",
+        "It only works for UDP-based services",
+        "It requires deep L7 inspection of every single DNS query passing through"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Connection draining (deregistration delay) exists so that?",
+      "options": [
+        "New TLS sessions warm up gradually across the backend pool",
+        "In-flight requests finish before a backend is removed",
+        "Health checks get extra time to pass during deploys",
+        "The balancer can compress idle connections safely"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You need TLS termination, path-based routing to microservices, and gRPC awareness. Which fits?",
+      "options": [
+        "A pure L4 passthrough network load balancer with simple TCP health checks",
+        "Round-robin DNS records pointing at the services",
+        "An IP-hash router operating at L3",
+        "An L7 proxy such as Envoy or an application load balancer"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does 'power of two choices' beat naive random backend assignment?",
+      "options": [
+        "Sampling two servers and picking the less-loaded one sharply cuts imbalance",
+        "Two balancers double the achievable throughput",
+        "It halves the total health-checking overhead",
+        "Two independent hash functions eliminate assignment collisions entirely across the pool"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Backends slow down, health checks fail, the pool shrinks, and survivors get more load — a spiral. Best mitigation?",
+      "options": [
+        "Tighten health-check thresholds even further",
+        "Retry every failed request more aggressively until the backend pool finally stabilizes",
+        "Disable health checking permanently across the fleet",
+        "Use circuit breaking, retry budgets, and gradual ejection instead"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Consistent hashing over three equal servers; one dies. Ideally, what fraction of keys must remap?",
+      "options": [
+        "All of the keys in the ring",
+        "About half of the keys",
+        "Roughly one-third — only the keys the dead server owned",
+        "None; requests simply queue up until the dead server eventually returns"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Long-lived gRPC (HTTP/2) connections through an L4 balancer end up imbalanced. Why?",
+      "options": [
+        "The HTTP/2 spec requires sticky sessions",
+        "The balancer spreads connections, not the many multiplexed requests inside each one",
+        "gRPC clients disable health checking by default",
+        "The balancer downgrades HTTP/2 streams to HTTP/1.1 connections unevenly across backends"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

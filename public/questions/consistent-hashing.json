@@ -1,0 +1,225 @@
+{
+  "topic": "Consistent hashing",
+  "questions": [
+    {
+      "q": "Compared with hash(key) mod N, what problem does consistent hashing primarily solve?",
+      "options": [
+        "It eliminates hash collisions entirely by spreading keys over a wider keyspace",
+        "It guarantees every node stores exactly the same number of keys at all times",
+        "It keeps key remapping small when nodes are added or removed",
+        "It removes the need for replication by storing keys on multiple nodes"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "On a consistent hash ring, which node owns a given key?",
+      "options": [
+        "The first node found moving clockwise from the key's hash position",
+        "The node whose hash value is numerically closest on either side of the key",
+        "The node currently holding the fewest keys, to keep load balanced",
+        "A node chosen by taking the key's hash modulo the current node count"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the primary purpose of virtual nodes (vnodes)?",
+      "options": [
+        "They add redundancy so each key survives the loss of one physical machine",
+        "They smooth load by giving each physical node many ring positions",
+        "They reduce memory usage by letting several machines share one ring position",
+        "They speed up lookups by shrinking the number of ring positions searched"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A node is removed from the ring. Which keys must move?",
+      "options": [
+        "All keys, because the ring's total capacity has changed",
+        "Keys on every node, redistributed evenly to rebalance the whole ring",
+        "Only keys whose hash exactly equals the departed node's position",
+        "Only the departed node's keys, which shift to the next node clockwise"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "With N evenly loaded nodes, roughly what fraction of keys moves when one node leaves?",
+      "options": [
+        "About 1/N of all keys",
+        "About half of all keys",
+        "About (N-1)/N of all keys",
+        "Essentially none of the keys"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which component most commonly uses consistent hashing?",
+      "options": [
+        "A write-ahead log assigning sequence numbers to transactions",
+        "A CPU scheduler assigning threads to cores on one machine",
+        "A distributed cache routing keys across a server fleet",
+        "A compiler allocating registers across basic blocks"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Without virtual nodes and with only a few physical nodes, what tends to go wrong?",
+      "options": [
+        "Hash collisions between node identifiers make key ownership ambiguous on the ring",
+        "Random placement can leave some nodes owning far larger arcs than others",
+        "Lookup time grows linearly because the whole ring must be scanned",
+        "Keys become unreachable in the gaps between distant node positions"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which data structure enables efficient successor lookup on the ring?",
+      "options": [
+        "A bloom filter over the identifiers of nodes currently in the ring",
+        "A queue of nodes ordered by the time each joined the cluster",
+        "A hash table mapping every possible key directly to its owner",
+        "A sorted array of node positions searched with binary search"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "You add one node to a consistent-hashed cache cluster. What happens to hit rate right away?",
+      "options": [
+        "A small dip: only keys in the arcs the new node claims now miss",
+        "A total collapse, since every key now maps to a different server",
+        "No change, because existing entries are copied before the node joins",
+        "A rise, because the extra capacity immediately serves more requests"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your fleet has one server with double the RAM and CPU. How do you give it proportionally more load?",
+      "options": [
+        "Hash its identifier with a faster function so it wins more ties",
+        "Place it at position zero on the ring, which owns the largest arc",
+        "Lower its replication factor so it spends less effort on copies",
+        "Assign it more virtual nodes than the smaller machines"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "In Dynamo-style stores, how is replication layered onto the ring?",
+      "options": [
+        "Each key is written to the N nodes whose identifiers share a hash prefix",
+        "Replicas are chosen randomly per write and recorded in a directory service",
+        "A key lives on its owner plus the next distinct successors clockwise",
+        "The ring is duplicated N times, each copy holding one full replica"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A node fails abruptly (no virtual nodes in use). Where does its load go?",
+      "options": [
+        "It rebalances evenly across every surviving node in the cluster",
+        "Its whole arc shifts onto its immediate clockwise successor",
+        "It moves to whichever node has the most free capacity at that moment",
+        "Its keys stay unavailable until an operator rebuilds the ring"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do virtual nodes make failure recovery smoother?",
+      "options": [
+        "A failed node's load spreads across many successors instead of one neighbor",
+        "Virtual nodes hold complete copies of the data, so nothing ever needs to move at all",
+        "They shrink the keyspace, so there is simply less data to transfer",
+        "They pause the failed node's tokens until it rejoins the ring"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Consistent hashing vs a central placement directory for shards: what is the core tradeoff?",
+      "options": [
+        "A directory cannot support adding new shards without cluster downtime",
+        "Hashing avoids per-key metadata; a directory allows arbitrary placement but must stay available",
+        "A directory is always faster because it avoids computing a hash per request",
+        "Hashing allows fine-grained manual placement while a directory does not"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A cache client library does consistent hashing client-side. What goes wrong during a rolling membership change?",
+      "options": [
+        "Every cache server must fully restart whenever any single client updates its member list",
+        "The hash function's seed must rotate on every membership change",
+        "Ring lookups degrade to O(N) while any two clients disagree",
+        "Clients with stale views route some keys to different servers, causing misses"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Jump consistent hash is a ring alternative. What is its key limitation?",
+      "options": [
+        "It relocates far more keys than a ring does whenever the bucket count changes at all",
+        "Its lookup cost grows linearly with the number of buckets",
+        "It addresses numbered buckets only, so removing an arbitrary node is awkward",
+        "It cannot achieve an even distribution of keys across buckets"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "10 nodes, 100 virtual nodes each; one node dies. Roughly how does load shift?",
+      "options": [
+        "A single clockwise neighbor absorbs the entire share, roughly doubling its load",
+        "Only the two adjacent nodes gain load, each taking about half the arcs",
+        "No survivor gains load because the dead node's virtual nodes stay parked",
+        "Each survivor gains roughly one-ninth more load as the arcs scatter evenly"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You raise vnodes per node from 8 to 512. What is the real tradeoff?",
+      "options": [
+        "Smoother balance, but bigger ring metadata and more fragmented data transfers",
+        "Strictly faster ring lookups, at the price of a noticeably less uniform key distribution",
+        "Lower memory use, but many more keys move on every membership change",
+        "Stronger consistency, but extra coordination required on every write"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A single celebrity key overloads its owner. Why don't more vnodes help, and what does?",
+      "options": [
+        "Vnodes only apply to writes; enabling read-through caching fixes it",
+        "Hashing is deterministic per key; rotating the hash function hourly fixes it",
+        "One key always maps to one owner; replicate or split that hot key instead",
+        "Vnodes fail under high QPS; widening the ring's bit space spreads the key"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Scaling a consistent-hashed cache from 20 to 40 nodes with minimal client-visible misses: best plan?",
+      "options": [
+        "Add all 20 new nodes simultaneously so the ring only has to change a single time",
+        "Add nodes gradually, warming each one's arcs before it serves traffic",
+        "Flush the entire cache first so every node starts from a clean state",
+        "Double every key's TTL so entries survive until the ring stabilizes"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

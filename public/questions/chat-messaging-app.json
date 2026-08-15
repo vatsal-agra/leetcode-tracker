@@ -1,0 +1,225 @@
+{
+  "topic": "Chat / messaging app",
+  "questions": [
+    {
+      "q": "Why are WebSockets preferred over HTTP polling for real-time chat delivery?",
+      "options": [
+        "WebSockets compress message payloads far better than HTTP does",
+        "A persistent duplex connection lets the server push messages instantly",
+        "WebSockets bypass load balancers entirely, reducing network hops",
+        "WebSockets guarantee ordered, exactly-once message delivery at the protocol level with built-in acknowledgments"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In a chat system, what does a delivered receipt actually indicate?",
+      "options": [
+        "The recipient opened the conversation and viewed the message",
+        "The server durably wrote the message to persistent storage",
+        "The sender's device confirmed its upload to the gateway finished",
+        "The message reached the recipient's device but may be unread"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which component tracks which gateway server currently holds each user's live connection?",
+      "options": [
+        "A session registry mapping user IDs to their gateway servers",
+        "The message queue's consumer-group coordinator service",
+        "The CDN's edge routing table for connected regions",
+        "A sticky cookie maintained by the load balancer for each user"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the standard way to order messages within a single conversation?",
+      "options": [
+        "Sort by each sender's device clock timestamp at send time",
+        "Order by the moment of arrival at the recipient's device",
+        "A server-assigned monotonic sequence number per conversation",
+        "A global wall-clock timestamp synchronized across devices via NTP"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How do messages reach a user whose devices are all offline?",
+      "options": [
+        "They are dropped, and the sender must retry manually later",
+        "The gateway holds the socket open until the user returns",
+        "Peers resend them directly once both parties come online together",
+        "The server stores them in the user's inbox and syncs on reconnect"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "With end-to-end encryption enabled, who can read a message's plaintext?",
+      "options": [
+        "The server, briefly, while it routes each message onward",
+        "Only sender and recipient devices holding the session keys",
+        "Any device that successfully authenticates with the user's password",
+        "The push notification provider, so it can render message previews"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What purpose do heartbeats serve on chat gateway connections?",
+      "options": [
+        "Detecting dead or half-open connections and keeping presence accurate",
+        "Batching many small messages together into fewer network frames to reduce per-message TCP overhead",
+        "Re-encrypting the session key on a fixed rotation interval",
+        "Synchronizing client clocks so message timestamps stay comparable"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How is a message delivered to all members of a small group chat?",
+      "options": [
+        "The sender's device opens a direct connection to each member",
+        "Members poll a shared topic for new messages every few seconds",
+        "The server fans out copies to each member's inbox or live connection",
+        "The CDN replicates the message into edge caches in each member's home region for faster reads"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A user runs the app on a phone and a laptop. How should the system deliver an incoming message?",
+      "options": [
+        "Deliver only to whichever device was most recently active",
+        "Fan out to every registered device, each tracking its own sync cursor",
+        "Deliver to one device and let it copy the message to the others",
+        "Queue the message until all of the user's devices are online simultaneously"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "The sender is connected to gateway A and the recipient to gateway B. How does the message travel?",
+      "options": [
+        "Gateway A looks up the recipient's gateway and forwards through the routing layer",
+        "Gateway A broadcasts the message to every gateway in the cluster, and each one filters for local recipients",
+        "The recipient's client periodically polls gateway A for new messages directly",
+        "The load balancer migrates the recipient's socket over to gateway A"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "In a 200-member group, naive per-message read receipts create a problem. What is it, and the usual mitigation?",
+      "options": [
+        "Receipts leak message plaintext, mitigated by hashing each receipt",
+        "Receipts arrive out of order, which is fixed by attaching vector clocks",
+        "Receipts double storage costs, which is fixed by TTL-based deletion",
+        "Receipt volume scales with readers times messages; use per-user last-read cursors instead"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A client's connection drops before it receives a send acknowledgment, so it resends. What prevents a duplicate message?",
+      "options": [
+        "The server compares message text and timestamps to spot repeats",
+        "TCP retransmission and sequence numbers already prevent duplicates end to end at the transport layer",
+        "A client-generated unique message ID lets the server deduplicate resends",
+        "The client waits for the next heartbeat before attempting the resend"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does a mobile chat app still need APNs or FCM push even though it uses WebSockets?",
+      "options": [
+        "Push delivers large media attachments faster than sockets can",
+        "Push encrypts notification payloads, while sockets cannot",
+        "Push costs the server less than maintaining millions of idle sockets",
+        "Mobile OSes suspend background connections, so only platform push can wake the app"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why is a wide-column store like Cassandra a common choice for chat message history?",
+      "options": [
+        "It handles high write volume with conversation-keyed partitions ordered by message ID",
+        "It supports multi-row ACID transactions needed for group conversations",
+        "It offers built-in full-text search across all stored message history",
+        "It stores media blobs inline more efficiently than object storage does"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How should typing indicators be handled compared to regular chat messages?",
+      "options": [
+        "Persist them in the inbox alongside messages for auditability",
+        "Send them over a dedicated TCP connection with automatic retries and exponential backoff",
+        "Treat them as ephemeral fire-and-forget events that may be dropped",
+        "Batch them together with read receipts into the message log"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why should a conversation not be ordered by sender device timestamps?",
+      "options": [
+        "Timestamps consume too much storage on every message row",
+        "Client clocks skew, so a reply can sort before the message it answers",
+        "Timestamps collide whenever two users type at the same moment",
+        "Encrypted payloads hide the timestamps from the ordering service until each device decrypts them"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A channel grows to 500k members and per-member inbox writes per message become untenable. What is the standard remedy?",
+      "options": [
+        "Read from a single shared conversation log on demand instead of writing per-member copies",
+        "Compress each member's inbox copy of the message using delta encoding",
+        "Split the channel into fifty independent subchannels behind one name",
+        "Move the fanout work onto client devices over mesh networking"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "In Signal-style group encryption, why use sender keys instead of pairwise sessions for each message?",
+      "options": [
+        "Sender keys survive device changes without requiring re-registration",
+        "Pairwise sessions leak the full group membership list to the server through their session metadata",
+        "Sender keys avoid encrypting each message separately for every member",
+        "Pairwise sessions are unable to provide any forward secrecy"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A gateway pushes a message to a socket that silently died before its heartbeat timeout fired. What prevents message loss?",
+      "options": [
+        "TCP guarantees delivery to the client once the write syscall succeeds",
+        "The registry always removes dead sockets synchronously with the failure",
+        "The operating system buffers the message until the client reconnects",
+        "The message is persisted first and only marked delivered on client acknowledgment"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A user in 300 groups reconnects after a month offline. How do production systems make this sync tractable?",
+      "options": [
+        "Replay the user's entire event stream from account creation onward",
+        "Sync recent conversation heads first, then lazily page older history per cursor on open",
+        "Reset all conversation cursors and mark the entire backlog as read",
+        "Push the full message backlog through APNs in sequence order"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

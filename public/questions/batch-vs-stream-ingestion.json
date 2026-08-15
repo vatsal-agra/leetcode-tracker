@@ -1,0 +1,225 @@
+{
+  "topic": "Batch vs stream ingestion",
+  "questions": [
+    {
+      "q": "What is the core latency difference between batch and stream ingestion?",
+      "options": [
+        "Batch delivers each individual record faster because it skips per-record scheduling overhead",
+        "Stream processes records as they arrive; batch waits to process accumulated data",
+        "Batch and stream have equal latency once pipelines are warmed up",
+        "Stream latency grows with data volume while batch latency stays constant"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which workload is the classic fit for batch processing?",
+      "options": [
+        "Fraud checks that must block a transaction within milliseconds",
+        "Live dashboards updating as user events arrive",
+        "Alerting on error spikes within seconds of occurrence",
+        "Nightly aggregation of a full day's records into reports"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In stream processing, what problem do watermarks address?",
+      "options": [
+        "Deciding when a window can close despite late or out-of-order events",
+        "Preventing a fast producer from overwhelming a slower downstream consumer",
+        "Encrypting records so downstream consumers can verify integrity",
+        "Assigning each event to a partition based on its key"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does 'event time' mean, as opposed to 'processing time'?",
+      "options": [
+        "The moment the stream processor's window fires for the event",
+        "The wall-clock time when the record is written to the sink",
+        "The time the event actually occurred at its source",
+        "The timestamp the message broker assigns on enqueue"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is throughput per unit of compute typically higher in batch than in streaming?",
+      "options": [
+        "Large sequential reads and amortized setup beat per-event overhead",
+        "Batch jobs run on faster hardware tiers reserved by schedulers",
+        "Streams must encrypt each event, which dominates their CPU cost",
+        "Batch frameworks can skip serialization because data already sits at rest"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is backpressure in a streaming pipeline?",
+      "options": [
+        "Reprocessing old events after a consumer crash wipes its state",
+        "The broker compacting a topic to reclaim disk space",
+        "A signal to slow producers when consumers can't keep up",
+        "Duplicate events created when a producer retries a send"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does 'at-least-once' delivery imply for consumers?",
+      "options": [
+        "Some events may be silently dropped whenever the broker fails over",
+        "Duplicates are possible, so processing should be idempotent",
+        "Each event arrives exactly once but possibly out of order",
+        "Events arrive in strict order but may be batched together"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which component typically decouples event producers from stream consumers?",
+      "options": [
+        "A distributed lock service coordinating writer leases",
+        "A shared relational table polled by every consumer",
+        "An API gateway that routes events to consumer replicas",
+        "A partitioned, replicated log such as Kafka"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A team needs hourly business reports and sub-second anomaly alerts from the same events. What's a sound architecture?",
+      "options": [
+        "One micro-batch job every hour tuned to also emit the alerts",
+        "Pure streaming for both, materializing full reports per event",
+        "Pure batch for both, shrinking the interval to one minute",
+        "A stream path for alerts plus a batch or warehouse path for reports"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your dashboard counts drop briefly, then correct themselves minutes later. Events are arriving late. Which mechanism produces this correction behavior?",
+      "options": [
+        "Watermarks silently discarding every late event as each window closes",
+        "Allowed-lateness updates that re-emit revised window results",
+        "Broker retention deleting and restoring recent segments",
+        "Consumer rebalancing replaying the entire partition"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A consumer crashes after writing results but before committing its offset. On restart, what happens under at-least-once semantics?",
+      "options": [
+        "The broker detects the partial write and rolls the output back",
+        "The event is skipped because the broker saw the delivery attempt",
+        "The event is reprocessed, so the write may happen twice",
+        "The consumer halts until an operator resolves the conflict"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which technique gives effectively-exactly-once results on top of at-least-once delivery?",
+      "options": [
+        "Idempotent writes keyed by a stable event ID at the sink",
+        "Doubling consumer replicas so another instance verifies each write",
+        "Switching the broker over to fire-and-forget publishing",
+        "Compressing events so duplicates collapse into one message"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Reprocessing 90 days of history after a logic bug is trivial in one paradigm and painful in the other. Which statement captures it?",
+      "options": [
+        "Streams replay faster because their events are already ordered",
+        "Batch reprocessing requires replaying the broker log at original speed",
+        "Batch re-runs over stored input easily; streams need replayable retention and state rebuilds",
+        "Neither can reprocess without vendor-specific snapshot tooling"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Event counts differ between your streaming output and a batch recount of the same day. Which is the usual authoritative choice, and why?",
+      "options": [
+        "Batch, because it reads the complete, settled input after late data lands",
+        "Streaming, because its watermarks certify that no late events were ever missed",
+        "Streaming, because broker offsets provide exactly-once accounting",
+        "Batch, because batch frameworks checksum every record they read"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Micro-batching (small periodic batches) primarily trades what for what?",
+      "options": [
+        "Durability for throughput, buffering events in volatile memory",
+        "Some latency for higher throughput and simpler delivery accounting",
+        "Ordering guarantees for lower end-to-end processing cost",
+        "Schema flexibility for compatibility with columnar storage formats"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A streaming job keyed by user_id holds 30 days of per-user state. What is the main operational cost this introduces?",
+      "options": [
+        "The message broker must retain thirty days of every topic in the cluster",
+        "Consumers can no longer scale beyond one instance per topic",
+        "Each event must be re-sorted by key before processing",
+        "Large state must be checkpointed and restored on failure or rescale"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A window closes at watermark, but 0.5% of events arrive after it. The business demands complete daily numbers. Which design is standard?",
+      "options": [
+        "Emit streaming results as provisional and reconcile with a later batch pass",
+        "Set the watermark delay to 24 hours so windows capture everything",
+        "Reject late events at ingestion so totals never change after close",
+        "Store late events in a dead-letter queue reviewed manually each week"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Exactly-once 'end to end' still breaks when your sink is an external email API. Why?",
+      "options": [
+        "Email payloads exceed the maximum transactional message size",
+        "Brokers cannot retain events long enough for email retries",
+        "The send is a non-transactional side effect that can't roll back or dedupe",
+        "Watermarks cannot be computed for events leaving the cluster"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Throughput is fine on average, but one partition lags badly. Keying is by customer_id and one customer dominates traffic. Best fix?",
+      "options": [
+        "Increase partition count so the big customer's data spreads out automatically",
+        "Raise consumer memory so the hot partition buffers more events",
+        "Switch to round-robin keying and drop per-customer ordering everywhere",
+        "Salt the hot key into sub-keys, then re-aggregate downstream"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You can deliver a feature with a 6-hour batch job or a streaming pipeline costing 4x more to run and operate. What should drive the decision?",
+      "options": [
+        "Streaming is the modern default choice, so choosing batch should require justification",
+        "Whether fresher-than-6-hours data changes a real decision or outcome",
+        "Whichever option the team's existing scheduler supports natively",
+        "Batch always wins on cost, so streaming needs executive approval"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

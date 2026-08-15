@@ -1,0 +1,225 @@
+{
+  "topic": "CDN",
+  "questions": [
+    {
+      "q": "What is the primary latency benefit of a CDN?",
+      "options": [
+        "Content is served from edge locations near users, shortening the network path",
+        "Edge servers use faster CPUs than origin servers, speeding response generation",
+        "Requests skip DNS resolution entirely when a CDN sits in front",
+        "TCP is replaced by a proprietary protocol that needs no handshake"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What happens on a CDN cache miss?",
+      "options": [
+        "The edge returns 404 until an operator manually seeds the object",
+        "The user's browser is redirected to fetch the object directly from the origin data center",
+        "The edge fetches it from the origin or a parent tier, serves it, and caches it",
+        "The request is queued at the edge until a scheduled origin sync runs"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does a TTL on a cached object control?",
+      "options": [
+        "How many edge locations are allowed to hold a copy of the object",
+        "How many client requests the edge may serve before it must revalidate each client",
+        "The maximum size of the object the edge is willing to cache",
+        "How long the edge may serve the copy before revalidating or refetching"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is a cache key?",
+      "options": [
+        "The TLS session ticket used to resume connections at the edge",
+        "The set of request attributes (URL, chosen headers) identifying a cached variant",
+        "A signed authorization token proving the client is permitted to read the cached object",
+        "The origin's private identifier for each file on its local disk"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which content is the most natural fit for CDN edge caching?",
+      "options": [
+        "Per-user account dashboards rendered from live database queries",
+        "POST endpoints that create new orders in the checkout flow",
+        "Static assets such as images, scripts, and video segments",
+        "Responses that differ on every request due to random tokens"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does cache invalidation (a purge) actually do?",
+      "options": [
+        "Removes or marks stale copies at edges so the next request refetches from origin",
+        "Deletes the object from the origin server and every backup simultaneously",
+        "Rewrites the object's URL so old links stop resolving at the edge",
+        "Forces every client browser worldwide to clear its local copy of the object immediately"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Cache-Control: public, max-age=86400 tells the CDN what?",
+      "options": [
+        "The object must be revalidated against the origin on every single request it receives",
+        "Shared caches may store the object and serve it for a day without revalidating",
+        "Only the user's private browser cache may store the object for a day",
+        "The object may be cached forever because it is immutable content"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How are users typically routed to a nearby CDN edge?",
+      "options": [
+        "Every edge shares one TCP endpoint and forwards excess users randomly",
+        "The origin measures each user's latency and redirects them with an HTTP 302",
+        "Clients download a list of edges and ping each one before every request",
+        "DNS resolution or anycast steers the client to a close healthy edge"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What problem does an origin shield (parent cache tier) solve?",
+      "options": [
+        "It encrypts origin traffic that edge locations would otherwise send in plaintext",
+        "It load balances user traffic across edge locations during regional failures",
+        "It stores objects too large for edge SSDs on cheaper spinning disks",
+        "It collapses misses from many edges so the origin sees far fewer requests"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You configure the cache key to vary on the entire Cookie header. What is the consequence?",
+      "options": [
+        "Responses get cached once and then served to the wrong logged-in users",
+        "Hit rate collapses because nearly every user produces a distinct variant",
+        "The CDN refuses to cache anything carrying cookies and returns errors",
+        "Cookies get stripped from forwarded requests, silently logging users out"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "How do fingerprinted filenames (app.3f9c.js) interact with CDN caching on deploys?",
+      "options": [
+        "New content gets a new URL, so long TTLs are safe and purges are rarely needed",
+        "Fingerprints force the CDN to revalidate the bundle on every request",
+        "They only work if the TTL is kept shorter than the deploy interval",
+        "They require a global purge on each deploy to avoid serving stale code"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A viral object expires at thousands of edges at once. What protects the origin?",
+      "options": [
+        "Anycast rerouting that spreads the refetches across all origin regions evenly",
+        "Client retry budgets that stop browsers from re-requesting stale objects",
+        "Request coalescing plus stale-while-revalidate so one refetch serves the crowd",
+        "Automatic TTL doubling whenever the origin's error rate starts rising"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why is caching authenticated API responses at the edge risky?",
+      "options": [
+        "A shared cache may serve one user's private data to another without careful keying",
+        "Authenticated responses are always uncacheable at the HTTP protocol level",
+        "Edge caches are technically incapable of storing any response to requests carrying an Authorization header",
+        "Tokens expire mid-TTL, which corrupts the cached response body itself"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Negative caching: why cache 404 responses briefly?",
+      "options": [
+        "To satisfy HTTP specs that require 404s be cached for at least an hour",
+        "So clients stop retrying, because cached 404s disable browser retries",
+        "To keep bots from discovering which URLs actually exist at the origin",
+        "To stop repeated misses for missing objects from hammering the origin"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do HLS/DASH video segments cache so well on CDNs?",
+      "options": [
+        "Video codecs include CDN hints that force every edge to prefetch them",
+        "Players re-request the manifest, which pins all segments into edge memory",
+        "Segments are small immutable files shared by every viewer of that stream",
+        "Segment URLs rotate every few seconds, keeping caches perpetually warm"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You set s-maxage=600 and max-age=60. How do the CDN and browser behave?",
+      "options": [
+        "Both caches use 600 seconds because the larger directive always wins",
+        "The CDN serves it for 600 seconds; browsers revalidate after 60",
+        "The browser serves it for 600 seconds; the CDN revalidates after 60",
+        "The directives conflict, so both caches revalidate on every request"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Purge-on-change vs short TTLs for a breaking-news site: what is the tradeoff?",
+      "options": [
+        "Purges are free while short TTLs raise CDN bills, so purging always wins",
+        "Short TTLs bound staleness but raise origin load; purges are precise but harder to operate",
+        "Short TTLs cannot go below one hour, so purging is the only real option",
+        "Purging additionally clears every client browser's cache, while TTLs only ever affect the edge tier"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "After adding a random analytics query param to asset URLs, origin load spikes despite long TTLs. Why?",
+      "options": [
+        "Random params make responses larger, so the origin needs more bandwidth",
+        "The CDN treats requests with random params as POSTs, which are never cached",
+        "Each unique URL is a distinct cache key, so most requests now miss",
+        "TTLs reset whenever the query string changes, expiring existing objects"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "10M users each fetch a 2 MB bundle daily; the CDN hit rate is 90%. Approximate daily origin egress for it?",
+      "options": [
+        "About 20 TB, since every request ultimately originates at the origin",
+        "Roughly 20 GB, since only manifest requests ever reach the origin",
+        "Roughly 18 TB, which is the share of traffic the edge absorbs",
+        "About 2 TB, the 10% of the 20 TB total that misses the edge"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "One PoP serves a corrupted copy of an immutable JS asset after a disk fault. Best remediation lever?",
+      "options": [
+        "Purge the object so that PoP refetches a clean copy from origin or shield",
+        "Lower global TTLs so every PoP refreshes the asset more frequently",
+        "Fail the entire PoP out of DNS until its disk has been replaced",
+        "Re-deploy the application so all asset fingerprints change everywhere"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    }
+  ]
+}

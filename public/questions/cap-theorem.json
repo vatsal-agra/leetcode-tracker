@@ -1,0 +1,225 @@
+{
+  "topic": "CAP theorem",
+  "questions": [
+    {
+      "q": "Under a network partition, what choice does the CAP theorem force on a distributed system?",
+      "options": [
+        "Choose between durability of writes and speed of reads",
+        "Either refuse some requests (consistency) or serve possibly stale data (availability)",
+        "Choose between encryption strength and replication factor",
+        "Either drop the partitioned nodes or restart the whole cluster"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In CAP, what does the C (consistency) actually mean?",
+      "options": [
+        "The database enforces every declared integrity constraint, as the C in ACID does",
+        "Replicas eventually converge to a single agreed value",
+        "Each transaction moves the data between valid states",
+        "Every read reflects the most recent completed write (linearizability)"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why can't a distributed system simply 'choose CA' and ignore partitions?",
+      "options": [
+        "Real networks will partition, so tolerance to partitions is not optional",
+        "CA is reserved for systems with more than three replicas",
+        "Availability mathematically implies partition tolerance, so the choice collapses",
+        "Consistency can only be sacrificed after a quorum vote"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "During a partition, a CP system that cannot reach quorum typically does what?",
+      "options": [
+        "Continues serving reads and writes from whichever side currently has more clients",
+        "Switches to last-write-wins conflict resolution automatically",
+        "Refuses or delays requests on the minority side rather than risk stale data",
+        "Keeps both sides writable and merges the histories afterward"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "During a partition, an AP system keeps responding. What is the accepted trade?",
+      "options": [
+        "Writes get throttled down to one per client until the network fully heals",
+        "Only read-only requests are honored during the partition window",
+        "The minority side shuts down to protect data integrity",
+        "Responses may be stale or conflicting and need reconciliation later"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which everyday product behavior smells like an AP design decision?",
+      "options": [
+        "An ATM refusing all withdrawals whenever its bank network link goes down",
+        "A shopping cart accepting items offline and merging duplicates later",
+        "A ticket site blocking checkout during a datacenter failover",
+        "A bank rejecting transfers when a region is unreachable"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does the CAP 'availability' property formally require?",
+      "options": [
+        "Every request to a non-failed node eventually gets a non-error response",
+        "The system remains reachable through at least one healthy load balancer at all times",
+        "99.99% of requests succeed measured over a month",
+        "Failed nodes restart automatically within a bounded time"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why is 'this database is CP, that one is AP' an oversimplification?",
+      "options": [
+        "CAP labels formally apply only to networks and never to the database software running on them",
+        "Vendors alternate between CP and AP with each major release",
+        "Many systems are tunable per operation, choosing consistency or availability per request",
+        "CP and AP differ only in marketing, not in behavior"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A quorum system has 5 replicas with W=3, R=3. A partition isolates 2 nodes. What happens on the minority side?",
+      "options": [
+        "Writes and quorum reads fail there, since 2 nodes cannot reach quorum",
+        "The two nodes elect their own leader and continue operating with W=1 automatically",
+        "It serves quorum reads but rejects only the writes",
+        "It buffers writes durably and reports them as committed"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "What does the PACELC formulation add beyond CAP?",
+      "options": [
+        "A proof that partitions cannot occur in well-built datacenter networks",
+        "Even without partitions, systems still trade latency against consistency",
+        "A fourth property, elasticity, describing autoscaling behavior",
+        "A ranking of consensus protocols by message complexity"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An inventory service shows one item left; two buyers in partitioned regions both purchase it. Which stance did the system take?",
+      "options": [
+        "CP: the system accepted both orders and then canceled one during nightly reconciliation",
+        "CA: it prevented the partition by rerouting traffic",
+        "AP: it stayed available and now must resolve the oversell after healing",
+        "CP: quorum writes allowed both sides to commit safely"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A coordination service (like ZooKeeper) picks CP. What is the practical consequence during partitions?",
+      "options": [
+        "Reads continue on both sides while writes silently degrade to best-effort delivery semantics",
+        "Both sides keep full service using cached membership data",
+        "Locks auto-release on both sides so no client ever blocks",
+        "The minority partition cannot elect a leader or serve strongly consistent operations"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why is a single-node relational database not a meaningful example of 'CA'?",
+      "options": [
+        "With one node there is no partition to tolerate, so CAP's trade-off never applies",
+        "A single node can never be truly consistent once many concurrent writers become involved",
+        "Single nodes are always CP because disks can fail",
+        "CA requires at least two datacenters by definition"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Under PACELC, why might a system choose EL (latency over consistency) with no partition present?",
+      "options": [
+        "Regulators require sub-second responses for consumer applications",
+        "Consistency checks consume disk and memory capacity that low-latency systems cannot spare",
+        "Waiting on cross-replica coordination for every request adds latency users notice",
+        "Latency and consistency are equivalent, so the choice is stylistic"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "DynamoDB offers both eventually consistent and strongly consistent reads. What does choosing strong reads cost you?",
+      "options": [
+        "Strong reads bypass every caching layer, so each one hits cold storage directly instead",
+        "Higher read charge and latency, plus unavailability if the leader partition is unreachable",
+        "They require a table scan to verify the latest value",
+        "Writes must pause while any strong read is in flight"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why does a 2-of-3 quorum system remain available when one node is partitioned away?",
+      "options": [
+        "The missing node's data gets reconstructed instantly from parity blocks on the survivors",
+        "Quorum systems always remain available regardless of failures",
+        "The partitioned node keeps serving its own clients independently",
+        "The majority side still reaches quorum, so operations proceed consistently there"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A 'CP' database advertises 99.999% availability. How do you reconcile this with CAP?",
+      "options": [
+        "The vendor is lying, since CP systems cannot exceed 99.9% availability",
+        "Five nines refers only to reads, which CAP does not constrain",
+        "CAP availability is a theoretical guarantee under partitions; five nines is an empirical uptime claim",
+        "The system silently switches to AP mode whenever uptime drops"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Spanner-style systems claim both strong consistency and very high availability. What makes this practically achievable?",
+      "options": [
+        "Engineering the network (redundant links, majority quorums) makes partitions rare, not impossible",
+        "TrueTime physically prevents network partitions from forming",
+        "They relax consistency invisibly during business hours",
+        "They run every replica inside a single rack to avoid partitions"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "During partition healing in an AP store, siblings (conflicting versions) surface. Which resolution strategy risks silent data loss?",
+      "options": [
+        "Application-level merge functions that thoughtfully combine fields from both versions",
+        "CRDTs designed so concurrent updates merge deterministically",
+        "Presenting both versions to the user for a manual choice",
+        "Timestamp-based last-write-wins across nodes with unsynchronized clocks"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A payments flow needs linearizable balance checks; feed rendering tolerates staleness. Both hit one datastore. Sound per-CAP design?",
+      "options": [
+        "Choose an AP store everywhere, compensating payment anomalies with client retries",
+        "Use per-request consistency levels: quorum reads for payments, relaxed reads for feeds",
+        "Serialize all traffic through one leader so both workloads become linearizable",
+        "Run two identical strongly consistent clusters and split traffic between them"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    }
+  ]
+}

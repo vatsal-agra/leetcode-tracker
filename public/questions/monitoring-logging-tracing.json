@@ -1,0 +1,225 @@
+{
+  "topic": "Monitoring, logging, tracing",
+  "questions": [
+    {
+      "q": "Metrics, logs, and traces each answer a different question. What are metrics best for?",
+      "options": [
+        "Recording the full payload of each failed request for debugging",
+        "Following one request's path across many collaborating services",
+        "Cheap aggregate time-series like rates, latencies, and saturation over time",
+        "Storing structured audit events for compliance review"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do latency SLOs use percentiles like p99 instead of the mean?",
+      "options": [
+        "Means hide tail pain; a fine average can coexist with terrible worst-case latency",
+        "Percentiles are cheaper to compute than a running average",
+        "Computing a true mean requires storing every raw sample, which is infeasible at scale",
+        "p99 automatically excludes bot and health-check traffic"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is an SLI, concretely?",
+      "options": [
+        "A contract promising customers refunds if uptime drops",
+        "The internal numerical target your team formally commits to for a given metric",
+        "A dashboard panel that pages on-call when it turns red",
+        "A measured signal of service health, like fraction of successful requests"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the purpose of an error budget?",
+      "options": [
+        "Money reserved each quarter specifically for incident response tooling and training",
+        "An allowed amount of unreliability to spend on risk and change",
+        "The maximum number of known bugs a release may ship with",
+        "Headcount allocated to fixing production errors each sprint"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What distinguishes structured logging from plain text logs?",
+      "options": [
+        "Machine-parseable key-value fields enabling reliable filtering and aggregation",
+        "Structured logs are encrypted at rest while text logs are not",
+        "Structured logs bypass local disk entirely, streaming straight to the collector service",
+        "A fixed 80-character line format optimized for terminals"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In distributed tracing, what is a span?",
+      "options": [
+        "The complete end-to-end journey of one request across every participating service",
+        "The network hop between two adjacent services",
+        "A single timed operation within a trace, with parent-child links",
+        "The sampling window during which traces are recorded"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "How does a trace stay connected as a request crosses service boundaries?",
+      "options": [
+        "Each service logs to a shared file that the tracer tails",
+        "Trace and span IDs propagate in request headers or message metadata",
+        "The load balancer records every hop centrally",
+        "Precisely clock-synchronized timestamps let the backend infer the request path afterward"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which alerting philosophy reduces pager fatigue?",
+      "options": [
+        "Page the on-call for every detected anomaly so that nothing is ever missed",
+        "Route all alerts to email so they can be batched",
+        "Page only during business hours, deferring the rest",
+        "Page on user-impacting symptoms; ticket the merely suspicious causes"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "p50 is 40 ms, p99 is 2 s. What does this shape usually indicate?",
+      "options": [
+        "Monitoring overhead itself adds two full seconds to one request out of every hundred",
+        "The service is uniformly slow and needs a faster runtime",
+        "The p99 metric is misconfigured, since it cannot exceed 10x p50",
+        "Most requests are fine, but a tail (GC, cold caches, slow deps) is badly degraded"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do high-traffic systems sample traces instead of recording all of them?",
+      "options": [
+        "Full tracing's storage and overhead cost outweighs its debugging value at scale",
+        "Most tracing libraries hard-cap their throughput at a few hundred spans per second",
+        "Unsampled traces violate data-retention regulations",
+        "Sampling improves trace accuracy by removing noisy requests"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An SLO is 99.9% success over 30 days. Roughly how much full downtime does that budget allow?",
+      "options": [
+        "About 4.3 hours",
+        "About 43 minutes",
+        "About 4.3 minutes",
+        "About 7.2 hours"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Error rate spiked, but only logs exist, no metrics. What is the practical pain?",
+      "options": [
+        "Logging frameworks cannot record genuine errors at all, only warnings and info lines",
+        "Log storage costs make retention beyond a day impossible",
+        "Quantifying rate and trends means expensive ad-hoc log scans instead of a cheap query",
+        "Errors in logs are unordered, making causality unknowable"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A trace shows 800 ms total: gateway 20 ms, service A 30 ms, then a 700 ms gap before service B's span. Likely culprit?",
+      "options": [
+        "Service B's business logic, which the span understates",
+        "Queueing or connection wait between A and B not captured by either span",
+        "The API gateway itself, because it is the component that initiated the request",
+        "Clock skew, which always manifests as gaps this large"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Your team burns 80% of the monthly error budget in week one. What does SRE practice suggest?",
+      "options": [
+        "Redefine the SLO upward so the budget resets immediately",
+        "Silence the noisiest alerts for the remainder of the month to reduce pager noise",
+        "Spend the remaining budget on a planned chaos experiment",
+        "Slow risky launches and prioritize reliability work until the budget recovers"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Logs from 40 services use inconsistent request ID field names. What is the highest-leverage fix?",
+      "options": [
+        "Grep with 40 alternate patterns and save it as a runbook",
+        "Rely on timestamps to join related logs across the services",
+        "Standardize a correlation ID field and propagate it in every service's logs",
+        "Centralize all the log files onto a single host so that field names stop mattering"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why alert on burn rate (budget consumption speed) rather than raw error thresholds?",
+      "options": [
+        "It ties alert urgency to real SLO impact, catching both fast and slow burns",
+        "Burn rate is cheaper to compute than an error ratio",
+        "Raw error-rate ratios cannot be measured reliably by modern metric collection agents",
+        "Burn rate alerts never fire during deployments"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "After adding 100% tracing to a hot service, p99 latency rises 15%. Most plausible mechanism?",
+      "options": [
+        "Span creation and export contend for CPU and network on the request path",
+        "Traces are stored in the same database as user data, causing lock contention",
+        "The trace collector rejects spans, forcing synchronous retries by default",
+        "Sampling at 100% disables the JIT compiler in most runtimes"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "An outage went unnoticed: dashboards were green because the metrics pipeline itself had failed. What prevents this blind spot?",
+      "options": [
+        "Rendering dashboards from raw logs instead of metrics",
+        "Meta-monitoring with heartbeats, plus alerting on absent data, from independent infrastructure",
+        "Doubling scrape frequency so gaps close twice as fast",
+        "Snapshotting dashboards hourly for later comparison"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "You must keep 13 months of metrics for capacity planning without huge storage bills. Standard approach?",
+      "options": [
+        "Persist only p50 values, since medians define capacity",
+        "Retain raw resolution for every series and just buy cheaper disks each year",
+        "Store metrics as compressed log lines and re-parse when needed",
+        "Downsample: raw short-term, progressively coarser rollups for older data"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "One user reports sporadic 500s; overall error rate is 0.01% and alerts are silent. Which capability finds the cause fastest?",
+      "options": [
+        "A CPU profiler attached to every production instance",
+        "Raising alert sensitivity until the sporadic errors trigger a page",
+        "Exemplar traces linked from error metrics, filterable by user or request attributes",
+        "A synthetic probe replaying the user's typical journey hourly"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

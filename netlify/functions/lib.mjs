@@ -329,15 +329,18 @@ export function computeState(data) {
     .map(p => ({ id: p.id, title: p.title, slug: p.slug, topic: p.topic,
                  difficulty: p.difficulty, logged: p.date_solved }));
 
-  const sd = data.sd || { done: [], pick: null };
+  const sd = data.sd || { done: [], pick: null, scores: {} };
   const sdDone = (sd.done || []).filter(n => SD_ALL.includes(n));
+  const sdScores = sd.scores || {};
   let sdPick = sd.pick;
   if (!SD_ALL.includes(sdPick) || sdDone.includes(sdPick)) sdPick = null;
+  const sdEntry = n => ({ name: n, done: sdDone.includes(n), score: sdScores[n] ?? null });
   const sysdesign = {
-    concepts: SD_CONCEPTS.map(n => ({ name: n, done: sdDone.includes(n) })),
-    problems: SD_PROBLEMS.map(n => ({ name: n, done: sdDone.includes(n) })),
+    concepts: SD_CONCEPTS.map(sdEntry),
+    problems: SD_PROBLEMS.map(sdEntry),
     done: sdDone.length, total: SD_ALL.length, pick: sdPick,
     pct: +(sdDone.length / SD_ALL.length * 100).toFixed(1),
+    pass_mark: 75,
   };
 
   const snap = data.snapshots[data.snapshots.length - 1] || null;

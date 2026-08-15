@@ -1,0 +1,225 @@
+{
+  "topic": "SQL vs NoSQL",
+  "questions": [
+    {
+      "q": "A transfer debits one account and credits another in one transaction. Which ACID property ensures neither change applies without the other?",
+      "options": [
+        "Isolation, which orders the two writes so readers never interleave them",
+        "Atomicity, which commits or rolls back the pair as a single unit",
+        "Durability, which persists both changes to disk before acknowledging",
+        "Consistency, which validates the account balances after each write"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which workload most clearly favors a relational database over a key-value store?",
+      "options": [
+        "Ad-hoc reports joining orders, customers, and inventory tables",
+        "Looking up session payloads by their unique session token",
+        "Caching rendered page fragments keyed by their URL",
+        "Storing device telemetry appended at very high rates"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In an eventually consistent store, what does the system actually promise about replicas?",
+      "options": [
+        "Each replica acknowledges every write before any read gets served",
+        "Reads always reflect the most recent successful write",
+        "Given no new writes, all replicas converge to the same value",
+        "Conflicting writes are impossible because replicas take turns"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which NoSQL family is purpose-built for traversing relationships like 'friends of friends'?",
+      "options": [
+        "Wide-column stores, which group related columns into families",
+        "Document stores, which nest related records inside a single document",
+        "Key-value stores, which link records through composite keys",
+        "Graph databases, storing nodes and edges as first-class data"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why do self-contained documents make horizontal write scaling simpler than normalized relational rows?",
+      "options": [
+        "A document shards as one unit, avoiding cross-node joins on reads and writes",
+        "JSON serializes faster than the relational wire protocols used by SQL databases",
+        "Documents compress better, so each shard holds proportionally more data",
+        "Document stores buffer writes in memory while relational engines cannot"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does 'schema-on-write' mean in practice for a relational table?",
+      "options": [
+        "The schema is versioned automatically so old rows keep their original column layout forever",
+        "Readers must supply a schema to interpret the raw stored bytes",
+        "Inserts violating declared column types or constraints are rejected immediately",
+        "The schema can only change by rebuilding the table from scratch"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "A cart service needs microsecond lookups by session id and no other query patterns. Best fit?",
+      "options": [
+        "A fully normalized relational schema with the cart split across five joined tables",
+        "An in-memory key-value store mapping session id to the cart blob",
+        "A document store with secondary indexes on every cart field",
+        "A graph database linking session nodes to product nodes"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "To stay writable during network partitions, Dynamo-style stores historically relaxed which guarantee?",
+      "options": [
+        "Durability, acknowledging writes before replicating them anywhere",
+        "Client authentication during the partition window",
+        "Per-key write atomicity on the accepting replica",
+        "Strong consistency, letting replicas briefly diverge and reconcile later"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "An order flow must atomically update accounts, ledger, and audit tables. Why does a basic key-value store struggle?",
+      "options": [
+        "Key-value stores cannot represent monetary values without floating point error",
+        "Each table would need its own separate cluster, tripling operational cost",
+        "It offers atomicity per key, but no transaction spanning arbitrary keys",
+        "Its eventual durability means committed writes may vanish after a crash"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Fields on your user profile change every sprint, and reads are by primary key. What does a document store buy you here?",
+      "options": [
+        "New optional fields ship without a coordinated table migration",
+        "Old documents are rewritten automatically to match the newest shape",
+        "Reads become transactional across all documents in the collection",
+        "Field renames propagate to historical documents at query time"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "An analytics job scans two columns across billions of rows. Why does columnar storage beat row storage here?",
+      "options": [
+        "Columnar engines cache the entire table in RAM between queries",
+        "Row stores must lock each row as it is scanned, throttling reads",
+        "Columnar files skip the transaction log entirely, roughly halving total write amplification",
+        "Only the two needed columns are read, and similar values compress tightly"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why do relational joins degrade sharply once tables are sharded across many machines?",
+      "options": [
+        "The SQL standard removes join support once a table is partitioned",
+        "Matching rows can live on different nodes, forcing large cross-network shuffles",
+        "Sharding invalidates secondary indexes, so every join falls back to full table scans",
+        "Join buffers are pinned to one primary node and cannot grow larger"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Seconds after you update your bio, a friend still sees the old one. In an eventually consistent store, what most likely happened?",
+      "options": [
+        "Their read hit a replica the write had not yet reached",
+        "The write failed a validation rule and was silently rolled back",
+        "A row-level lock made their read return the column's default value",
+        "Read-repair deleted the newer value while reconciling replicas"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "When does denormalizing shared data into each document backfire the most?",
+      "options": [
+        "When documents are usually read in their entirety by the application",
+        "When the collection is sharded across more than a handful of nodes",
+        "When reads outnumber writes by several orders of magnitude",
+        "When many documents copy a value that changes frequently"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A team with 5 GB of data and heavy reporting adopts a key-value store 'for scale'. Most likely outcome?",
+      "options": [
+        "Single-key reads become slower than relational primary-key lookups were",
+        "Joins and aggregations get re-implemented, badly, in application code",
+        "The store's strict schema checks reject most of their existing records",
+        "Write throughput drops because all writes serialize on one global lock"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Which access pattern most justifies a graph database over SQL join tables?",
+      "options": [
+        "Fetching a user's direct friends list each time their profile page renders",
+        "Counting the total number of edges in the network for a daily report",
+        "Variable-depth traversals such as shortest path between two members",
+        "Sorting all users by signup date with pagination"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A global app needs sub-50 ms reads everywhere; payments need strict ordering; minor feed staleness is fine. Sound architecture?",
+      "options": [
+        "One strongly consistent global database serving every workload from a single region",
+        "Everything eventually consistent, reconciling payment order in a nightly batch",
+        "Per-region relational primaries with clients writing to whichever is nearest",
+        "Geo-replicated eventual store for feeds, payments routed to one strongly consistent service"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Which statement best captures transactions in modern NoSQL systems?",
+      "options": [
+        "Multi-document transactions remain impossible because BASE semantics forbid atomic commits entirely",
+        "Several offer multi-document ACID transactions, at a real throughput and latency cost",
+        "Transactions are now free because they run entirely on the client",
+        "Only graph databases gained transactions, since edges require them"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Postgres handles 5k writes/s at 60% CPU; load doubles yearly. Strongest argument to defer a Cassandra migration now?",
+      "options": [
+        "Vertical headroom plus read replicas likely covers years, at far lower risk than migrating",
+        "Cassandra clusters cannot exceed the write rate of a tuned Postgres primary",
+        "Doubling load will halve CPU usage as caches warm over time",
+        "Postgres will scale writes automatically once partitioned tables are enabled"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Why are Cassandra-style data models designed starting from the queries rather than the entities?",
+      "options": [
+        "CQL lacks a general WHERE clause, so most filtering must happen in the application layer",
+        "Entities cannot be represented because storage is a flat log of writes",
+        "Each query should hit one partition; cross-partition scans are slow and unbounded",
+        "The engine enforces third normal form, constraining table design"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

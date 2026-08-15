@@ -497,16 +497,21 @@ def compute_state():
              "difficulty": p["difficulty"], "logged": p["date_solved"]}
             for p in probs if p["flag_redo"] and not p["redo_done"]]
 
-    # system design
+    # system design — a topic is done ONLY by passing its test (>= 75%)
     sd_done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
+    sd_scores = {k: v for k, v in get_kv("sd_scores", {}).items() if k in SD_ALL}
     sd_pick = get_kv("sd_pick", None)
     if sd_pick not in SD_ALL or sd_pick in sd_done:
         sd_pick = None
+
+    def sd_entry(n):
+        return {"name": n, "done": n in sd_done, "score": sd_scores.get(n)}
     sysdesign = {
-        "concepts": [{"name": n, "done": n in sd_done} for n in SD_CONCEPTS],
-        "problems": [{"name": n, "done": n in sd_done} for n in SD_PROBLEMS],
+        "concepts": [sd_entry(n) for n in SD_CONCEPTS],
+        "problems": [sd_entry(n) for n in SD_PROBLEMS],
         "done": len(sd_done), "total": len(SD_ALL), "pick": sd_pick,
         "pct": round(len(sd_done) / len(SD_ALL) * 100, 1),
+        "pass_mark": 75,
     }
 
     try:
@@ -650,22 +655,33 @@ def api_settings(body: dict):
     return {"ok": True, "settings": get_settings()}
 
 
+PASS_MARK = 75
+
+
 @app.post("/api/sd")
 def api_sd(body: dict):
     action = body.get("action")
     name = body.get("name")
-    if action == "toggle":
+    if action == "score":
+        # the ONLY path to ticking a topic: submit a test score; >= PASS_MARK marks it done
         if name not in SD_ALL:
             raise HTTPException(400, "unknown system-design topic")
+        try:
+            pct = int(body.get("pct"))
+        except (TypeError, ValueError):
+            raise HTTPException(400, "pct must be a number")
+        pct = max(0, min(100, pct))
+        scores = get_kv("sd_scores", {})
+        scores[name] = max(int(scores.get(name, 0)), pct)
+        set_kv("sd_scores", scores)
+        passed = pct >= PASS_MARK
         done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
-        if name in done:
-            done.remove(name)
-        else:
+        if passed and name not in done:
             done.append(name)
+            set_kv("sd_done", done)
             if get_kv("sd_pick", None) == name:
                 set_kv("sd_pick", None)
-        set_kv("sd_done", done)
-        return {"ok": True, "done": done}
+        return {"ok": True, "passed": passed, "best": scores[name], "done_count": len(done)}
     if action == "pick":
         if name not in SD_ALL:
             raise HTTPException(400, "unknown system-design topic")
@@ -674,7 +690,7 @@ def api_sd(body: dict):
     if action == "clear_pick":
         set_kv("sd_pick", None)
         return {"ok": True, "pick": None}
-    raise HTTPException(400, "action must be toggle | pick | clear_pick")
+    raise HTTPException(400, "action must be score | pick | clear_pick")
 
 
 @app.get("/api/export")

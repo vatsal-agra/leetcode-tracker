@@ -1,0 +1,225 @@
+{
+  "topic": "Rate limiting",
+  "questions": [
+    {
+      "q": "In a token bucket limiter, what does the bucket capacity control?",
+      "options": [
+        "The steady-state request rate allowed over long time periods",
+        "How long a client must wait after a single rejected request",
+        "The number of distinct clients a single bucket can track",
+        "The maximum burst size allowed above the steady refill rate"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "In a token bucket, what does the refill rate correspond to?",
+      "options": [
+        "The sustained average request rate permitted over time",
+        "The maximum instantaneous burst the limiter will accept",
+        "The interval between full resets of every client's bucket",
+        "The penalty duration applied to clients exceeding quota"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Which status code signals a rate-limited HTTP request?",
+      "options": [
+        "403, indicating the client's credentials were revoked",
+        "503, indicating the entire service is currently unavailable",
+        "429, optionally paired with Retry-After guidance",
+        "409, indicating the request conflicts with another one"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the leaky bucket's defining behavior?",
+      "options": [
+        "It permits unlimited instantaneous bursts as long as the daily total stays within quota",
+        "Requests drain at a constant rate, smoothing bursts into a steady flow",
+        "It multiplies each client's allowance whenever the system is idle",
+        "It rejects all traffic for a cooldown period after any single breach"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What is the classic flaw of a fixed window counter?",
+      "options": [
+        "Bursts at a window boundary can allow nearly double the intended rate",
+        "It needs floating-point math, which drifts over long uptimes",
+        "It cannot be implemented in Redis without server-side scripting",
+        "Counters must be stored separately per URL path, which explodes memory usage quickly"
+      ],
+      "answer": 0,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Why rate limit per API key or user rather than only globally?",
+      "options": [
+        "Global limits are prohibited by most cloud providers' API terms",
+        "Per-key limits remove the need for authenticating requests entirely",
+        "One noisy client can otherwise consume the shared quota and starve others",
+        "Per-key limits make every response automatically cacheable at CDN edge locations"
+      ],
+      "answer": 2,
+      "difficulty": "easy"
+    },
+    {
+      "q": "What does the sliding window log approach store?",
+      "options": [
+        "One counter per client, decayed exponentially every second",
+        "Timestamps of recent requests, pruned as they age out of the window",
+        "A fixed boolean flag per window marking whether the client exceeded its quota there",
+        "The average latency of each client's requests in the window"
+      ],
+      "answer": 1,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Where is a rate limiter most commonly enforced?",
+      "options": [
+        "Inside the database, by throttling slow queries per connection",
+        "In the client SDK, which the server trusts to self-report its usage",
+        "At the DNS layer, by delaying resolution for overly hot clients",
+        "At the API gateway or edge, before requests reach backend services"
+      ],
+      "answer": 3,
+      "difficulty": "easy"
+    },
+    {
+      "q": "Sliding window counter (two weighted windows) vs a full log: what do you give up?",
+      "options": [
+        "It rejects far more legitimate traffic than any other algorithm",
+        "It requires synchronized clocks across every client device",
+        "Exactness: it approximates the rolling count using far less memory",
+        "It cannot express limits over any interval shorter than a full minute of wall time"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A distributed limiter keeps per-node local counters with no synchronization. What is the effect?",
+      "options": [
+        "Each node rejects all traffic as soon as any node's counter fills",
+        "The limit still gets enforced globally as long as the load balancer is strictly round-robin",
+        "Requests queue at the load balancer until the counters synchronize",
+        "A client can reach roughly N times the limit by spreading requests across nodes"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "You centralize counters in Redis. What are the main new risks?",
+      "options": [
+        "Redis silently rounds all counters to powers of two, loosening every configured limit",
+        "Added latency per request and a dependency that can fail or hotspot",
+        "Counters can never expire, so memory grows without any bound",
+        "Atomic increments become impossible, so counts are always stale"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why prefer failing open (allowing traffic) when the limiter backend is down for a consumer API?",
+      "options": [
+        "Availability is preserved; the limiter is protection, not a correctness gate",
+        "Failing open resets every client's counters, giving all clients a clean slate afterwards",
+        "HTTP requires that requests be served whenever intermediaries fail",
+        "Failing closed would corrupt the counter store permanently"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "A batch client sends 10k requests at midnight and gets throttled. Which limiter change lets it proceed smoothly?",
+      "options": [
+        "A fixed window aligned exactly to midnight so the burst fits inside it",
+        "A larger bucket capacity allowing bursts while keeping the average rate",
+        "A leaky bucket with a slower drain, spreading the burst across the day",
+        "Per-IP limits, since batch jobs originate from many source addresses"
+      ],
+      "answer": 1,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Clients retry immediately on 429, amplifying load. What server guidance most directly breaks the loop?",
+      "options": [
+        "Return 500 instead so clients switch over to their error path",
+        "Blackhole the client's IP for an hour after the very first 429",
+        "Serve cached stale responses to every throttled client instead",
+        "Retry-After headers plus jittered exponential backoff in client guidance"
+      ],
+      "answer": 3,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Why add jitter to client retry backoff?",
+      "options": [
+        "To desynchronize retries so they don't arrive in synchronized waves",
+        "To make legitimate retry traffic harder for attackers to fingerprint and imitate",
+        "To ensure each client's total wait time works out exactly equal",
+        "To satisfy TCP congestion control requirements on retransmission"
+      ],
+      "answer": 0,
+      "difficulty": "medium"
+    },
+    {
+      "q": "Tiered limits (free vs paid). Where does the tier lookup belong?",
+      "options": [
+        "In the client, which selects its own tier via a request header",
+        "In the database layer, throttling queries by table ownership",
+        "In the gateway's auth step, attaching quota attributes to the verified identity",
+        "In DNS, by resolving paying customers to a separate pool of faster endpoints"
+      ],
+      "answer": 2,
+      "difficulty": "medium"
+    },
+    {
+      "q": "1M active clients with a 10 req/s limit each, sliding window log in Redis. Why does memory blow up?",
+      "options": [
+        "Storing per-request timestamps costs memory proportional to allowed requests per window per client",
+        "Redis duplicates each key on every shard, squaring the total storage",
+        "TTL metadata dominates, costing roughly a megabyte per client key",
+        "Sorted sets must store the full request body alongside every entry"
+      ],
+      "answer": 0,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Global limit of 1000 req/s across 10 gateway nodes: split local quotas vs a central counter?",
+      "options": [
+        "Split quotas overshoot the global limit whenever traffic is skewed toward one node",
+        "Split quotas waste capacity under skewed traffic; central counters add latency and a failure point",
+        "Central counters can never be made atomic across nodes, so they systematically undercount by design",
+        "Split quotas require sticky sessions, which double memory usage on the balancer"
+      ],
+      "answer": 1,
+      "difficulty": "hard"
+    },
+    {
+      "q": "A downstream handles 5k req/s. Steady traffic is 4k with 3x spikes lasting 10s. Which limiter config fits best?",
+      "options": [
+        "A fixed one-minute window of 300k requests aligned to the wall clock",
+        "A token bucket refilling at 12k/s with capacity one, matching the spike rate",
+        "A leaky bucket draining at 12k/s backed by an unbounded in-memory queue",
+        "A token bucket refilling near 5k/s with burst capacity sized to downstream headroom"
+      ],
+      "answer": 3,
+      "difficulty": "hard"
+    },
+    {
+      "q": "Thousands of users behind one corporate NAT constantly hit per-IP limits. What is the best fix?",
+      "options": [
+        "Raise the global limit for everyone until the complaints stop arriving across all users",
+        "Switch to per-region limits derived from GeoIP lookups at the edge",
+        "Key limits on authenticated identity where available, falling back to IP",
+        "Exempt all known corporate IP ranges from rate limiting entirely"
+      ],
+      "answer": 2,
+      "difficulty": "hard"
+    }
+  ]
+}

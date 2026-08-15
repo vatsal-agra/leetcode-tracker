@@ -134,21 +134,28 @@ export default async (req) => {
     if (path === "/api/sd" && method === "POST") {
       const body = await req.json().catch(() => ({}));
       const data = await loadData(store);
-      if (body.action === "toggle") {
+      data.sd.scores = data.sd.scores || {};
+      if (body.action === "score") {
+        // the ONLY path to ticking a topic: submit a test score; >= 75 marks it done
         if (!SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
-        const i = data.sd.done.indexOf(body.name);
-        if (i >= 0) data.sd.done.splice(i, 1);
-        else {
+        const pct = Math.max(0, Math.min(100, parseInt(body.pct, 10)));
+        if (!Number.isFinite(pct)) return json({ error: "pct must be a number" }, 400);
+        data.sd.scores[body.name] = Math.max(data.sd.scores[body.name] || 0, pct);
+        const passed = pct >= 75;
+        if (passed && !data.sd.done.includes(body.name)) {
           data.sd.done.push(body.name);
           if (data.sd.pick === body.name) data.sd.pick = null;
         }
-      } else if (body.action === "pick") {
+        await saveData(store, data, ["sd"]);
+        return json({ ok: true, passed, best: data.sd.scores[body.name], done_count: data.sd.done.length });
+      }
+      if (body.action === "pick") {
         if (!SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
         data.sd.pick = body.name;
       } else if (body.action === "clear_pick") {
         data.sd.pick = null;
       } else {
-        return json({ error: "action must be toggle | pick | clear_pick" }, 400);
+        return json({ error: "action must be score | pick | clear_pick" }, 400);
       }
       await saveData(store, data, ["sd"]);
       return json({ ok: true, done: data.sd.done, pick: data.sd.pick });
