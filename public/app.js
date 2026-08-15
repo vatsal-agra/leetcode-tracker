@@ -116,7 +116,7 @@ function renderChrome() {
   $("#nav-log-count").textContent = st.problems.length || "";
   $("#nav-redo-count").textContent = k.open_flags || "";
   $("#nav-sd-count").textContent = st.sysdesign ? `${st.sysdesign.done}/${st.sysdesign.total}` : "";
-  $$(".nav-item").forEach(a => a.classList.toggle("active", a.dataset.view === S.view));
+  $$(".nav-item, .tab-item").forEach(a => a.classList.toggle("active", a.dataset.view === S.view));
   const titles = {
     dashboard: ["Dashboard", "no deadlines — just progress · auto-synced from LeetCode"],
     topics: ["Topics", "the full interview syllabus — 18 blocks, done at your pace"],
