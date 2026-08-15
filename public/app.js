@@ -313,12 +313,73 @@ function drawDonut() {
 
 /* ------------------------------------------------------------------ system design */
 const slugify = n => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null };
+const EXAM_KEY = "__overall_exam__";
+S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null, exam: false };
 S._qbank = {};
 
 function sdFind(name) {
   const sd = S.state.sysdesign;
   return [...sd.concepts, ...sd.problems].find(t => t.name === name);
+}
+const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+async function loadBank(name) {
+  const slug = slugify(name);
+  if (!S._qbank[slug]) {
+    const r = await fetch(`/questions/${slug}.json`);
+    if (!r.ok) throw new Error(`questions not found (${r.status})`);
+    S._qbank[slug] = await r.json();
+  }
+  return S._qbank[slug];
+}
+
+/* build a shuffled attempt from a list of raw questions (options shuffled too) */
+function buildAttempt(raws) {
+  return raws.map(q => {
+    const om = shuf([0, 1, 2, 3]);
+    return {
+      q: q.q, difficulty: q.difficulty, topic: q.__topic || null,
+      opts: om.map(o => q.options[o]), correct: om.indexOf(q.answer),
+      explanation: q.explanation || "",
+    };
+  });
+}
+
+function fmtWhen(ts) {
+  if (!ts) return "";
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) + " · " +
+         d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+}
+
+/* one-time: reconstruct the Bloom filters 85% attempt that predates history tracking */
+async function seedBloomHistory() {
+  const t = sdFind("Bloom filters");
+  if (!t || !t.done || (t.history && t.history.length)) return;
+  const MISSES = {
+    "A web crawler uses a Bloom filter for 'have I seen this URL?'. What is the practical consequence of a false positive?":
+      "The same URL ends up crawled twice, wasting bandwidth and storage",
+    "Given a fixed bit array, what does using too many hash functions cause?":
+      "Standard implementations silently ignore all hash functions beyond the optimal count",
+    "You sized a Bloom filter for 10M elements at 1% FP, but 40M arrive. Rough effect on the false-positive rate?":
+      "It becomes 100% the moment capacity is doubled",
+  };
+  try {
+    const bank = await loadBank("Bloom filters");
+    let correct = 0;
+    const answers = bank.questions.map(q => {
+      const miss = MISSES[q.q.trim()];
+      const ok = !miss;
+      if (ok) correct++;
+      return { q: q.q, difficulty: q.difficulty, ok,
+               yours: ok ? q.options[q.answer] : miss,
+               right: q.options[q.answer], explanation: q.explanation || "" };
+    });
+    const pct = Math.round(correct / answers.length * 100);
+    await api("/api/sd", { method: "POST", body: JSON.stringify({
+      action: "score", name: "Bloom filters", pct, correct, total: answers.length, answers }) });
+    S.state = await api("/api/state");
+  } catch {}
 }
 
 function renderSysdesign(el) {
@@ -368,13 +429,14 @@ function renderSdGrid(el) {
       <div class="bar" style="width:150px"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
     </div>
   </div>
+  ${examCardHTML()}
   ${section("Core concepts", sd.concepts, "enter a card to take its test")}
   ${section("Design problems", sd.problems, "full mock designs")}
-  <p style="font-size:11.5px;color:var(--dim);margin-top:14px">a topic only ticks when you score <b>≥ ${sd.pass_mark}%</b> on its 20-question test — 8 easy · 8 medium · 4 hard, no explanations given, missed ones are yours to research.</p>`;
+  <p style="font-size:11.5px;color:var(--dim);margin-top:14px">a topic only ticks when you score <b>≥ ${sd.pass_mark}%</b> on its 20-question test — 8 easy · 8 medium · 4 hard. Fail and the misses are yours to research; pass and you get the explanations.</p>`;
 
   $$(".sd-chip", el).forEach(chip => chip.onclick = () => {
     if (S._spinning) return;
-    S.sd = { mode: "topic", topic: chip.dataset.name, attempt: null, answers: {}, result: null };
+    S.sd = { mode: "topic", topic: chip.dataset.name, attempt: null, answers: {}, result: null, exam: false };
     renderSysdesign($("#view-sysdesign"));
   });
   const spinBtn = $("#btn-spin", el);
@@ -383,9 +445,55 @@ function renderSdGrid(el) {
   if (again) again.onclick = () => runSpin(el, remaining.filter(n => n !== sd.pick));
   const testBtn = $("#pick-test", el);
   if (testBtn) testBtn.onclick = () => {
-    S.sd = { mode: "topic", topic: sd.pick, attempt: null, answers: {}, result: null };
+    S.sd = { mode: "topic", topic: sd.pick, attempt: null, answers: {}, result: null, exam: false };
     renderSysdesign($("#view-sysdesign"));
   };
+  const examBtn = $("#exam-start", el);
+  if (examBtn) examBtn.onclick = startExam;
+}
+
+/* -------- overall exam across every ticked topic -------- */
+function examPlan() {
+  const sd = S.state.sysdesign;
+  const ticked = [...sd.concepts, ...sd.problems].filter(t => t.done).map(t => t.name);
+  const per = ticked.length ? Math.max(2, Math.min(10, Math.ceil(30 / ticked.length))) : 0;
+  return { ticked, per, total: ticked.length * per };
+}
+
+function examCardHTML() {
+  const { ticked, per, total } = examPlan();
+  const hist = S.state.sysdesign.exam_history || [];
+  const best = hist.length ? Math.max(...hist.map(h => h.pct)) : null;
+  return `
+  <div class="card exam-card mt">
+    <div style="flex:1;min-width:260px">
+      <div class="kpi-label"><svg><use href="#i-target"/></svg>Overall exam</div>
+      <div class="exam-title">${ticked.length ? `${total} questions · ${per} from each of your ${ticked.length} passed topic${ticked.length > 1 ? "s" : ""}` : "Pass a topic first"}</div>
+      <div class="exam-sub">${ticked.length
+        ? `random pull across everything you've mastered — nothing gets ticked or untucked, this one is purely for keeping it sharp${best != null ? ` · best ${best}%` : ""}`
+        : "once you clear topics, this becomes a mixed exam drawn from all of them"}</div>
+    </div>
+    <button class="btn btn-primary btn-spin" id="exam-start" ${ticked.length ? "" : "disabled"}>
+      <svg><use href="#i-bolt"/></svg>Start overall exam</button>
+  </div>`;
+}
+
+async function startExam() {
+  const { ticked, per } = examPlan();
+  if (!ticked.length) return;
+  try {
+    const picks = [];
+    for (const name of ticked) {
+      const bank = await loadBank(name);
+      shuf([...bank.questions]).slice(0, per).forEach(q => picks.push({ ...q, __topic: name }));
+    }
+    const order = { easy: 0, medium: 1, hard: 2 };
+    const raws = shuf(picks).sort((a, b) => order[a.difficulty] - order[b.difficulty]);
+    S.sd = { mode: "test", topic: "Overall exam", attempt: buildAttempt(raws),
+             answers: {}, result: null, exam: true };
+    renderSysdesign($("#view-sysdesign"));
+    window.scrollTo(0, 0);
+  } catch (e) { toast("Couldn't build the exam: " + e.message, false); }
 }
 
 function renderSdTopic(el) {
@@ -412,33 +520,75 @@ function renderSdTopic(el) {
       <div style="font-size:11.5px;color:var(--mut);line-height:1.75">
         <b style="color:var(--text)">20 questions</b> — 8 easy · 8 medium · 4 hard<br>
         pass at <b style="color:var(--text)">≥ ${sd.pass_mark}%</b> to tick the topic<br>
-        no explanations — missed questions are<br>yours to research afterwards
+        pass and you get explanations;<br>fail and the misses are yours to chase
       </div>
     </div>
-  </div>`;
+  </div>
+  ${historyHTML(t)}`;
   $("#sd-back", el).onclick = () => { S.sd.mode = "grid"; renderSysdesign(el); };
   $("#sd-start", el).onclick = async () => {
-    const slug = slugify(t.name);
     try {
-      if (!S._qbank[slug]) {
-        const r = await fetch(`/questions/${slug}.json`);
-        if (!r.ok) throw new Error(`questions not found (${r.status})`);
-        S._qbank[slug] = await r.json();
-      }
-      const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const bank = await loadBank(t.name);
       const groups = { easy: [], medium: [], hard: [] };
-      S._qbank[slug].questions.forEach(q => (groups[q.difficulty] || groups.easy).push(q));
+      bank.questions.forEach(q => (groups[q.difficulty] || groups.easy).push(q));
       const seq = [...shuf(groups.easy), ...shuf(groups.medium), ...shuf(groups.hard)];
-      S.sd.attempt = seq.map(q => {
-        const om = shuf([0, 1, 2, 3]);
-        return { q: q.q, difficulty: q.difficulty, opts: om.map(o => q.options[o]), correct: om.indexOf(q.answer) };
-      });
+      S.sd.attempt = buildAttempt(seq);
       S.sd.answers = {};
+      S.sd.exam = false;
       S.sd.mode = "test";
       renderSysdesign(el);
-      $("#view-sysdesign").scrollIntoView();
+      window.scrollTo(0, 0);
     } catch (e) { toast("Couldn't load the test: " + e.message, false); }
   };
+  wireHistory(el);
+}
+
+/* -------- attempt history (rendered under the take-test button) -------- */
+function historyHTML(t) {
+  const hist = t.history || [];
+  if (!hist.length) return `
+    <div class="card mt"><div class="empty" style="padding:34px 20px">
+      <svg><use href="#i-clock"/></svg><b>No attempts yet</b>your past tests — every answer and score — will collect here.</div></div>`;
+  return `
+  <div class="card mt">
+    <div class="card-h"><svg><use href="#i-clock"/></svg>Test history<span class="spacer"></span>
+      <span style="letter-spacing:0;text-transform:none;font-weight:600">${hist.length} attempt${hist.length > 1 ? "s" : ""} · newest first</span></div>
+    <div class="card-b">
+      ${hist.map((h, i) => `
+        <div class="hist-item">
+          <button class="hist-head" data-h="${i}">
+            <span class="hist-pct ${h.passed ? "pass" : "fail"}">${h.pct}%</span>
+            <span class="hist-meta">
+              <b>${h.passed ? "Passed" : "Not passed"}</b>
+              <span>${h.correct}/${h.total} correct · ${fmtWhen(h.ts)}</span>
+            </span>
+            <span class="hist-toggle">review ▾</span>
+          </button>
+          <div class="hist-body" id="hist-body-${i}" hidden>
+            ${(h.answers || []).map((a, qi) => `
+              <div class="hist-q ${a.ok ? "ok" : "bad"}">
+                <span class="hist-num">${qi + 1}</span>
+                <div>
+                  <div class="hist-qtext">${esc(a.q)}${a.topic ? ` <span class="hist-topic">${esc(a.topic)}</span>` : ""}</div>
+                  <div class="hist-ans">${a.ok ? "✓" : "✗"} your answer: ${esc(a.yours ?? "—")}</div>
+                  ${!a.ok && h.passed && a.right ? `<div class="hist-right">→ correct: ${esc(a.right)}</div>` : ""}
+                  ${!a.ok && h.passed && a.explanation ? `<div class="hist-exp">${esc(a.explanation)}</div>` : ""}
+                </div>
+              </div>`).join("") || `<div class="hist-ans" style="padding:8px 2px">answers weren't recorded for this attempt</div>`}
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function wireHistory(el) {
+  $$(".hist-head", el).forEach(btn => btn.onclick = () => {
+    const body = $("#hist-body-" + btn.dataset.h, el);
+    const open = !body.hidden;
+    body.hidden = open;
+    btn.classList.toggle("open", !open);
+    $(".hist-toggle", btn).textContent = open ? "review ▾" : "hide ▴";
+  });
 }
 
 function renderSdTest(el) {
@@ -490,24 +640,30 @@ function renderSdTest(el) {
   });
   const submit = async () => {
     if (Object.keys(t.answers).length !== total) return;
+    const answers = [];
     const missed = [];
     let correct = 0;
     t.attempt.forEach((q, i) => {
-      if (t.answers[i] === q.correct) correct++;
-      else missed.push({ q: q.q, yours: q.opts[t.answers[i]], difficulty: q.difficulty });
+      const ok = t.answers[i] === q.correct;
+      if (ok) correct++;
+      const rec = { q: q.q, difficulty: q.difficulty, ok, topic: q.topic || null,
+                    yours: q.opts[t.answers[i]], right: q.opts[q.correct], explanation: q.explanation };
+      answers.push(rec);
+      if (!ok) missed.push(rec);
     });
     const pct = Math.round(correct / total * 100);
     let resp = null;
     try {
-      resp = await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "score", name: t.topic, pct }) });
+      resp = await api("/api/sd", { method: "POST", body: JSON.stringify({
+        action: "score", name: t.exam ? EXAM_KEY : t.topic, pct, correct, total, answers }) });
     } catch (e) { if (e.message !== "locked") toast("Score not saved: " + e.message, false); }
-    t.result = { pct, correct, total, missed, passed: resp ? resp.passed : pct >= (S.state.sysdesign.pass_mark || 75) };
+    t.result = { pct, correct, total, missed,
+                 passed: resp ? resp.passed : pct >= (S.state.sysdesign.pass_mark || 75) };
     t.mode = "result";
     try { S.state = await api("/api/state"); } catch {}
     renderChrome();
     renderSysdesign(el);
     window.scrollTo(0, 0);
-    $("#view-sysdesign").scrollIntoView();
   };
   $("#test-submit", el).onclick = submit;
   $("#test-submit-2", el).onclick = submit;
@@ -520,32 +676,40 @@ function renderSdTest(el) {
 
 function renderSdResult(el) {
   const t = S.sd, r = t.result;
+  const verdict = t.exam
+    ? (r.passed ? "STRONG — you're keeping it sharp ✓" : `BELOW ${S.state.sysdesign.pass_mark || 75}% — worth a revision pass`)
+    : (r.passed ? "PASSED — topic ticked ✓" : `NOT YET — the bar is ${S.state.sysdesign.pass_mark || 75}%`);
   el.innerHTML = `
   <div class="card result-card ${r.passed ? "pass" : "fail"}">
     <div class="result-pct">${r.pct}%</div>
-    <div class="result-verdict">${r.passed ? "PASSED — topic ticked ✓" : `NOT YET — the bar is ${S.state.sysdesign.pass_mark || 75}%`}</div>
+    <div class="result-verdict">${verdict}</div>
     <div class="result-sub">${r.correct} of ${r.total} correct · ${esc(t.topic)}</div>
     <div class="picker-actions" style="justify-content:center;margin-top:18px">
-      ${r.passed ? "" : `<button class="btn btn-primary" id="res-retake"><svg><use href="#i-sync"/></svg>Retake when ready</button>`}
+      ${r.passed || t.exam ? "" : `<button class="btn btn-primary" id="res-retake"><svg><use href="#i-sync"/></svg>Retake when ready</button>`}
       <button class="btn ${r.passed ? "btn-primary" : "btn-ghost"}" id="res-back">Back to topics</button>
     </div>
   </div>
   ${r.missed.length ? `
   <div class="card mt">
-    <div class="card-h"><svg><use href="#i-flag"/></svg>You missed ${r.missed.length} — go find out why<span class="spacer"></span>
-      <span style="letter-spacing:0;text-transform:none;font-weight:600">no answers given, that's the point</span></div>
+    <div class="card-h"><svg><use href="#i-flag"/></svg>You missed ${r.missed.length}<span class="spacer"></span>
+      <span style="letter-spacing:0;text-transform:none;font-weight:600">${r.passed ? "you earned the answers" : "no answers given — that's the point"}</span></div>
     <div class="card-b">
       ${r.missed.map(m => `
         <div class="missed-row">
           <span class="pill ${m.difficulty === "easy" ? "Easy" : m.difficulty === "medium" ? "Medium" : "Hard"}">${m.difficulty}</span>
-          <div><div class="missed-q">${esc(m.q)}</div>
-          <div class="missed-a">your answer: ${esc(m.yours)}</div></div>
+          <div style="flex:1">
+            <div class="missed-q">${esc(m.q)}${m.topic ? ` <span class="hist-topic">${esc(m.topic)}</span>` : ""}</div>
+            <div class="missed-a">your answer: ${esc(m.yours)}</div>
+            ${r.passed ? `
+              <div class="hist-right">→ correct: ${esc(m.right)}</div>
+              ${m.explanation ? `<div class="hist-exp">${esc(m.explanation)}</div>` : ""}` : ""}
+          </div>
         </div>`).join("")}
     </div>
   </div>` : `<div class="card mt"><div class="empty"><b>Flawless.</b>not a single miss — that's how it's done.</div></div>`}`;
   const retake = $("#res-retake", el);
-  if (retake) retake.onclick = () => { S.sd = { mode: "topic", topic: t.topic, attempt: null, answers: {}, result: null }; renderSysdesign(el); };
-  $("#res-back", el).onclick = () => { S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null }; renderSysdesign(el); };
+  if (retake) retake.onclick = () => { S.sd = { mode: "topic", topic: t.topic, attempt: null, answers: {}, result: null, exam: false }; renderSysdesign(el); };
+  $("#res-back", el).onclick = () => { S.sd = { mode: "grid", topic: null, attempt: null, answers: {}, result: null, exam: false }; renderSysdesign(el); };
 }
 
 function runSpin(el, remaining) {
@@ -907,6 +1071,7 @@ setInterval(async () => {
 (async function boot() {
   try {
     await reload();
+    seedBloomHistory().then(() => { if (S.view === "sysdesign") render(S.view); });
   } catch (e) {
     if (e.message === "locked") return; // lock screen is showing
     document.body.innerHTML = `<div style="display:grid;place-items:center;height:100vh;color:#98a2b8;font-family:'Segoe UI'">

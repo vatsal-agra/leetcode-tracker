@@ -500,18 +500,22 @@ def compute_state():
     # system design — a topic is done ONLY by passing its test (>= 75%)
     sd_done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
     sd_scores = {k: v for k, v in get_kv("sd_scores", {}).items() if k in SD_ALL}
+    sd_history = get_kv("sd_history", {})
     sd_pick = get_kv("sd_pick", None)
     if sd_pick not in SD_ALL or sd_pick in sd_done:
         sd_pick = None
 
     def sd_entry(n):
-        return {"name": n, "done": n in sd_done, "score": sd_scores.get(n)}
+        hist = sd_history.get(n, [])
+        return {"name": n, "done": n in sd_done, "score": sd_scores.get(n),
+                "attempts": len(hist), "history": hist}
     sysdesign = {
         "concepts": [sd_entry(n) for n in SD_CONCEPTS],
         "problems": [sd_entry(n) for n in SD_PROBLEMS],
         "done": len(sd_done), "total": len(SD_ALL), "pick": sd_pick,
         "pct": round(len(sd_done) / len(SD_ALL) * 100, 1),
         "pass_mark": 75,
+        "exam_history": sd_history.get(EXAM_KEY, []),
     }
 
     try:
@@ -656,6 +660,8 @@ def api_settings(body: dict):
 
 
 PASS_MARK = 75
+MAX_HISTORY = 8
+EXAM_KEY = "__overall_exam__"
 
 
 @app.post("/api/sd")
@@ -664,17 +670,32 @@ def api_sd(body: dict):
     name = body.get("name")
     if action == "score":
         # the ONLY path to ticking a topic: submit a test score; >= PASS_MARK marks it done
-        if name not in SD_ALL:
+        is_exam = name == EXAM_KEY
+        if not is_exam and name not in SD_ALL:
             raise HTTPException(400, "unknown system-design topic")
         try:
             pct = int(body.get("pct"))
         except (TypeError, ValueError):
             raise HTTPException(400, "pct must be a number")
         pct = max(0, min(100, pct))
+        passed = pct >= PASS_MARK
+
+        history = get_kv("sd_history", {})
+        entry = {
+            "ts": int(time.time()), "pct": pct, "passed": passed,
+            "correct": int(body.get("correct") or 0), "total": int(body.get("total") or 0),
+            "answers": (body.get("answers") or [])[:120],
+        }
+        history.setdefault(name, []).insert(0, entry)
+        history[name] = history[name][:MAX_HISTORY]
+        set_kv("sd_history", history)
+
+        if is_exam:
+            return {"ok": True, "passed": passed, "exam": True}
+
         scores = get_kv("sd_scores", {})
         scores[name] = max(int(scores.get(name, 0)), pct)
         set_kv("sd_scores", scores)
-        passed = pct >= PASS_MARK
         done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
         if passed and name not in done:
             done.append(name)

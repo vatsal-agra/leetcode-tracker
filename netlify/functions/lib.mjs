@@ -329,18 +329,23 @@ export function computeState(data) {
     .map(p => ({ id: p.id, title: p.title, slug: p.slug, topic: p.topic,
                  difficulty: p.difficulty, logged: p.date_solved }));
 
-  const sd = data.sd || { done: [], pick: null, scores: {} };
+  const sd = data.sd || { done: [], pick: null, scores: {}, history: {} };
   const sdDone = (sd.done || []).filter(n => SD_ALL.includes(n));
   const sdScores = sd.scores || {};
+  const sdHistory = sd.history || {};
   let sdPick = sd.pick;
   if (!SD_ALL.includes(sdPick) || sdDone.includes(sdPick)) sdPick = null;
-  const sdEntry = n => ({ name: n, done: sdDone.includes(n), score: sdScores[n] ?? null });
+  const sdEntry = n => ({
+    name: n, done: sdDone.includes(n), score: sdScores[n] ?? null,
+    attempts: (sdHistory[n] || []).length, history: sdHistory[n] || [],
+  });
   const sysdesign = {
     concepts: SD_CONCEPTS.map(sdEntry),
     problems: SD_PROBLEMS.map(sdEntry),
     done: sdDone.length, total: SD_ALL.length, pick: sdPick,
     pct: +(sdDone.length / SD_ALL.length * 100).toFixed(1),
     pass_mark: 75,
+    exam_history: sdHistory["__overall_exam__"] || [],
   };
 
   const snap = data.snapshots[data.snapshots.length - 1] || null;

@@ -135,13 +135,30 @@ export default async (req) => {
       const body = await req.json().catch(() => ({}));
       const data = await loadData(store);
       data.sd.scores = data.sd.scores || {};
+      data.sd.history = data.sd.history || {};
       if (body.action === "score") {
         // the ONLY path to ticking a topic: submit a test score; >= 75 marks it done
-        if (!SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
+        const EXAM_KEY = "__overall_exam__";
+        const isExam = body.name === EXAM_KEY;
+        if (!isExam && !SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
         const pct = Math.max(0, Math.min(100, parseInt(body.pct, 10)));
         if (!Number.isFinite(pct)) return json({ error: "pct must be a number" }, 400);
-        data.sd.scores[body.name] = Math.max(data.sd.scores[body.name] || 0, pct);
         const passed = pct >= 75;
+
+        const entry = {
+          ts: Math.floor(Date.now() / 1000), pct, passed,
+          correct: parseInt(body.correct, 10) || 0, total: parseInt(body.total, 10) || 0,
+          answers: (body.answers || []).slice(0, 120),
+        };
+        const list = data.sd.history[body.name] || [];
+        list.unshift(entry);
+        data.sd.history[body.name] = list.slice(0, 8);
+
+        if (isExam) {
+          await saveData(store, data, ["sd"]);
+          return json({ ok: true, passed, exam: true });
+        }
+        data.sd.scores[body.name] = Math.max(data.sd.scores[body.name] || 0, pct);
         if (passed && !data.sd.done.includes(body.name)) {
           data.sd.done.push(body.name);
           if (data.sd.pick === body.name) data.sd.pick = null;
