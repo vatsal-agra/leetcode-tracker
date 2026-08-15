@@ -1,35 +1,31 @@
 /* DSA Mission Control — API (Netlify Functions v2, backed by Netlify Blobs). */
 import { getStore } from "@netlify/blobs";
 import {
-  DEFAULT_SETTINGS, TOPIC_NAMES, TYPES, computeState, runSync, validISO,
+  DEFAULT_SETTINGS, TOPIC_NAMES, TYPES, SD_ALL, computeState, runSync, validISO,
 } from "./lib.mjs";
 
 export const config = { path: "/api/*" };
 
-const EMPTY = () => ({
-  problems: { nextId: 1, items: [] },
-  qcache: {}, snapshots: [], synclog: [], settings: { ...DEFAULT_SETTINGS },
-});
-
 async function loadData(store) {
-  const [problems, qcache, snapshots, synclog, settings] = await Promise.all([
+  const [problems, qcache, snapshots, synclog, settings, sd] = await Promise.all([
     store.get("problems", { type: "json" }),
     store.get("qcache", { type: "json" }),
     store.get("snapshots", { type: "json" }),
     store.get("synclog", { type: "json" }),
     store.get("settings", { type: "json" }),
+    store.get("sd", { type: "json" }),
   ]);
-  const base = EMPTY();
   return {
-    problems: problems || base.problems,
-    qcache: qcache || base.qcache,
-    snapshots: snapshots || base.snapshots,
-    synclog: synclog || base.synclog,
+    problems: problems || { nextId: 1, items: [] },
+    qcache: qcache || {},
+    snapshots: snapshots || [],
+    synclog: synclog || [],
     settings: { ...DEFAULT_SETTINGS, ...(settings || {}) },
+    sd: sd || { done: [], pick: null },
   };
 }
 
-async function saveData(store, data, keys = ["problems", "qcache", "snapshots", "synclog", "settings"]) {
+async function saveData(store, data, keys = ["problems", "qcache", "snapshots", "synclog", "settings", "sd"]) {
   await Promise.all(keys.map(k => store.setJSON(k, data[k])));
 }
 
@@ -133,6 +129,29 @@ export default async (req) => {
       }
       await saveData(store, data, ["settings"]);
       return json({ ok: true, settings: data.settings });
+    }
+
+    if (path === "/api/sd" && method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const data = await loadData(store);
+      if (body.action === "toggle") {
+        if (!SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
+        const i = data.sd.done.indexOf(body.name);
+        if (i >= 0) data.sd.done.splice(i, 1);
+        else {
+          data.sd.done.push(body.name);
+          if (data.sd.pick === body.name) data.sd.pick = null;
+        }
+      } else if (body.action === "pick") {
+        if (!SD_ALL.includes(body.name)) return json({ error: "unknown system-design topic" }, 400);
+        data.sd.pick = body.name;
+      } else if (body.action === "clear_pick") {
+        data.sd.pick = null;
+      } else {
+        return json({ error: "action must be toggle | pick | clear_pick" }, 400);
+      }
+      await saveData(store, data, ["sd"]);
+      return json({ ok: true, done: data.sd.done, pick: data.sd.pick });
     }
 
     if (path === "/api/export" && method === "GET") {

@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    DSA Mission Control — SPA
    ========================================================================== */
 "use strict";
@@ -113,16 +113,16 @@ function renderChrome() {
   dot.className = "sync-dot " + (sync ? (sync.ok ? "ok" : "err") : "");
   dot.title = sync ? `last sync ${timeago(sync.ts)} · ${sync.message}` : "no sync yet";
   $("#last-sync").textContent = sync ? `synced ${timeago(sync.ts)}` : "";
-  $("#streak-num").textContent = k.streak;
   $("#nav-log-count").textContent = st.problems.length || "";
   $("#nav-redo-count").textContent = k.open_flags || "";
+  $("#nav-sd-count").textContent = st.sysdesign ? `${st.sysdesign.done}/${st.sysdesign.total}` : "";
   $$(".nav-item").forEach(a => a.classList.toggle("active", a.dataset.view === S.view));
   const titles = {
-    dashboard: ["Dashboard", "Jul 11 → Dec 31 · 320 problems · auto-synced from LeetCode"],
-    roadmap: ["Roadmap", "six months, planned to the problem"],
-    topics: ["Topics", "the full interview syllabus — 18 blocks"],
+    dashboard: ["Dashboard", "no deadlines — just progress · auto-synced from LeetCode"],
+    topics: ["Topics", "the full interview syllabus — 18 blocks, done at your pace"],
     log: ["Problem Log", "every solve, auto-captured · edit anything inline"],
-    redo: ["Redo Queue", "spaced repetition — flag it, re-solve it 7 days later"],
+    redo: ["Redo Queue", "flagged problems — re-solve them whenever, the tracker notices"],
+    sysdesign: ["System Design", "43 topics · spin the picker, learn one, tick it off"],
     playbook: ["Playbook", "the rules that make the numbers real"],
     settings: ["Settings", "engine room"],
   };
@@ -146,10 +146,7 @@ function ringSVG(pct) {
 }
 
 function renderDashboard(el) {
-  const st = S.state, k = st.kpi, lc = st.lc;
-  const cur = st.months.find(m => m.start <= st.today && st.today <= m.end)
-    || st.months.find(m => m.status === "upcoming") || st.months[st.months.length - 1];
-  const paceGood = k.pace >= k.required;
+  const st = S.state, k = st.kpi, lc = st.lc, sd = st.sysdesign;
   const sinceB = lc.since_baseline;
 
   const review = st.problems.filter(p => p.needs_review);
@@ -175,53 +172,60 @@ function renderDashboard(el) {
   </div>` : ""}
 
   <div class="grid g-kpi ${review.length ? "mt" : ""}">
+    <div class="card kpi headline"><div style="flex:1">
+      <div class="kpi-label" style="display:flex;justify-content:space-between">Total solved · lifetime
+        <span class="chip ${st.sync.last && st.sync.last.ok ? "live" : "off"}" style="text-transform:none">${st.sync.last && st.sync.last.ok ? "synced" : "sync issue"}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:14px;margin-top:4px">
+        <div class="kpi-huge" id="cu-lift">${num(lc.lifetime)}</div>
+        ${sinceB != null && sinceB > 0 ? `<span class="delta-chip good" style="margin:0"><svg><use href="#i-trend"/></svg>+${sinceB} since tracking began</span>` : ""}
+      </div>
+      <div class="kpi-sub" style="margin-top:9px">
+        <span style="color:var(--easy)">● ${lc.easy ?? "—"} easy</span> ·
+        <span style="color:var(--med)">● ${lc.medium ?? "—"} medium</span> ·
+        <span style="color:var(--hard)">● ${lc.hard ?? "—"} hard</span>
+        · rank <b>${num(lc.ranking)}</b></div>
+    </div></div>
+
     <div class="card kpi">
       ${ringSVG(k.pct)}
       <div>
-        <div class="kpi-label">Problems solved</div>
+        <div class="kpi-label">Mission 320</div>
         <div class="kpi-big"><span id="cu-done">${k.done}</span><span style="font-size:16px;color:var(--dim)"> / ${k.total_target}</span></div>
-        <div class="kpi-sub">day <b>${k.days_in}</b> of 174 · <b>${k.days_left}</b> days left</div>
+        <div class="kpi-sub">tracked solves — no deadline,<br>just a mountain to climb</div>
       </div>
     </div>
 
-    <div class="card kpi"><div style="flex:1">
-      <div class="kpi-label">Pace / day</div>
-      <div class="pace-two" style="margin-top:6px">
-        <div><div class="kpi-big" id="cu-pace">${k.pace.toFixed(2)}</div><div class="kpi-sub">current</div></div>
-        <div class="pace-vs"></div>
-        <div><div class="kpi-big" style="color:var(--mut)">${k.required.toFixed(2)}</div><div class="kpi-sub">required</div></div>
-      </div>
-      <div class="delta-chip ${paceGood ? "good" : "bad"}">
-        <svg><use href="#i-trend"/></svg>${paceGood ? "ahead of the line" : `${(k.required - k.pace).toFixed(2)}/day behind the line`}
-      </div>
+    <div class="card kpi sd-kpi" onclick="location.hash='#sysdesign'"><div style="flex:1">
+      <div class="kpi-label">System design</div>
+      <div class="kpi-big" style="margin-top:6px">${sd.done}<span style="font-size:16px;color:var(--dim)"> / ${sd.total}</span></div>
+      <div class="bar" style="margin:9px 0 8px"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
+      <div class="kpi-sub">${sd.pick ? `current pick: <b style="color:var(--violet)">${esc(sd.pick)}</b>` : `no pick yet — <b style="color:var(--violet)">spin the picker →</b>`}</div>
     </div></div>
 
     <div class="card kpi"><div style="flex:1">
-      <div class="kpi-label">${cur.name} — month ${st.months.indexOf(cur) + 1}/6</div>
-      <div class="kpi-big" style="margin-top:6px">${cur.done}<span style="font-size:16px;color:var(--dim)"> / ${cur.target}</span></div>
-      <div class="bar" style="margin:9px 0 8px"><i class="${cur.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, cur.pct)}%"></i></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="chip ${cur.status}">${cur.status}</span>
-        <span class="kpi-sub"><b>${cur.need_per_day}</b>/day needed</span>
-      </div>
-    </div></div>
-
-    <div class="card kpi"><div style="flex:1">
-      <div class="kpi-label" style="display:flex;justify-content:space-between">LeetCode · live
-        <span class="chip ${st.sync.last && st.sync.last.ok ? "live" : "off"}" style="text-transform:none">${st.sync.last && st.sync.last.ok ? "synced" : "sync issue"}</span>
-      </div>
+      <div class="kpi-label">Needs attention</div>
       <div style="display:flex;gap:20px;margin-top:8px">
-        <div><div class="kpi-big" id="cu-lift">${num(lc.lifetime)}</div><div class="kpi-sub">lifetime</div></div>
-        <div><div class="kpi-big" style="color:var(--green)">${sinceB != null && sinceB >= 0 ? "+" + sinceB : "—"}</div><div class="kpi-sub">since Jul 11</div></div>
+        <div><div class="kpi-big" style="color:${k.open_flags ? "var(--amber)" : "var(--text)"}">${k.open_flags}</div><div class="kpi-sub">redo flags</div></div>
+        <div><div class="kpi-big" style="color:${k.needs_review ? "var(--violet)" : "var(--text)"}">${k.needs_review}</div><div class="kpi-sub">topic calls</div></div>
+        <div><div class="kpi-big" style="color:var(--hard)">${k.hards}</div><div class="kpi-sub">hards done</div></div>
       </div>
-      <div class="kpi-sub" style="margin-top:9px">rank <b>${num(lc.ranking)}</b> · E ${lc.easy ?? "—"} / M ${lc.medium ?? "—"} / H ${lc.hard ?? "—"}</div>
+      <div class="kpi-sub" style="margin-top:9px">${k.open_flags || k.needs_review ? "clear these when you get a minute — zero rush" : "all clear ✓"}</div>
     </div></div>
   </div>
 
   <div class="grid g-mid mt">
     <div class="card">
-      <div class="card-h"><svg><use href="#i-trend"/></svg>Burn-up — plan vs actual<span class="spacer"></span></div>
-      <div class="card-b"><div class="chart-box"><canvas id="ch-burn"></canvas></div></div>
+      <div class="card-h"><svg><use href="#i-layers"/></svg>Topic snapshot<span class="spacer"></span>
+        <a href="#topics" style="letter-spacing:0;text-transform:none;color:var(--indigo);font-weight:700">all topics →</a></div>
+      <div class="card-b">
+        ${st.topics.map(t => `
+          <div class="tbar-row">
+            <div class="tbar-name">${esc(t.name)}</div>
+            <div class="bar thin"><i class="${t.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, t.pct)}%"></i></div>
+            <div class="tbar-num"><b>${t.block_done}</b> / ${t.target}</div>
+          </div>`).join("")}
+      </div>
     </div>
     <div class="card">
       <div class="card-h"><svg><use href="#i-layers"/></svg>Splits</div>
@@ -236,46 +240,12 @@ function renderDashboard(el) {
     </div>
   </div>
 
-  <div class="card mt">
-    <div class="card-h"><svg><use href="#i-cal"/></svg>Daily activity<span class="spacer"></span>
-      <span style="letter-spacing:0;text-transform:none;font-weight:600">best streak · ${k.best_streak}d</span></div>
-    <div class="card-b">
-      <div id="heatmap"></div>
-      <div class="heat-legend">less
-        <span class="heat-cell"></span><span class="heat-cell l1"></span><span class="heat-cell l2"></span>
-        <span class="heat-cell l3"></span><span class="heat-cell l4"></span> more
-      </div>
-    </div>
-  </div>
-
-  <div class="grid g-months mt">
-    ${st.months.map(m => `
-      <div class="mcard ${m === cur ? "current" : ""}">
-        <div class="mcard-top"><span class="mcard-name">${m.name}</span><span class="chip ${m.status}">${m.status}</span></div>
-        <div class="mcard-nums">${m.done}<span> / ${m.target}</span></div>
-        <div class="bar thin"><i class="${m.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, m.pct)}%"></i></div>
-        <div class="mcard-need">${m.status === "upcoming" ? `${fmtDate(m.start)} → ${fmtDate(m.end)}` : m.status === "complete" ? "done ✓" : m.status === "missed" ? "target missed" : `needs <b>${m.need_per_day}</b>/day`}</div>
-      </div>`).join("")}
-  </div>
-
-  <div class="grid g-bottom mt">
-    <div class="card">
-      <div class="card-h"><svg><use href="#i-layers"/></svg>Topic snapshot<span class="spacer"></span>
-        <a href="#topics" style="letter-spacing:0;text-transform:none;color:var(--indigo);font-weight:700">all topics →</a></div>
-      <div class="card-b">
-        ${st.topics.map(t => `
-          <div class="tbar-row">
-            <div class="tbar-name">${esc(t.name)}</div>
-            <div class="bar thin"><i class="${t.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, t.pct)}%"></i></div>
-            <div class="tbar-num"><b>${t.block_done}</b> / ${t.target}</div>
-          </div>`).join("")}
-      </div>
-    </div>
+  <div class="grid g-bottom mt" style="grid-template-columns:1fr">
     <div class="card">
       <div class="card-h"><svg><use href="#i-bolt"/></svg>Recent activity<span class="spacer"></span>
         <span style="letter-spacing:0;text-transform:none;font-weight:600">auto-captured ⚡</span></div>
       <div class="card-b feed">
-        ${st.problems.slice(0, 9).map(p => `
+        ${st.problems.slice(0, 10).map(p => `
           <div class="feed-row">
             <span class="feed-dot ${p.difficulty || "na"}"></span>
             <div class="feed-main">
@@ -283,7 +253,6 @@ function renderDashboard(el) {
               <div class="feed-meta"><span class="tpill ${p.type}">${p.type}</span><span>${esc(p.topic)}</span>
                 ${p.auto ? '<span class="auto-badge"><svg><use href="#i-bolt"/></svg>AUTO</span>' : ""}</div>
             </div>
-            <span class="feed-date">${fmtDate(p.date_solved)}</span>
           </div>`).join("") || `<div class="empty"><b>Nothing yet</b>solve something — it shows up here on its own</div>`}
       </div>
     </div>
@@ -302,41 +271,7 @@ function renderDashboard(el) {
         toast(`Filed under ${topic} ⚡`);
     });
   });
-  drawHeatmap($("#heatmap", el));
-  drawBurnup();
   drawDonut();
-}
-
-/* heatmap */
-function drawHeatmap(box) {
-  const st = S.state;
-  const start = new Date(st.settings.roadmap_start + "T00:00:00");
-  const end = new Date(st.settings.roadmap_end + "T00:00:00");
-  const today = st.today;
-  // pad to Monday
-  const first = new Date(start);
-  first.setDate(first.getDate() - ((first.getDay() + 6) % 7));
-  let cells = "", monthLabels = [], week = 0, lastMonth = -1;
-  for (let d = new Date(first); d <= end; d.setDate(d.getDate() + 1)) {
-    const iso = ymd(d);
-    const dow = (d.getDay() + 6) % 7;
-    if (dow === 0) {
-      week++;
-      if (d.getMonth() !== lastMonth && d >= start) { monthLabels.push([week, MONTH_NAMES[d.getMonth()]]); lastMonth = d.getMonth(); }
-    }
-    if (d < start) { cells += `<span class="heat-cell" style="visibility:hidden"></span>`; continue; }
-    const n = st.heatmap[iso] || 0;
-    const lvl = n >= 4 ? "l4" : n === 3 ? "l3" : n === 2 ? "l2" : n === 1 ? "l1" : "";
-    const fut = iso > today ? "future" : "";
-    const tod = iso === today ? "today" : "";
-    cells += `<span class="heat-cell ${lvl} ${fut} ${tod}" title="${fmtDate(iso)} — ${n} solved"></span>`;
-  }
-  const totalWeeks = week + 1;
-  box.innerHTML = `
-    <div class="heat-months" style="display:grid;grid-template-columns:repeat(${totalWeeks},16.5px)">
-      ${(() => { let out = "", prev = 0; for (const [w, name] of monthLabels) { out += `<span style="grid-column:${w + 1}">${name}</span>`; prev = w; } return out; })()}
-    </div>
-    <div class="heat-grid">${cells}</div>`;
 }
 
 /* charts */
@@ -347,69 +282,6 @@ function chartDefaults() {
   Chart.defaults.font.size = 10.5;
   Chart.defaults.borderColor = "rgba(148,163,184,.07)";
   return true;
-}
-
-function drawBurnup() {
-  if (!chartDefaults()) return;
-  const st = S.state;
-  const labels = [], plan = [], actual = [];
-  const start = new Date(st.settings.roadmap_start + "T00:00:00");
-  const end = new Date(st.settings.roadmap_end + "T00:00:00");
-  const rates = {};
-  st.months.forEach(m => rates[m.key] = m.target / m.days);
-  const actMap = {};
-  st.burnup.forEach(b => actMap[b.date] = b.actual);
-  let planCum = 0;
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const iso = ymd(d);
-    planCum += rates[iso.slice(0, 7)] || 0;
-    labels.push(iso);
-    plan.push(Math.round(planCum * 10) / 10);
-    actual.push(iso <= st.today ? (actMap[iso] ?? (actual.length ? actual[actual.length - 1] : 0)) : null);
-  }
-  const el = $("#ch-burn");
-  if (!el) return;
-  S.charts.burn?.destroy();
-  const ctx = el.getContext("2d");
-  const grad = ctx.createLinearGradient(0, 0, 0, 260);
-  grad.addColorStop(0, "rgba(129,140,248,.34)");
-  grad.addColorStop(1, "rgba(129,140,248,0)");
-  const todayIdx = labels.indexOf(st.today);
-  S.charts.burn = new Chart(ctx, {
-    type: "line",
-    data: { labels, datasets: [
-      { label: "plan", data: plan, borderColor: "rgba(148,163,184,.45)", borderDash: [5, 5], borderWidth: 1.4, pointRadius: 0, fill: false },
-      { label: "actual", data: actual, borderColor: "#818cf8", borderWidth: 2.6, pointRadius: 0, fill: true, backgroundColor: grad, tension: .25 },
-    ]},
-    options: {
-      responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#141c31", borderColor: "rgba(148,163,184,.2)", borderWidth: 1,
-          titleColor: "#e9edf7", bodyColor: "#98a2b8", padding: 10, displayColors: false,
-          callbacks: { title: it => fmtDate(it[0].label), label: it => ` ${it.dataset.label}: ${it.parsed.y}` },
-        },
-      },
-      scales: {
-        x: { ticks: { maxRotation: 0, autoSkip: false, callback: (v, i) => labels[i].endsWith("-01") ? MONTH_NAMES[+labels[i].slice(5, 7) - 1] : null }, grid: { display: false } },
-        y: { beginAtZero: true, max: 340, ticks: { stepSize: 80 } },
-      },
-    },
-    plugins: [{
-      id: "todayLine",
-      afterDraw(c) {
-        if (todayIdx < 0) return;
-        const x = c.scales.x.getPixelForValue(todayIdx);
-        const { top, bottom } = c.chartArea;
-        const g = c.ctx; g.save();
-        g.strokeStyle = "rgba(232,121,249,.5)"; g.setLineDash([3, 4]); g.lineWidth = 1;
-        g.beginPath(); g.moveTo(x, top); g.lineTo(x, bottom); g.stroke();
-        g.fillStyle = "#e879f9"; g.font = "700 9px 'Segoe UI'";
-        g.fillText("today", x + 4, top + 10); g.restore();
-      },
-    }],
-  });
 }
 
 function drawDonut() {
@@ -444,65 +316,120 @@ function drawDonut() {
   });
 }
 
-/* ------------------------------------------------------------------ roadmap */
-function renderRoadmap(el) {
-  const st = S.state;
-  el.innerHTML = `
-  <div class="modes-strip">
-    ${st.modes.map(m => `
-      <div class="card" style="padding:14px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="tpill ${m.mode}">${m.mode}</span>
-          <span style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums">${m.done}<span style="color:var(--dim);font-size:11px"> / ${m.target}</span></span>
-        </div>
-        <div class="bar thin"><i class="${m.done >= m.target ? "full" : ""}" style="width:${Math.min(100, m.done / m.target * 100)}%"></i></div>
-        <div style="font-size:10.5px;color:var(--dim);margin-top:8px">${esc(m.note)}</div>
-      </div>`).join("")}
-  </div>
-  ${st.months.map(m => {
-    const allocs = st.allocations.filter(a => a.month === m.key);
-    return `
-    <div class="card month-sec">
-      <div class="month-head">
-        <div>
-          <div class="month-title">${m.name}</div>
-          <div class="month-dates">${fmtDate(m.start)} → ${fmtDate(m.end)} · ${m.days} days</div>
-        </div>
-        <span class="chip ${m.status}">${m.status}</span>
-        <div class="bar"><i class="${m.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, m.pct)}%"></i></div>
-        <div class="month-bignum">${m.done}<span> / ${m.target}</span></div>
-        ${m.need_per_day ? `<div class="month-dates">needs <b style="color:var(--text)">${m.need_per_day}</b>/day</div>` : ""}
+/* ------------------------------------------------------------------ system design */
+function renderSysdesign(el) {
+  const sd = S.state.sysdesign;
+  const remaining = [...sd.concepts, ...sd.problems].filter(t => !t.done).map(t => t.name);
+  const section = (title, items, hint) => `
+    <div class="card mt">
+      <div class="card-h"><svg><use href="#i-sys"/></svg>${title}<span class="spacer"></span>
+        <span style="letter-spacing:0;text-transform:none;font-weight:600">${items.filter(i => i.done).length} / ${items.length} · ${hint}</span></div>
+      <div class="card-b sd-grid">
+        ${items.map(t => `
+          <button class="sd-chip ${t.done ? "done" : ""} ${sd.pick === t.name ? "picked" : ""}" data-name="${esc(t.name)}">
+            <span class="sd-tick"><svg><use href="#i-check"/></svg></span>
+            <span class="sd-name">${esc(t.name)}</span>
+            ${sd.pick === t.name ? '<span class="sd-flag">current pick</span>' : ""}
+          </button>`).join("")}
       </div>
-      <table class="alloc-table"><tbody>
-        ${allocs.map(a => `
-          <tr>
-            <td class="alloc-label">${esc(a.label)}</td>
-            <td style="width:90px"><span class="tpill ${a.mode}">${a.mode}</span></td>
-            <td class="alloc-prog"><div class="bar thin"><i class="${a.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, a.pct)}%"></i></div></td>
-            <td class="alloc-nums"><b>${a.done}</b> / ${a.target}</td>
-            <td class="alloc-note">${esc(a.note)}</td>
-          </tr>`).join("")}
-      </tbody></table>
     </div>`;
-  }).join("")}`;
+
+  el.innerHTML = `
+  <div class="card picker-card">
+    <div class="picker-left">
+      <div class="kpi-label">${sd.pick ? "Current pick — learn this, then tick it" : "No pick yet"}</div>
+      <div class="picker-name ${sd.pick ? "" : "empty"}" id="picker-name">
+        ${sd.pick ? esc(sd.pick) : remaining.length ? "spin to get today's topic" : "everything is ticked — you absolute legend"}
+      </div>
+      <div class="picker-actions">
+        ${sd.pick ? `
+          <button class="btn btn-primary" id="pick-done"><svg><use href="#i-check"/></svg>Learned it — tick it off</button>
+          <button class="btn btn-ghost" id="pick-again"><svg><use href="#i-sync"/></svg>Spin again</button>` : `
+          <button class="btn btn-primary btn-spin" id="btn-spin" ${remaining.length ? "" : "disabled"}>
+            <svg><use href="#i-sync"/></svg>Spin the picker</button>`}
+      </div>
+    </div>
+    <div class="picker-right">
+      <div class="picker-count"><b>${sd.done}</b><span>/ ${sd.total} topics<br>mastered</span></div>
+      <div class="bar" style="width:150px"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
+    </div>
+  </div>
+  ${section("Core concepts", sd.concepts, "click to tick")}
+  ${section("Design problems", sd.problems, "full mock designs")}`;
+
+  $$(".sd-chip", el).forEach(chip => chip.onclick = async () => {
+    if (S._spinning) return;
+    const name = chip.dataset.name;
+    try {
+      await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "toggle", name }) });
+      const t = [...S.state.sysdesign.concepts, ...S.state.sysdesign.problems].find(x => x.name === name);
+      toast(t && t.done ? `Unticked ${name}` : `${name} — mastered ✓`);
+      await reload();
+    } catch (e) { if (e.message !== "locked") toast("Failed: " + e.message, false); }
+  });
+  const spinBtn = $("#btn-spin", el);
+  if (spinBtn) spinBtn.onclick = () => runSpin(el, remaining);
+  const again = $("#pick-again", el);
+  if (again) again.onclick = () => runSpin(el, remaining.filter(n => n !== sd.pick));
+  const doneBtn = $("#pick-done", el);
+  if (doneBtn) doneBtn.onclick = async () => {
+    try {
+      await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "toggle", name: sd.pick }) });
+      toast(`${sd.pick} — mastered ✓ (${sd.done + 1}/${sd.total})`);
+      await reload();
+    } catch (e) { if (e.message !== "locked") toast("Failed: " + e.message, false); }
+  };
+}
+
+function runSpin(el, remaining) {
+  if (S._spinning || !remaining.length) return;
+  S._spinning = true;
+  const target = remaining[Math.floor(Math.random() * remaining.length)];
+  const chips = $$(".sd-chip", el).filter(c => remaining.includes(c.dataset.name));
+  const byName = Object.fromEntries(chips.map(c => [c.dataset.name, c]));
+  const nameEl = $("#picker-name", el);
+  nameEl.classList.remove("empty");
+  const steps = Math.min(26, Math.max(14, remaining.length * 2));
+  let i = 0, prev = null;
+  const step = () => {
+    let name;
+    if (i >= steps) name = target;
+    else do { name = remaining[Math.floor(Math.random() * remaining.length)]; }
+    while (name === prev && remaining.length > 1);
+    prev = name;
+    if (prev && byName[prev]) chips.forEach(c => c.classList.remove("rolling"));
+    const chip = byName[name];
+    if (chip) { chip.classList.add("rolling"); chip.scrollIntoView({ block: "nearest", behavior: "instant" }); }
+    nameEl.textContent = name;
+    if (i >= steps) {
+      setTimeout(async () => {
+        chips.forEach(c => c.classList.remove("rolling"));
+        if (chip) chip.classList.add("picked");
+        nameEl.classList.add("landed");
+        try {
+          await api("/api/sd", { method: "POST", body: JSON.stringify({ action: "pick", name: target }) });
+          toast(`Today's mission: ${target} 🎯`);
+        } catch {}
+        S._spinning = false;
+        await reload();
+      }, 420);
+      return;
+    }
+    i++;
+    setTimeout(step, 52 + i * i * 0.55);
+  };
+  step();
 }
 
 /* ------------------------------------------------------------------ topics */
-function coldBadge(t) {
-  if (t.days_cold == null) return `<span class="cold warm">untouched</span>`;
-  if (t.days_cold > 45) return `<span class="cold red">${t.days_cold}d cold</span>`;
-  if (t.days_cold > 30) return `<span class="cold amber">${t.days_cold}d cold</span>`;
-  if (t.days_cold <= 3) return `<span class="cold fresh">active</span>`;
-  return `<span class="cold warm">${t.days_cold}d ago</span>`;
-}
 function renderTopics(el) {
   const st = S.state;
   el.innerHTML = `<div class="tgrid">
     ${st.topics.map(t => `
       <div class="card tcard" data-topic="${esc(t.name)}">
         <div class="tcard-top">
-          <div><div class="tcard-name">${esc(t.name)}</div><div class="tcard-months">${esc(t.months).toUpperCase()}</div></div>
-          ${coldBadge(t)}
+          <div><div class="tcard-name">${esc(t.name)}</div></div>
+          ${t.pct >= 100 ? '<span class="cold fresh">complete</span>' : t.touches ? '<span class="cold warm">in progress</span>' : ""}
         </div>
         <div class="tcard-nums"><b>${t.block_done}</b><span>/ ${t.target} block</span>
           <span style="margin-left:auto">${t.touches} touch${t.touches === 1 ? "" : "es"}</span></div>
@@ -524,8 +451,6 @@ function renderLog(el) {
   el.innerHTML = `
   <div class="log-tools">
     <input class="input log-search" id="lf-q" placeholder="Search title, topic, tag…" value="${esc(f.q)}">
-    <select class="select" id="lf-month"><option value="">All months</option>
-      ${st.months.map(m => `<option value="${m.key}" ${f.month === m.key ? "selected" : ""}>${m.name}</option>`).join("")}</select>
     <select class="select" id="lf-topic"><option value="">All topics</option>
       ${st.topics.map(t => `<option ${f.topic === t.name ? "selected" : ""}>${esc(t.name)}</option>`).join("")}</select>
     <select class="select" id="lf-type"><option value="">All types</option>
@@ -541,7 +466,6 @@ function renderLog(el) {
     const q = S.logFilters;
     const rows = st.problems.filter(p =>
       (!q.q || (p.title + p.topic + (p.lc_tags || []).join(" ")).toLowerCase().includes(q.q.toLowerCase())) &&
-      (!q.month || p.date_solved.slice(0, 7) === q.month) &&
       (!q.topic || p.topic === q.topic) &&
       (!q.type || p.type === q.type) &&
       (!q.diff || p.difficulty === q.diff));
@@ -551,14 +475,13 @@ function renderLog(el) {
     <div class="card table-wrap">
       <table class="log">
         <thead><tr>
-          <th>Date</th><th>Problem</th><th>Diff</th><th>Topic</th><th>Type</th>
+          <th>Problem</th><th>Diff</th><th>Topic</th><th>Type</th>
           <th title="minutes">Time</th><th title="solved without editorial">Clean</th>
           <th title="flag for redo">Flag</th><th>Notes</th><th></th>
         </tr></thead>
         <tbody>
           ${rows.map(p => `
           <tr data-id="${p.id}">
-            <td style="color:var(--mut);font-variant-numeric:tabular-nums">${fmtDate(p.date_solved)}</td>
             <td><div class="prob-title">
               ${p.lc_id ? `<span class="lc-num">#${p.lc_id}</span>` : ""}
               <span class="t" title="${esc(p.lc_tags.join(", "))}">${esc(p.title)}</span>
@@ -606,13 +529,13 @@ function renderLog(el) {
 
   const refilter = () => {
     S.logFilters = {
-      q: $("#lf-q", el).value, month: $("#lf-month", el).value, topic: $("#lf-topic", el).value,
+      q: $("#lf-q", el).value, month: "", topic: $("#lf-topic", el).value,
       type: $("#lf-type", el).value, diff: $("#lf-diff", el).value, auto: "",
     };
     paintTable();
   };
   $("#lf-q", el).oninput = () => { clearTimeout(S._qt); S._qt = setTimeout(refilter, 220); };
-  ["lf-month", "lf-topic", "lf-type", "lf-diff"].forEach(id => $("#" + id, el).onchange = refilter);
+  ["lf-topic", "lf-type", "lf-diff"].forEach(id => $("#" + id, el).onchange = refilter);
   $("#btn-add", el).onclick = openAddModal;
   paintTable();
 }
@@ -669,11 +592,7 @@ function renderRedo(el) {
   }
   el.innerHTML = `<div class="redo-list">
     ${st.redo.map(r => `
-      <div class="card redo-item ${r.overdue > 0 ? "overdue" : ""}">
-        <div class="redo-due ${r.overdue > 0 ? "late" : ""}">
-          <b>${r.overdue > 0 ? `${r.overdue}d overdue` : "due " + fmtDate(r.due)}</b>
-          logged ${fmtDate(r.logged)}
-        </div>
+      <div class="card redo-item">
         <div class="redo-main">
           <div class="redo-title">${esc(r.title)}</div>
           <div class="redo-meta">
@@ -685,7 +604,7 @@ function renderRedo(el) {
         <button class="btn btn-ghost" data-id="${r.id}"><svg><use href="#i-check"/></svg>Mark redone</button>
       </div>`).join("")}
   </div>
-  <p style="font-size:11.5px;color:var(--dim);margin-top:14px">tip — just re-solve it on LeetCode: the next sync files it as a <b>Redo</b> entry and clears the flag on its own.</p>`;
+  <p style="font-size:11.5px;color:var(--dim);margin-top:14px">no due dates here — whenever you're ready, just re-solve it on LeetCode: the next sync files it as a <b>Redo</b> entry and clears the flag on its own.</p>`;
   $$("[data-id]", el).forEach(b => b.onclick = async () => {
     if (await patchProblem(+b.dataset.id, { redo_done: 1 })) toast("Marked redone");
   });
@@ -791,8 +710,8 @@ async function syncNow() {
 }
 
 const RENDERERS = {
-  dashboard: renderDashboard, roadmap: renderRoadmap, topics: renderTopics,
-  log: renderLog, redo: renderRedo, playbook: renderPlaybook, settings: renderSettings,
+  dashboard: renderDashboard, topics: renderTopics, log: renderLog,
+  redo: renderRedo, sysdesign: renderSysdesign, playbook: renderPlaybook, settings: renderSettings,
 };
 
 function render(view) {

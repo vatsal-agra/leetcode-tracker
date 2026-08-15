@@ -93,17 +93,33 @@ export const PRACTICE_MODES = [
 ];
 
 export const PLAYBOOK = [
-  { title: "Daily template — 2 + 1", body: "Two problems from the current mini-block (5–6 day topic runs), one wildcard: a redo-queue item if one is due, otherwise a random problem from any covered topic with the tag hidden." },
+  { title: "Mix blocks with wildcards", body: "Work a topic in a focused run, but keep sprinkling in wildcards: a redo-queue item if one is open, otherwise a random problem from any covered topic with the tag hidden. Discrimination reps are what interviews actually test." },
   { title: "The 60-second rule", body: "Before coding any wildcard, write down which pattern you think it is and why. That minute of classification practice is the entire point of the slot." },
-  { title: "The 35-minute rule", body: "Stuck past 35 minutes → read the editorial, close it, implement from memory, flag it for redo. Grinding 2 hours on one DP problem kills the daily quota." },
-  { title: "Flag → +7 days", body: "Any problem that needed the editorial gets redone 7 days later. The tracker auto-detects the re-solve and clears the flag. Redos count toward monthly totals — repetition is the learning." },
-  { title: "Thin days: wildcard first", body: "On a 1-problem day, do the wildcard, not the block problem. Block progress can slip a day; discrimination reps can't be crammed later." },
-  { title: "Contests — Sept onward", body: "Start September, not before. Each contest counts ~4 toward the month; every attempted problem logs as its own entry." },
-  { title: "November — pure preservation", body: "Streak preservation only: 2–3 per week from your weakest tags (watch the Days-Cold badges). Zero new topics — exams own this month, and the full syllabus is already behind you by design." },
-  { title: "December — consolidation", body: "Flush the flag queue (weeks 1–2), then timed pairs — 2 mediums in 70 minutes, no autocomplete — company-tagged lists, hard reps on Graphs/DP, and 2 Sunday contests." },
+  { title: "The 35-minute rule", body: "Stuck past 35 minutes → read the editorial, close it, implement from memory, flag it for redo. Grinding hours on one DP problem burns energy you don't have to spare." },
+  { title: "Flag → redo", body: "Any problem that needed the editorial gets re-solved later, from scratch. The tracker auto-detects the re-solve on LeetCode and clears the flag. Repetition is the learning." },
+  { title: "Busy day? Wildcard first", body: "If you only have time for one problem, make it the wildcard, not the block problem. Block progress can wait; discrimination reps can't be crammed." },
+  { title: "Hards come later", body: "Easies and mediums build the pattern library; hards test composition. Don't force hards early in a topic — return for them once the topic feels boring." },
   { title: "Tier-2 (deliberately skipped)", body: "Segment trees / Fenwick, KMP / rolling hash, bitmask & digit DP, Floyd–Warshall. Contest material, ~1–2% of interviews. Reliability on the 95% beats breadth on the last 5%." },
-  { title: "Single source of truth", body: "The log drives every number here. Solves sync in automatically; your only jobs are the redo flags, time-taken, and honest No-Editorial marks." },
+  { title: "One system-design pick at a time", body: "Spin the picker, get one topic, actually learn it — a real article or video plus notes, not a skim. Tick it only when you could explain it in an interview. Then spin again." },
+  { title: "Single source of truth", body: "The log drives every number here. Solves sync in automatically; your only jobs are the redo flags, time-taken, honest No-Editorial marks — and ticking system-design topics you truly finished." },
 ];
+
+export const SD_CONCEPTS = [
+  "Requirements gathering & scoping", "Back-of-envelope estimation", "Load balancing", "Caching",
+  "SQL vs NoSQL", "Database indexing", "Replication", "Sharding / partitioning", "CAP theorem",
+  "Consistent hashing", "Message queues & pub/sub", "CDN", "API design", "Rate limiting",
+  "Monolith vs microservices", "Consistency models", "Proxies", "WebSockets / SSE / polling",
+  "Blob & object storage", "Idempotency", "Retries, backoff, circuit breakers",
+  "Service discovery & API gateway", "Monitoring, logging, tracing", "Authentication & authorization",
+  "Bloom filters", "Database schema design", "Query optimization & N+1 problems", "Connection pooling",
+  "Transactions, locking & concurrency control", "Background jobs & async processing",
+  "Pagination & cursors", "Batch vs stream ingestion", "Time-series & high-write workloads",
+];
+export const SD_PROBLEMS = [
+  "URL shortener", "Rate limiter", "Chat / messaging app", "News feed", "Notification system",
+  "Web crawler", "Search autocomplete", "Ride-sharing", "Video streaming", "Payment system",
+];
+export const SD_ALL = [...SD_CONCEPTS, ...SD_PROBLEMS];
 
 const TAG_RULES = [
   [["Trie"], "Tries"],
@@ -147,9 +163,9 @@ export function addDays(iso, n) {
 }
 export const validISO = d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(Date.parse(d + "T00:00:00Z"));
 
-const monthKeyOf = d => d.slice(0, 7);
 export function defaultType(topic, dsolved) {
-  return (MONTH_BLOCK_TOPICS[monthKeyOf(dsolved)] || []).includes(topic) ? "Block" : "Wildcard";
+  // no schedule pressure: auto-captured solves default to Block; other types are manual
+  return "Block";
 }
 
 /* ------------------------------------------------------------- leetcode */
@@ -282,7 +298,6 @@ export async function runSync(data) {
 export function computeState(data) {
   const s = { ...DEFAULT_SETTINGS, ...data.settings };
   const today = istToday();
-  const start = s.roadmap_start, end = s.roadmap_end;
 
   const probs = data.problems.items
     .filter(p => validISO(p.date_solved))
@@ -292,89 +307,38 @@ export function computeState(data) {
   for (const p of probs) {
     p.lc_tags = p.lc_tags || [];
     p.candidates = p.candidates || [];
-    if (p.flag_redo && !p.redo_done) p.redo_due = addDays(p.date_solved, s.redo_days);
   }
 
   const totalTarget = MONTHS.reduce((a, m) => a + m.target, 0);
   const done = probs.length;
-  const daysIn = Math.max(0, dayNum(today < end ? today : end) - dayNum(start) + 1);
-  const daysLeft = today <= end ? Math.max(0, dayNum(end) - dayNum(today) + 1) : 0;
-  const pace = daysIn ? +(done / daysIn).toFixed(2) : 0;
-  const required = daysLeft ? +(Math.max(0, totalTarget - done) / daysLeft).toFixed(2) : 0;
-
-  const months = MONTHS.map(m => {
-    const mdone = probs.filter(p => p.date_solved >= m.start && p.date_solved <= m.end).length;
-    const days = dayNum(m.end) - dayNum(m.start) + 1;
-    let status;
-    if (mdone >= m.target) status = "complete";
-    else if (today < m.start) status = "upcoming";
-    else if (today > m.end) status = "missed";
-    else status = mdone >= m.target * (dayNum(today) - dayNum(m.start) + 1) / days ? "ontrack" : "behind";
-    let need = 0;
-    if (status === "ontrack" || status === "behind") {
-      const leftDays = dayNum(m.end) - Math.max(dayNum(today), dayNum(m.start)) + 1;
-      need = +(Math.max(0, m.target - mdone) / Math.max(1, leftDays)).toFixed(2);
-    }
-    return { ...m, done: mdone, left: Math.max(0, m.target - mdone), days, status,
-             need_per_day: need, pct: m.target ? +(mdone / m.target * 100).toFixed(1) : 0 };
-  });
 
   const topics = TOPICS.map(t => {
     const tp = probs.filter(p => p.topic === t.name);
     const blockDone = tp.filter(p => p.type === "Block").length;
-    const last = tp.reduce((a, p) => a && a > p.date_solved ? a : p.date_solved, null);
-    return { ...t, block_done: blockDone, touches: tp.length,
+    return { name: t.name, target: t.target, icon: t.icon,
+             block_done: blockDone, touches: tp.length,
              left: Math.max(0, t.target - blockDone),
              pct: t.target ? +(blockDone / t.target * 100).toFixed(1) : 0,
              easy: tp.filter(p => p.difficulty === "Easy").length,
              medium: tp.filter(p => p.difficulty === "Medium").length,
-             hard: tp.filter(p => p.difficulty === "Hard").length,
-             last_touched: last, days_cold: last ? dayNum(today) - dayNum(last) : null };
-  });
-
-  const allocations = ALLOCATIONS.map(a => {
-    const inMonth = probs.filter(p => monthKeyOf(p.date_solved) === a.month);
-    const adone = (a.mode === "Block")
-      ? inMonth.filter(p => p.type === "Block" && (a.topics || []).includes(p.topic)).length
-      : inMonth.filter(p => p.type === a.mode).length;
-    return { ...a, done: adone, left: Math.max(0, a.target - adone),
-             pct: a.target ? +(adone / a.target * 100).toFixed(1) : 0 };
-  });
-
-  const modes = PRACTICE_MODES.map(m => {
-    const mdone = probs.filter(p => p.type === m.mode).length;
-    return { ...m, done: mdone, left: Math.max(0, m.target - mdone) };
+             hard: tp.filter(p => p.difficulty === "Hard").length };
   });
 
   const redo = probs
     .filter(p => p.flag_redo && !p.redo_done)
-    .map(p => ({ id: p.id, title: p.title, slug: p.slug, topic: p.topic, difficulty: p.difficulty,
-                 logged: p.date_solved, due: p.redo_due,
-                 overdue: Math.max(0, dayNum(today) - dayNum(p.redo_due)) }))
-    .sort((a, b) => a.due.localeCompare(b.due));
+    .map(p => ({ id: p.id, title: p.title, slug: p.slug, topic: p.topic,
+                 difficulty: p.difficulty, logged: p.date_solved }));
 
-  const byDay = {};
-  for (const p of probs) byDay[p.date_solved] = (byDay[p.date_solved] || 0) + 1;
-
-  const rates = Object.fromEntries(MONTHS.map(m => [m.key, m.target / (dayNum(m.end) - dayNum(m.start) + 1)]));
-  const burnup = [];
-  let cum = 0, planCum = 0;
-  const horizon = today > start ? (today < end ? today : end) : start;
-  for (let d = start; d <= horizon; d = addDays(d, 1)) {
-    cum += byDay[d] || 0;
-    planCum += rates[monthKeyOf(d)] || 0;
-    burnup.push({ date: d, actual: cum, plan: +planCum.toFixed(1) });
-  }
-
-  let streak = 0;
-  let dcheck = today;
-  if (!byDay[dcheck]) dcheck = addDays(dcheck, -1);
-  while (byDay[dcheck]) { streak++; dcheck = addDays(dcheck, -1); }
-  let best = 0, run = 0;
-  for (let d = start; d <= today; d = addDays(d, 1)) {
-    run = byDay[d] ? run + 1 : 0;
-    if (run > best) best = run;
-  }
+  const sd = data.sd || { done: [], pick: null };
+  const sdDone = (sd.done || []).filter(n => SD_ALL.includes(n));
+  let sdPick = sd.pick;
+  if (!SD_ALL.includes(sdPick) || sdDone.includes(sdPick)) sdPick = null;
+  const sysdesign = {
+    concepts: SD_CONCEPTS.map(n => ({ name: n, done: sdDone.includes(n) })),
+    problems: SD_PROBLEMS.map(n => ({ name: n, done: sdDone.includes(n) })),
+    done: sdDone.length, total: SD_ALL.length, pick: sdPick,
+    pct: +(sdDone.length / SD_ALL.length * 100).toFixed(1),
+  };
 
   const snap = data.snapshots[data.snapshots.length - 1] || null;
   const baseline = Number.isFinite(+s.baseline_total) ? +s.baseline_total : DEFAULT_SETTINGS.baseline_total;
@@ -398,16 +362,15 @@ export function computeState(data) {
     today, settings: s,
     kpi: {
       total_target: totalTarget, done, pct: +(done / totalTarget * 100).toFixed(1),
-      days_in: daysIn, days_left: daysLeft, pace, required,
       hards: probs.filter(p => p.difficulty === "Hard").length,
-      open_flags: redo.length, overdue: redo.filter(r => r.overdue > 0).length,
-      streak, best_streak: best,
+      open_flags: redo.length,
       needs_review: probs.filter(p => p.needs_review).length,
     },
     lc, cross_check: crossCheck,
     sync: { last: lastSync, ranking_series: data.snapshots.map(r => ({ ts: r.ts, ranking: r.ranking })) },
-    months, topics, allocations, modes, redo, problems: probs,
-    burnup, plan_line: [], heatmap: byDay, playbook: PLAYBOOK,
+    topics, redo, problems: probs,
+    sysdesign,
+    playbook: PLAYBOOK,
     difficulty_split: Object.fromEntries(["Easy", "Medium", "Hard"].map(k => [k, probs.filter(p => p.difficulty === k).length])),
     type_split: Object.fromEntries(TYPES.map(k => [k, probs.filter(p => p.type === k).length])),
   };

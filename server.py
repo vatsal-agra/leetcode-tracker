@@ -123,17 +123,33 @@ PRACTICE_MODES = [
 ]
 
 PLAYBOOK = [
-    {"title": "Daily template — 2 + 1", "body": "Two problems from the current mini-block (5–6 day topic runs), one wildcard: a redo-queue item if one is due, otherwise a random problem from any covered topic with the tag hidden."},
+    {"title": "Mix blocks with wildcards", "body": "Work a topic in a focused run, but keep sprinkling in wildcards: a redo-queue item if one is open, otherwise a random problem from any covered topic with the tag hidden. Discrimination reps are what interviews actually test."},
     {"title": "The 60-second rule", "body": "Before coding any wildcard, write down which pattern you think it is and why. That minute of classification practice is the entire point of the slot."},
-    {"title": "The 35-minute rule", "body": "Stuck past 35 minutes → read the editorial, close it, implement from memory, flag it for redo. Grinding 2 hours on one DP problem kills the daily quota."},
-    {"title": "Flag → +7 days", "body": "Any problem that needed the editorial gets redone 7 days later. The tracker auto-detects the re-solve and clears the flag. Redos count toward monthly totals — repetition is the learning."},
-    {"title": "Thin days: wildcard first", "body": "On a 1-problem day, do the wildcard, not the block problem. Block progress can slip a day; discrimination reps can't be crammed later."},
-    {"title": "Contests — Sept onward", "body": "Start September, not before. Each contest counts ~4 toward the month; every attempted problem logs as its own entry."},
-    {"title": "November — pure preservation", "body": "Streak preservation only: 2–3 per week from your weakest tags (watch the Days-Cold badges). Zero new topics — exams own this month, and the full syllabus is already behind you by design."},
-    {"title": "December — consolidation", "body": "Flush the flag queue (weeks 1–2), then timed pairs — 2 mediums in 70 minutes, no autocomplete — company-tagged lists, hard reps on Graphs/DP, and 2 Sunday contests."},
+    {"title": "The 35-minute rule", "body": "Stuck past 35 minutes → read the editorial, close it, implement from memory, flag it for redo. Grinding hours on one DP problem burns energy you don't have to spare."},
+    {"title": "Flag → redo", "body": "Any problem that needed the editorial gets re-solved later, from scratch. The tracker auto-detects the re-solve on LeetCode and clears the flag. Repetition is the learning."},
+    {"title": "Busy day? Wildcard first", "body": "If you only have time for one problem, make it the wildcard, not the block problem. Block progress can wait; discrimination reps can't be crammed."},
+    {"title": "Hards come later", "body": "Easies and mediums build the pattern library; hards test composition. Don't force hards early in a topic — return for them once the topic feels boring."},
     {"title": "Tier-2 (deliberately skipped)", "body": "Segment trees / Fenwick, KMP / rolling hash, bitmask & digit DP, Floyd–Warshall. Contest material, ~1–2% of interviews. Reliability on the 95% beats breadth on the last 5%."},
-    {"title": "Single source of truth", "body": "The log drives every number here. Solves sync in automatically; your only jobs are the redo flags, time-taken, and honest No-Editorial marks."},
+    {"title": "One system-design pick at a time", "body": "Spin the picker, get one topic, actually learn it — a real article or video plus notes, not a skim. Tick it only when you could explain it in an interview. Then spin again."},
+    {"title": "Single source of truth", "body": "The log drives every number here. Solves sync in automatically; your only jobs are the redo flags, time-taken, honest No-Editorial marks — and ticking system-design topics you truly finished."},
 ]
+
+SD_CONCEPTS = [
+    "Requirements gathering & scoping", "Back-of-envelope estimation", "Load balancing", "Caching",
+    "SQL vs NoSQL", "Database indexing", "Replication", "Sharding / partitioning", "CAP theorem",
+    "Consistent hashing", "Message queues & pub/sub", "CDN", "API design", "Rate limiting",
+    "Monolith vs microservices", "Consistency models", "Proxies", "WebSockets / SSE / polling",
+    "Blob & object storage", "Idempotency", "Retries, backoff, circuit breakers",
+    "Service discovery & API gateway", "Monitoring, logging, tracing", "Authentication & authorization",
+    "Bloom filters", "Database schema design", "Query optimization & N+1 problems", "Connection pooling",
+    "Transactions, locking & concurrency control", "Background jobs & async processing",
+    "Pagination & cursors", "Batch vs stream ingestion", "Time-series & high-write workloads",
+]
+SD_PROBLEMS = [
+    "URL shortener", "Rate limiter", "Chat / messaging app", "News feed", "Notification system",
+    "Web crawler", "Search autocomplete", "Ride-sharing", "Video streaming", "Payment system",
+]
+SD_ALL = SD_CONCEPTS + SD_PROBLEMS
 
 # Ordered (tag-group → roadmap-topic) rules: structures before algorithms,
 # specific before general, Arrays & Hashing as the fallback bucket.
@@ -246,8 +262,19 @@ def get_settings():
     with closing(db()) as c:
         rows = c.execute("SELECT k, v FROM settings").fetchall()
     s = dict(DEFAULT_SETTINGS)
-    s.update({r["k"]: json.loads(r["v"]) for r in rows})
+    s.update({r["k"]: json.loads(r["v"]) for r in rows if r["k"] in DEFAULT_SETTINGS})
     return s
+
+
+def get_kv(key, default):
+    with closing(db()) as c:
+        row = c.execute("SELECT v FROM settings WHERE k=?", (key,)).fetchone()
+    return json.loads(row["v"]) if row else default
+
+
+def set_kv(key, value):
+    with closing(db()) as c, c:
+        c.execute("INSERT OR REPLACE INTO settings VALUES(?,?)", (key, json.dumps(value)))
 
 
 # ----------------------------------------------------------------------------- leetcode client
@@ -312,8 +339,9 @@ def month_key_of(d: str) -> str:
 
 
 def default_type(topic, dsolved):
-    blocks = MONTH_BLOCK_TOPICS.get(month_key_of(dsolved), [])
-    return "Block" if topic in blocks else "Wildcard"
+    # no schedule pressure: every auto-captured solve defaults to Block work on
+    # its topic; Wildcard/Timed/Contest are deliberate manual re-labels
+    return "Block"
 
 
 def run_sync():
@@ -447,111 +475,39 @@ def compute_state():
     for p in probs:
         p["lc_tags"] = json.loads(p["lc_tags"] or "[]")
         p["candidates"] = json.loads(p.get("candidates") or "[]")
-        if p["flag_redo"] and not p["redo_done"]:
-            p["redo_due"] = (date.fromisoformat(p["date_solved"]) + timedelta(days=s["redo_days"])).isoformat()
 
     total_target = sum(m["target"] for m in MONTHS)
     done = len(probs)
-    days_in = max(0, (min(today, end) - start).days + 1)
-    days_left = max(0, (end - today).days + 1) if today <= end else 0
-    pace = round(done / days_in, 2) if days_in else 0.0
-    required = round(max(0, total_target - done) / days_left, 2) if days_left else 0.0
 
-    # months
-    months_out = []
-    for m in MONTHS:
-        ms, me = date.fromisoformat(m["start"]), date.fromisoformat(m["end"])
-        mdone = sum(1 for p in probs if m["start"] <= p["date_solved"] <= m["end"])
-        days = (me - ms).days + 1
-        if mdone >= m["target"]:
-            status = "complete"
-        elif today < ms:
-            status = "upcoming"
-        elif today > me:
-            status = "missed"
-        else:
-            elapsed = (today - ms).days + 1
-            status = "ontrack" if mdone >= m["target"] * elapsed / days else "behind"
-        need = 0.0
-        if status in ("ontrack", "behind"):
-            left_days = (me - max(today, ms)).days + 1
-            need = round(max(0, m["target"] - mdone) / max(1, left_days), 2)
-        months_out.append({**m, "done": mdone, "left": max(0, m["target"] - mdone), "days": days,
-                           "status": status, "need_per_day": need,
-                           "pct": round(mdone / m["target"] * 100, 1) if m["target"] else 0})
-
-    # topics
+    # topics — quantity goals only, no calendar
     topics_out = []
     for t in TOPICS:
         tp = [p for p in probs if p["topic"] == t["name"]]
         block_done = sum(1 for p in tp if p["type"] == "Block")
-        last = max((p["date_solved"] for p in tp), default=None)
-        cold = (today - date.fromisoformat(last)).days if last else None
-        topics_out.append({**t, "block_done": block_done, "touches": len(tp),
+        topics_out.append({"name": t["name"], "target": t["target"], "icon": t["icon"],
+                           "block_done": block_done, "touches": len(tp),
                            "left": max(0, t["target"] - block_done),
                            "pct": round(block_done / t["target"] * 100, 1) if t["target"] else 0,
                            "easy": sum(1 for p in tp if p["difficulty"] == "Easy"),
                            "medium": sum(1 for p in tp if p["difficulty"] == "Medium"),
-                           "hard": sum(1 for p in tp if p["difficulty"] == "Hard"),
-                           "last_touched": last, "days_cold": cold})
+                           "hard": sum(1 for p in tp if p["difficulty"] == "Hard")})
 
-    # allocations
-    allocs_out = []
-    for a in ALLOCATIONS:
-        mk = a["month"]
-        if a["mode"] in ("Wildcard", "Redo", "Timed", "Contest"):
-            adone = sum(1 for p in probs if month_key_of(p["date_solved"]) == mk and p["type"] == a["mode"])
-        else:
-            adone = sum(1 for p in probs if month_key_of(p["date_solved"]) == mk and p["type"] == "Block"
-                        and p["topic"] in (a["topics"] or []))
-        allocs_out.append({**a, "done": adone, "left": max(0, a["target"] - adone),
-                           "pct": round(adone / a["target"] * 100, 1) if a["target"] else 0})
-
-    modes_out = [{**m, "done": sum(1 for p in probs if p["type"] == m["mode"]),
-                  } for m in PRACTICE_MODES]
-    for m in modes_out:
-        m["left"] = max(0, m["target"] - m["done"])
-
-    # redo queue
+    # redo queue — open flags, no due dates, newest first
     redo = [{"id": p["id"], "title": p["title"], "slug": p["slug"], "topic": p["topic"],
-             "difficulty": p["difficulty"], "logged": p["date_solved"], "due": p["redo_due"],
-             "overdue": max(0, (today - date.fromisoformat(p["redo_due"])).days)}
+             "difficulty": p["difficulty"], "logged": p["date_solved"]}
             for p in probs if p["flag_redo"] and not p["redo_done"]]
-    redo.sort(key=lambda r: r["due"])
 
-    # burn-up + heatmap + streaks
-    by_day = {}
-    for p in probs:
-        by_day[p["date_solved"]] = by_day.get(p["date_solved"], 0) + 1
-    burn, cum, plan_cum = [], 0, 0.0
-    d = start
-    plan_rates = {m["key"]: m["target"] / ((date.fromisoformat(m["end"]) - date.fromisoformat(m["start"])).days + 1)
-                  for m in MONTHS}
-    horizon = min(end, max(today, start))
-    while d <= horizon:
-        cum += by_day.get(d.isoformat(), 0)
-        plan_cum += plan_rates.get(d.isoformat()[:7], 0)
-        burn.append({"date": d.isoformat(), "actual": cum, "plan": round(plan_cum, 1)})
-        d += timedelta(days=1)
-    plan_total, dd, full_plan = [], start, 0.0
-    while dd <= end:
-        full_plan += plan_rates.get(dd.isoformat()[:7], 0)
-        if dd.day == 1 or dd == end or dd == start:
-            plan_total.append({"date": dd.isoformat(), "plan": round(full_plan)})
-        dd += timedelta(days=1)
-
-    streak = 0
-    dcheck = today
-    if not by_day.get(dcheck.isoformat()):
-        dcheck -= timedelta(days=1)  # streak survives until today ends
-    while by_day.get(dcheck.isoformat()):
-        streak += 1
-        dcheck -= timedelta(days=1)
-    best, run, dd = 0, 0, start
-    while dd <= today:
-        run = run + 1 if by_day.get(dd.isoformat()) else 0
-        best = max(best, run)
-        dd += timedelta(days=1)
+    # system design
+    sd_done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
+    sd_pick = get_kv("sd_pick", None)
+    if sd_pick not in SD_ALL or sd_pick in sd_done:
+        sd_pick = None
+    sysdesign = {
+        "concepts": [{"name": n, "done": n in sd_done} for n in SD_CONCEPTS],
+        "problems": [{"name": n, "done": n in sd_done} for n in SD_PROBLEMS],
+        "done": len(sd_done), "total": len(SD_ALL), "pick": sd_pick,
+        "pct": round(len(sd_done) / len(SD_ALL) * 100, 1),
+    }
 
     try:
         baseline = int(s["baseline_total"])
@@ -574,17 +530,14 @@ def compute_state():
         "today": today.isoformat(),
         "settings": s,
         "kpi": {"total_target": total_target, "done": done, "pct": round(done / total_target * 100, 1),
-                "days_in": days_in, "days_left": days_left, "pace": pace, "required": required,
                 "hards": sum(1 for p in probs if p["difficulty"] == "Hard"),
-                "open_flags": len(redo), "overdue": sum(1 for r in redo if r["overdue"] > 0),
-                "streak": streak, "best_streak": best,
+                "open_flags": len(redo),
                 "needs_review": sum(1 for p in probs if p["needs_review"])},
         "lc": lc, "cross_check": cross_check,
         "sync": {"last": dict(last_sync) if last_sync else None,
                  "ranking_series": [{"ts": r["ts"], "ranking": r["ranking"]} for r in snaps]},
-        "months": months_out, "topics": topics_out, "allocations": allocs_out,
-        "modes": modes_out, "redo": redo, "problems": probs,
-        "burnup": burn, "plan_line": plan_total, "heatmap": by_day,
+        "topics": topics_out, "redo": redo, "problems": probs,
+        "sysdesign": sysdesign,
         "playbook": PLAYBOOK,
         "difficulty_split": {k: sum(1 for p in probs if p["difficulty"] == k) for k in ("Easy", "Medium", "Hard")},
         "type_split": {k: sum(1 for p in probs if p["type"] == k) for k in ("Block", "Wildcard", "Redo", "Timed", "Contest")},
@@ -695,6 +648,33 @@ def api_settings(body: dict):
         for k, v in clean.items():
             c.execute("INSERT OR REPLACE INTO settings VALUES(?,?)", (k, json.dumps(v)))
     return {"ok": True, "settings": get_settings()}
+
+
+@app.post("/api/sd")
+def api_sd(body: dict):
+    action = body.get("action")
+    name = body.get("name")
+    if action == "toggle":
+        if name not in SD_ALL:
+            raise HTTPException(400, "unknown system-design topic")
+        done = [n for n in get_kv("sd_done", []) if n in SD_ALL]
+        if name in done:
+            done.remove(name)
+        else:
+            done.append(name)
+            if get_kv("sd_pick", None) == name:
+                set_kv("sd_pick", None)
+        set_kv("sd_done", done)
+        return {"ok": True, "done": done}
+    if action == "pick":
+        if name not in SD_ALL:
+            raise HTTPException(400, "unknown system-design topic")
+        set_kv("sd_pick", name)
+        return {"ok": True, "pick": name}
+    if action == "clear_pick":
+        set_kv("sd_pick", None)
+        return {"ok": True, "pick": None}
+    raise HTTPException(400, "action must be toggle | pick | clear_pick")
 
 
 @app.get("/api/export")
