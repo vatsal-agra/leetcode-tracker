@@ -172,46 +172,42 @@ function renderDashboard(el) {
   </div>` : ""}
 
   <div class="grid g-kpi ${review.length ? "mt" : ""}">
-    <div class="card kpi headline"><div style="flex:1">
-      <div class="kpi-label" style="display:flex;justify-content:space-between">Total solved · lifetime
+    <div class="card kpi2">
+      <div class="kpi2-top">
+        <span class="kpi-label"><svg><use href="#i-bolt"/></svg>LeetCode — total solved</span>
         <span class="chip ${st.sync.last && st.sync.last.ok ? "live" : "off"}" style="text-transform:none">${st.sync.last && st.sync.last.ok ? "synced" : "sync issue"}</span>
       </div>
-      <div style="display:flex;align-items:baseline;gap:14px;margin-top:4px">
-        <div class="kpi-huge" id="cu-lift">${num(lc.lifetime)}</div>
+      <div class="kpi2-mid">
+        <span class="kpi-huge" id="cu-lift">${num(lc.lifetime)}</span>
+        <span class="kpi2-total">problems<br>crushed</span>
         ${sinceB != null && sinceB > 0 ? `<span class="delta-chip good" style="margin:0"><svg><use href="#i-trend"/></svg>+${sinceB} since tracking began</span>` : ""}
       </div>
-      <div class="kpi-sub" style="margin-top:9px">
-        <span style="color:var(--easy)">● ${lc.easy ?? "—"} easy</span> ·
-        <span style="color:var(--med)">● ${lc.medium ?? "—"} medium</span> ·
-        <span style="color:var(--hard)">● ${lc.hard ?? "—"} hard</span>
-        · rank <b>${num(lc.ranking)}</b></div>
-    </div></div>
-
-    <div class="card kpi">
-      ${ringSVG(k.pct)}
-      <div>
-        <div class="kpi-label">Mission 320</div>
-        <div class="kpi-big"><span id="cu-done">${k.done}</span><span style="font-size:16px;color:var(--dim)"> / ${k.total_target}</span></div>
-        <div class="kpi-sub">tracked solves — no deadline,<br>just a mountain to climb</div>
+      <div class="bar"><i class="${k.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, k.pct)}%"></i></div>
+      <div class="kpi2-foot">
+        <span><span style="color:var(--easy)">● ${lc.easy ?? "—"} easy</span> ·
+          <span style="color:var(--med)">● ${lc.medium ?? "—"} medium</span> ·
+          <span style="color:var(--hard)">● ${lc.hard ?? "—"} hard</span></span>
+        <span>${k.done} / ${k.total_target} tracked · rank <b>${num(lc.ranking)}</b></span>
       </div>
     </div>
 
-    <div class="card kpi sd-kpi" onclick="location.hash='#sysdesign'"><div style="flex:1">
-      <div class="kpi-label">System design</div>
-      <div class="kpi-big" style="margin-top:6px">${sd.done}<span style="font-size:16px;color:var(--dim)"> / ${sd.total}</span></div>
-      <div class="bar" style="margin:9px 0 8px"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
-      <div class="kpi-sub">${sd.pick ? `current pick: <b style="color:var(--violet)">${esc(sd.pick)}</b>` : `no pick yet — <b style="color:var(--violet)">spin the picker →</b>`}</div>
-    </div></div>
-
-    <div class="card kpi"><div style="flex:1">
-      <div class="kpi-label">Needs attention</div>
-      <div style="display:flex;gap:20px;margin-top:8px">
-        <div><div class="kpi-big" style="color:${k.open_flags ? "var(--amber)" : "var(--text)"}">${k.open_flags}</div><div class="kpi-sub">redo flags</div></div>
-        <div><div class="kpi-big" style="color:${k.needs_review ? "var(--violet)" : "var(--text)"}">${k.needs_review}</div><div class="kpi-sub">topic calls</div></div>
-        <div><div class="kpi-big" style="color:var(--hard)">${k.hards}</div><div class="kpi-sub">hards done</div></div>
+    <div class="card kpi2 sd-kpi" onclick="location.hash='#sysdesign'">
+      <div class="kpi2-top">
+        <span class="kpi-label"><svg><use href="#i-sys"/></svg>System design — topics mastered</span>
+        <span class="chip live" style="text-transform:none;color:var(--violet);background:rgba(167,139,250,.11)">picker</span>
       </div>
-      <div class="kpi-sub" style="margin-top:9px">${k.open_flags || k.needs_review ? "clear these when you get a minute — zero rush" : "all clear ✓"}</div>
-    </div></div>
+      <div class="kpi2-mid">
+        <span class="kpi-huge">${sd.done}</span>
+        <span class="kpi2-total">of ${sd.total}<br>topics</span>
+        ${sd.pick ? `<span class="delta-chip good" style="margin:0;color:var(--violet);background:rgba(167,139,250,.11)"><svg><use href="#i-target"/></svg>${esc(sd.pick)}</span>`
+                  : `<span class="delta-chip good" style="margin:0;color:var(--violet);background:rgba(167,139,250,.11)"><svg><use href="#i-sync"/></svg>spin the picker →</span>`}
+      </div>
+      <div class="bar"><i class="${sd.pct >= 100 ? "full" : ""}" style="width:${Math.min(100, sd.pct)}%"></i></div>
+      <div class="kpi2-foot">
+        <span>${sd.concepts.filter(c => c.done).length} / ${sd.concepts.length} core concepts · ${sd.problems.filter(p => p.done).length} / ${sd.problems.length} design problems</span>
+        <span style="color:var(--violet);font-weight:700">open →</span>
+      </div>
+    </div>
   </div>
 
   <div class="grid g-mid mt">
@@ -259,7 +255,6 @@ function renderDashboard(el) {
   </div>`;
 
   if (!S.countedUp) {
-    countUp($("#cu-done", el), k.done);
     if (lc.lifetime != null) countUp($("#cu-lift", el), lc.lifetime);
     S.countedUp = true;
   }
