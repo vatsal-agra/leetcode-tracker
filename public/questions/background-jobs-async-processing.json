@@ -10,7 +10,8 @@
         "SMTP connections require a dedicated long-lived process anyway"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Decoupling keeps user-facing latency low and isolates the request from third-party slowness or failure, since the queued job can retry independently without the user waiting."
     },
     {
       "q": "At-least-once delivery means job handlers must be...",
@@ -21,7 +22,8 @@
         "stateless, holding no data whatsoever between successive executions"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "At-least-once guarantees no loss but permits duplicates from redelivery, so reprocessing must produce the same result. Idempotency moves that burden to the handler, where it can be solved."
     },
     {
       "q": "A job fails with a transient network timeout. Standard first response?",
@@ -32,13 +34,15 @@
         "Retry it with exponential backoff and jitter"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Transient faults usually clear on their own, so a retry likely succeeds. Backoff avoids piling pressure on a struggling dependency, and jitter keeps retries from synchronizing."
     },
     {
       "q": "A malformed job crashes its worker on every attempt and keeps getting redelivered. This is called...",
       "options": ["a zombie job", "a tombstone message", "a poison message", "a livelocked consumer"],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A poison message can never be processed successfully, so redelivery loops forever and can block the queue. A retry limit plus a dead-letter queue is the standard containment."
     },
     {
       "q": "Why acknowledge a message only after processing finishes?",
@@ -49,7 +53,8 @@
         "Late acks reduce network chatter between polling cycles"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The ack is the promise that work is done. Acking first turns any crash into silent data loss; acking last converts it into a duplicate, which idempotency can handle."
     },
     {
       "q": "What is a dead-letter queue for?",
@@ -60,7 +65,8 @@
         "Parking jobs that exhausted retries, for inspection and replay"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DLQ isolates permanently failing messages so they stop consuming worker capacity, while preserving them for debugging and replay after the underlying bug is fixed."
     },
     {
       "q": "Why add jitter to retry backoff delays?",
@@ -71,7 +77,8 @@
         "To make retry timestamps unique for distributed tracing"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Jobs that failed together would retry together on identical schedules. Random delay spreads them across the window so the recovering dependency sees a ramp, not a spike."
     },
     {
       "q": "Where should a large video live when you enqueue a transcoding job?",
@@ -82,7 +89,8 @@
         "Split across a numbered sequence of chunked messages"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The claim-check pattern keeps messages small and within broker size limits, while durable object storage handles the bytes. Any worker can then fetch the payload by key."
     },
     {
       "q": "A service enqueues 'send confirmation' inside a DB transaction that later rolls back, but the message was already published. Fix?",
@@ -93,7 +101,8 @@
         "Have consumers ignore messages older than the transaction timeout"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Writing the event to an outbox table in the same transaction makes state and event commit or roll back together, eliminating the dual-write gap that produced the phantom message."
     },
     {
       "q": "With the outbox pattern, how do events actually reach the broker?",
@@ -104,7 +113,8 @@
         "Consumers query the outbox table directly instead of subscribing to a broker"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A separate relay tails the outbox table, by polling or change data capture on the WAL, and publishes committed rows. Publishing inside the transaction would reintroduce the dual write."
     },
     {
       "q": "A worker charges a card, then crashes before acking. The message is redelivered. What prevents double billing?",
@@ -115,7 +125,8 @@
         "The card network's automatic same-amount deduplication window"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A stable key derived from the job lets the provider recognize the retry as the same charge and return the original result. The broker cannot know about external side effects."
     },
     {
       "q": "Queue depth grows steadily while workers run at 100% utilization. What is the real lever?",
@@ -126,7 +137,8 @@
         "Add consumers or cut per-job time; arrivals exceed service rate"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A monotonically growing backlog means arrival rate exceeds service rate, so only raising throughput (more consumers or faster jobs) or reducing arrivals can help. Reordering does not add capacity."
     },
     {
       "q": "One tenant enqueues a million jobs, starving everyone on the shared queue. Best structural fix?",
@@ -137,7 +149,8 @@
         "Have workers skip any batch larger than a threshold"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Isolating tenants into separate queues, or dequeueing round-robin across them, bounds any one tenant's share of worker time. A bigger queue just buffers the same starvation."
     },
     {
       "q": "After scheduler failover, two schedulers fire the same nightly job. What prevents double execution?",
@@ -148,7 +161,8 @@
         "The queue's FIFO ordering guarantee on message delivery"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Inserting a unique row or acquiring a lock keyed on the scheduled occurrence lets exactly one instance win and the loser exit. Clock sync makes collisions likelier, not safer."
     },
     {
       "q": "Which failure should NOT be retried automatically?",
@@ -159,7 +173,8 @@
         "A validation error proving the payload can never succeed"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Validation failures are deterministic: the identical payload will fail identically forever, so retrying only wastes capacity. Send it straight to the dead-letter queue."
     },
     {
       "q": "A job's processing time exceeds the queue's visibility timeout. What happens?",
@@ -170,7 +185,8 @@
         "The ack fails and the job is instantly dead-lettered"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The broker assumes the worker died and redelivers, so two workers run the same job at once. Fix it by extending the timeout (heartbeating) or making handlers idempotent."
     },
     {
       "q": "An outbox relay publishes, crashes before marking rows sent, then republishes on restart. Net delivery guarantee?",
@@ -181,7 +197,8 @@
         "At-least-once; consumers still need idempotent handling"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Publish and mark-sent are two non-atomic steps, so a crash between them causes republication. Nothing is lost, but duplicates are possible, which is at-least-once."
     },
     {
       "q": "100k jobs fail together during a 10-minute dependency outage, all on fixed 30-second retry. What happens at recovery?",
@@ -192,7 +209,8 @@
         "Nothing notable; fixed intervals are self-desynchronizing over time"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Fixed intervals keep the failures phase-locked, so 100k requests land in the same instant on a cold dependency. Jitter plus capped exponential backoff spreads the load out."
     },
     {
       "q": "You need each job's effect applied exactly once end-to-end over an at-least-once queue. What is achievable?",
@@ -203,7 +221,8 @@
         "Exactly-once, whenever FIFO queues with dedup windows are used"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Exactly-once delivery is impossible across an unreliable network, but exactly-once effect is not: dedupe on a persisted key so repeated deliveries collapse into one observable outcome."
     },
     {
       "q": "A job writes database state and calls an unrevertible external API. Sound approach?",
@@ -214,7 +233,8 @@
         "Interleave the two and lean on the queue's retry semantics"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Committing an intent record first means a crash leaves a durable record to retry from, and idempotent calls plus reconciliation close the gap. External providers cannot join your transaction."
     }
   ]
 }
