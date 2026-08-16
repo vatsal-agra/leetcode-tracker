@@ -5,7 +5,8 @@
       "q": "An ORM loads 50 blog posts, then lazily fetches each post's author inside a loop. How many queries typically execute?",
       "options": ["2", "50", "51", "100"],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "That is the classic N+1 shape: one query fetches the 50 posts, then one lazy author lookup fires per post, giving 1 + 50 = 51 queries."
     },
     {
       "q": "Which change most directly eliminates an N+1 pattern when loading orders with their customers?",
@@ -16,7 +17,8 @@
         "Increase the connection pool so the lookups run in parallel"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Eager loading collapses the per-row lookups into one join or one batched IN query. Indexes and bigger pools only make each of the N round trips cheaper, not fewer."
     },
     {
       "q": "EXPLAIN shows a sequential scan on a 50-million-row table for a highly selective WHERE clause. Most likely explanation?",
@@ -27,7 +29,8 @@
         "The filter predicate is being applied after aggregation"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A highly selective predicate is exactly the case an index wins, so a full scan almost always means no index covers that column, or none the predicate can use."
     },
     {
       "q": "Why can SELECT * hurt performance even when the WHERE clause is fully indexed?",
@@ -38,7 +41,8 @@
         "It drags unneeded columns, blocking index-only scans"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Requesting every column forces heap lookups the index alone could have satisfied, and ships extra bytes over the wire. Locking and caching behavior are unchanged."
     },
     {
       "q": "Where do the row estimates in an EXPLAIN plan come from?",
@@ -49,7 +53,8 @@
         "The table's file size divided by the average row width"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The planner uses stored statistics (histograms, distinct counts, null fractions) gathered by sampling during ANALYZE. It never touches the data while planning, so stale stats mean bad estimates."
     },
     {
       "q": "When is one JOIN query clearly better than several separate queries?",
@@ -60,7 +65,8 @@
         "When the application already caches each row individually"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "With indexed join keys and rows that are always consumed together, one join beats several round trips. Cross-shard joins and heavy parent-row duplication argue the other way."
     },
     {
       "q": "A composite B-tree index exists on (customer_id, created_at). Which query can use it efficiently?",
@@ -71,7 +77,8 @@
         "ORDER BY created_at DESC LIMIT 10 with no filter at all"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A composite B-tree is ordered by its leading column first, so equality on customer_id plus a range on created_at seeks straight to a contiguous slice. Predicates skipping customer_id cannot."
     },
     {
       "q": "What is the standard fix for N+1 queries inside GraphQL field resolvers?",
@@ -82,7 +89,8 @@
         "Per-request dataloaders that batch and dedupe key lookups"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DataLoader collects keys requested during a tick, dedupes them, and issues one batched fetch, turning N resolver calls into a single query. Its cache is scoped per request to avoid stale data."
     },
     {
       "q": "A read query got slower right after you added an index it now uses. Most likely cause?",
@@ -93,7 +101,8 @@
         "New indexes invalidate the buffer pool until it rewarms fully"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "If the indexed column is not selective, the index path matches most rows and adds random heap fetches on top, costing more than the sequential scan the planner used before."
     },
     {
       "q": "Logs show one query for users, then 200 identical queries differing only by user_id. Best immediate fix?",
@@ -104,7 +113,8 @@
         "Turn on statement caching so repeats skip the parser"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The cost is 200 round trips, so batching the ids into one IN query removes 199 of them. Indexing or statement caching shaves each trip but leaves the count unchanged."
     },
     {
       "q": "A join of two large tables shows a nested loop with a sequential scan on the inner side. What should you check first?",
@@ -115,7 +125,8 @@
         "Whether the join should become a UNION of two separate scans"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A nested loop rescans the inner side once per outer row, so a missing index on the inner join column turns the join quadratic. Indexing it makes each inner lookup a cheap seek."
     },
     {
       "q": "Fetching one post plus its 5,000 comments with a single JOIN mainly risks what, versus two queries?",
@@ -126,7 +137,8 @@
         "The post's wide columns transferred 5,000 times over the wire"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A one-to-many join repeats every parent column on each child row, so a wide post body is sent 5,000 times. This cartesian bloat is why two queries can win here."
     },
     {
       "q": "EXPLAIN ANALYZE shows estimated 100 rows but actual 2 million at a filter node. Most productive response?",
@@ -137,7 +149,8 @@
         "Partition the table on the filtered column right away"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A four-order-of-magnitude misestimate points at bad or missing statistics, often correlated predicates the planner multiplies independently. Fix the estimate and the plan usually fixes itself."
     },
     {
       "q": "Eager loading is configured, yet N+1 queries persist in production. Which pattern explains this?",
@@ -148,7 +161,8 @@
         "The association is serialized to JSON after being loaded"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Adding a scope, filter, or ordering to an association inside the loop produces a different query than the one preloaded, so the ORM discards the cache and hits the database per item."
     },
     {
       "q": "95% of rows have status 'active'. Why does the planner skip the status index for WHERE status = 'active'?",
@@ -159,7 +173,8 @@
         "The index serves only ORDER BY clauses, never WHERE filters"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "At 95% selectivity the index path would read the index plus nearly every heap page in random order, which is more expensive than one sequential pass over the table."
     },
     {
       "q": "Wrapping 200 small SELECTs in one transaction barely helps latency. Why?",
@@ -170,7 +185,8 @@
         "Each statement still pays a network round trip plus parse cost"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A transaction only saves the implicit begin/commit overhead; the 200 round trips and per-statement parse and plan work remain. Batching or pipelining is what removes them."
     },
     {
       "q": "A request runs 1 parent query plus 100 child queries; each takes 1 ms server-side over a 2 ms round-trip network. Roughly how much latency does collapsing to 2 queries save?",
@@ -181,7 +197,8 @@
         "Almost nothing, since the database overlaps the requests"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Each child query costs 1 ms plus 2 ms of round trip, so 100 of them cost about 300 ms sequentially. Collapsing to one batched child query reclaims nearly all of it."
     },
     {
       "q": "Postgres chooses an index-only scan, yet still reads heap pages. Why?",
@@ -192,7 +209,8 @@
         "The executor always verifies the first row on the heap"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Indexes carry no visibility information, so Postgres consults the visibility map. Pages not yet marked all-visible, typically because vacuum has not caught up, force a heap fetch per row."
     },
     {
       "q": "You replace an N+1 with one SELECT ... WHERE id IN (list of 10,000). What new problem can appear?",
@@ -203,7 +221,8 @@
         "Result ordering becomes tied to the transaction snapshot instead"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Very large IN lists blow up planning time, can exceed bind-parameter limits, and may flip the planner to a scan. Chunking into batches of a few hundred to a thousand is the usual fix."
     },
     {
       "q": "WHERE lower(email) = $1 ignores the B-tree index on email. Which fix actually works?",
@@ -214,7 +233,8 @@
         "Create an expression index on lower(email), or use citext"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Wrapping a column in a function makes the predicate non-sargable against a plain index. Indexing the same expression, lower(email), or switching to citext restores index matching."
     }
   ]
 }

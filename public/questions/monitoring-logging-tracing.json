@@ -10,7 +10,8 @@
         "Storing structured audit events for compliance review"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Metrics are pre-aggregated numeric time-series, so they are cheap to store and query for trends and alerting. Per-request detail belongs in logs and traces."
     },
     {
       "q": "Why do latency SLOs use percentiles like p99 instead of the mean?",
@@ -21,7 +22,8 @@
         "p99 automatically excludes bot and health-check traffic"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Averages are dominated by the bulk of fast requests and mask slow outliers, while percentiles describe the experience of the worst-served users. Means are actually cheaper to compute, not harder."
     },
     {
       "q": "What is an SLI, concretely?",
@@ -32,7 +34,8 @@
         "A measured signal of service health, like fraction of successful requests"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An SLI is the measurement itself, such as the ratio of successful requests. The target set on that measurement is the SLO, and the customer-facing contract is the SLA."
     },
     {
       "q": "What is the purpose of an error budget?",
@@ -43,7 +46,8 @@
         "Headcount allocated to fixing production errors each sprint"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The gap between 100% and the SLO is a quantified allowance of failure that teams can deliberately spend on shipping features and taking risks, balancing velocity against reliability."
     },
     {
       "q": "What distinguishes structured logging from plain text logs?",
@@ -54,7 +58,8 @@
         "A fixed 80-character line format optimized for terminals"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Structured logs emit typed key-value fields, usually JSON, so tools can index and query them precisely instead of relying on brittle regex parsing of free-form strings."
     },
     {
       "q": "In distributed tracing, what is a span?",
@@ -65,7 +70,8 @@
         "The sampling window during which traces are recorded"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A span is one named, timed unit of work with attributes and a parent reference. The full end-to-end tree of spans for a request is the trace."
     },
     {
       "q": "How does a trace stay connected as a request crosses service boundaries?",
@@ -76,7 +82,8 @@
         "Precisely clock-synchronized timestamps let the backend infer the request path afterward"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Context propagation carries the trace ID and parent span ID in headers such as W3C traceparent, so each downstream service attaches its spans to the same trace."
     },
     {
       "q": "Which alerting philosophy reduces pager fatigue?",
@@ -87,7 +94,8 @@
         "Page on user-impacting symptoms; ticket the merely suspicious causes"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Symptom-based paging keeps every page actionable and tied to real user harm, while cause-based anomalies become tickets. Paging on every anomaly is what creates fatigue and ignored alerts."
     },
     {
       "q": "p50 is 40 ms, p99 is 2 s. What does this shape usually indicate?",
@@ -98,7 +106,8 @@
         "Most requests are fine, but a tail (GC, cold caches, slow deps) is badly degraded"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A fast median with a heavy tail means the common path is healthy and a small fraction hits GC pauses, cache misses, lock contention, or slow dependencies. Uniform slowness would raise p50 too."
     },
     {
       "q": "Why do high-traffic systems sample traces instead of recording all of them?",
@@ -109,7 +118,8 @@
         "Sampling improves trace accuracy by removing noisy requests"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Span volume scales with traffic, so 100% retention costs enormous storage and export bandwidth for little extra insight; a representative sample answers the same questions far cheaper."
     },
     {
       "q": "An SLO is 99.9% success over 30 days. Roughly how much full downtime does that budget allow?",
@@ -120,7 +130,8 @@
         "About 7.2 hours"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "0.1% of 30 days is 43,200 minutes x 0.001, which is about 43 minutes. Three nines monthly is the familiar roughly-43-minute budget."
     },
     {
       "q": "Error rate spiked, but only logs exist, no metrics. What is the practical pain?",
@@ -131,7 +142,8 @@
         "Errors in logs are unordered, making causality unknowable"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Logs are per-event records, so answering how many and how fast requires scanning and counting large volumes, whereas a counter metric gives the rate instantly and supports alerting."
     },
     {
       "q": "A trace shows 800 ms total: gateway 20 ms, service A 30 ms, then a 700 ms gap before service B's span. Likely culprit?",
@@ -142,7 +154,8 @@
         "Clock skew, which always manifests as gaps this large"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Unattributed time between spans points at what neither span measures: queue wait, connection-pool exhaustion, DNS, TLS handshake, or network delay before B starts its work."
     },
     {
       "q": "Your team burns 80% of the monthly error budget in week one. What does SRE practice suggest?",
@@ -153,7 +166,8 @@
         "Slow risky launches and prioritize reliability work until the budget recovers"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The error budget is a control loop: exhausting it shifts the team from feature velocity to reliability work and change freezes until the budget refills. Redefining the SLO just hides the problem."
     },
     {
       "q": "Logs from 40 services use inconsistent request ID field names. What is the highest-leverage fix?",
@@ -164,7 +178,8 @@
         "Centralize all the log files onto a single host so that field names stop mattering"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "One agreed correlation ID field, propagated and logged everywhere, makes a single query reconstruct a request across all services. Centralizing storage without a shared field still leaves logs unjoinable."
     },
     {
       "q": "Why alert on burn rate (budget consumption speed) rather than raw error thresholds?",
@@ -175,7 +190,8 @@
         "Burn rate alerts never fire during deployments"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Burn rate normalizes errors against the budget, so multi-window rules page urgently on a fast burn and file slower notifications for gradual drain, matching alert severity to actual user impact."
     },
     {
       "q": "After adding 100% tracing to a hot service, p99 latency rises 15%. Most plausible mechanism?",
@@ -186,7 +202,8 @@
         "Sampling at 100% disables the JIT compiler in most runtimes"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Instrumentation is not free: allocating spans, serializing attributes, and flushing batches consume CPU, memory, and network that compete with request handling, and the tail feels it first."
     },
     {
       "q": "An outage went unnoticed: dashboards were green because the metrics pipeline itself had failed. What prevents this blind spot?",
@@ -197,7 +214,8 @@
         "Snapshotting dashboards hourly for later comparison"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Treat missing data as a failure signal, not silence: a constant heartbeat series plus dead-man alerts, evaluated by separate infrastructure, catches a monitoring stack that dies with the system."
     },
     {
       "q": "You must keep 13 months of metrics for capacity planning without huge storage bills. Standard approach?",
@@ -208,7 +226,8 @@
         "Downsample: raw short-term, progressively coarser rollups for older data"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Tiered retention keeps high resolution only while it is needed for debugging and rolls older data into coarser buckets, which is enough for long-term trend and capacity analysis at a fraction of the cost."
     },
     {
       "q": "One user reports sporadic 500s; overall error rate is 0.01% and alerts are silent. Which capability finds the cause fastest?",
@@ -219,7 +238,8 @@
         "A synthetic probe replaying the user's typical journey hourly"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Exemplars jump straight from the aggregate error metric to concrete failing traces, so you inspect the actual rare requests instead of hunting a needle statistically. Lowering thresholds would only add noise."
     }
   ]
 }

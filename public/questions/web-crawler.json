@@ -10,7 +10,8 @@
         "The cache of hostnames the crawler has already resolved via DNS"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The frontier is the crawler's to-do list: discovered but unfetched URLs, ordered so that important pages come first while per-host rate limits are respected."
     },
     {
       "q": "What does a site's robots.txt file communicate to a crawler?",
@@ -21,7 +22,8 @@
         "Which paths a given crawler user-agent may or may not fetch"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "robots.txt declares Allow and Disallow rules per user-agent, plus optional crawl-delay. A full URL listing is the job of a sitemap, not robots.txt."
     },
     {
       "q": "What does politeness mean in crawler design?",
@@ -32,7 +34,8 @@
         "Identifying the crawler honestly through its User-Agent header on every request"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Politeness is throttling: at most one outstanding request per host with a delay between fetches, so the crawl does not act as an accidental denial-of-service attack."
     },
     {
       "q": "How does a crawler detect that two fetched pages have identical content at scale?",
@@ -43,7 +46,8 @@
         "Compare rendered screenshots using perceptual image diffing"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Hashing reduces each page to a short fixed-size digest, turning duplicate detection into an O(1) set lookup instead of comparing against billions of stored documents."
     },
     {
       "q": "Which structure is commonly used for the URL-seen test when memory is constrained?",
@@ -54,7 +58,8 @@
         "A Bloom filter, trading small false positives for compact memory"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A Bloom filter stores membership in a few bits per URL with no false negatives, so billions of URLs fit in RAM at the cost of occasionally skipping a new URL."
     },
     {
       "q": "What is the standard processing order once a crawler downloads a page?",
@@ -65,7 +70,8 @@
         "Fetch, enqueue the page itself, parse later, normalize last"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Normalizing and deduplicating before enqueue keeps the frontier small and prevents refetching equivalent URLs. Fetching links immediately would violate politeness and skip dedupe."
     },
     {
       "q": "Why is DNS resolution a notable crawler bottleneck, and what is the common fix?",
@@ -76,7 +82,8 @@
         "Every TCP handshake triggers repeated reverse PTR lookups"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DNS round trip can take tens of milliseconds and blocks the fetcher thread; caching resolutions per host, plus async lookups, amortizes it across many page fetches."
     },
     {
       "q": "What is a spider trap?",
@@ -87,7 +94,8 @@
         "A honeypot page that logs crawler IPs so the site can ban them"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Infinite calendars or endlessly nested parameter URLs create an unbounded URL space, so a naive crawler burns its whole budget on one worthless host."
     },
     {
       "q": "How does a multi-threaded crawler enforce per-host politeness in its frontier?",
@@ -98,7 +106,8 @@
         "URLs are hashed by path so no two workers ever share a page"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Mapping each host to exactly one worker queue means a single thread controls that host's timing, so the delay is trivially enforced without cross-thread coordination."
     },
     {
       "q": "How should a crawler consult robots.txt efficiently across billions of fetches?",
@@ -109,7 +118,8 @@
         "Bake its rules into the frontier at discovery time and trust them forever"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Caching the parsed rules avoids refetching robots.txt for every URL, while a TTL of hours or a day ensures the crawler picks up policy changes reasonably quickly."
     },
     {
       "q": "Why must URLs be normalized before the URL-seen test runs?",
@@ -120,7 +130,8 @@
         "Equivalent URL variants would evade the seen test and be fetched repeatedly"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Differing case, default ports, trailing slashes, fragments, and parameter order all hash differently, so without canonicalization the same page enters the frontier many times."
     },
     {
       "q": "How should URLs be partitioned across machines in a distributed crawler?",
@@ -131,7 +142,8 @@
         "Broadcast every URL to all nodes and deduplicate afterward"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Host-based partitioning keeps rate limiting, robots caching, and connection reuse local to a single node. Hashing by full URL would scatter one host across every machine."
     },
     {
       "q": "How should a crawler decide when to revisit already-crawled pages?",
@@ -142,7 +154,8 @@
         "Adapt per-page revisit rates from observed change frequency and importance"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Spending the recrawl budget where content actually churns keeps a news homepage fresh while rarely revisiting static archive pages. Uniform cycles waste bandwidth on both ends."
     },
     {
       "q": "Which combination of mechanisms defends a crawler against spider traps?",
@@ -153,7 +166,8 @@
         "Limiting the crawl to hosts that serve valid HTTPS certificates signed by trusted CAs"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Hard budgets bound the damage from any single host even when the trap is undetectable, since an infinite URL space cannot exhaust a finite depth and page allowance."
     },
     {
       "q": "A URL chain issues 30 consecutive redirects. What should the crawler do?",
@@ -164,7 +178,8 @@
         "Switch to HEAD requests to resolve the chain more cheaply"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Long chains usually indicate a loop or trap, so a cap of roughly five hops bounds the wasted requests and marks the URL as failed rather than following forever."
     },
     {
       "q": "Two pages differ only in navigation boilerplate, so exact hashing misses the duplication. What is the standard fix?",
@@ -175,7 +190,8 @@
         "Crawl suspected mirrors from the same node and diff them directly"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "SimHash maps similar documents to fingerprints within a small Hamming distance, so near-duplicates are found by cheap bit comparison. Exact hashes change completely on any byte difference."
     },
     {
       "q": "In a crawler's URL-seen Bloom filter, what does a false positive cause?",
@@ -186,7 +202,8 @@
         "Frontier priority ordering degrades until it becomes random"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A Bloom filter can say 'present' for an absent item, so a small fraction of new URLs is skipped. It never yields false negatives, so nothing is refetched because of it."
     },
     {
       "q": "A high-priority host has millions of pages but demands a 10-second crawl delay. What follows?",
@@ -197,7 +214,8 @@
         "Moving the host's queue to the fastest node restores throughput"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The delay fixes throughput at roughly 8,640 pages per day regardless of hardware, so millions of pages take years. Only the site owner can relax that limit."
     },
     {
       "q": "A fetcher node dies while holding thousands of frontier URLs. How does a robust design recover them?",
@@ -208,7 +226,8 @@
         "Frontier leases expire and the dead node's URLs are reassigned, tolerating occasional refetches"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Leasing URLs with a timeout means unacknowledged work automatically returns to the pool for another node. Crawling is idempotent, so a duplicate fetch is harmless."
     },
     {
       "q": "Headless-browser rendering costs 10-100x more than plain fetching. When is it justified in a crawl?",
@@ -219,7 +238,8 @@
         "Only for paginated listing pages that hide their content behind infinite scroll widgets"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Render only when the raw HTML is empty or the page scores as high value, so the expensive path is reserved for content you cannot otherwise obtain."
     }
   ]
 }

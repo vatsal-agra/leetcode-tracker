@@ -10,7 +10,8 @@
         "It packs IDs into short strings using only URL-safe alphanumerics"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Base62 uses only 0-9, a-z, A-Z, which need no percent-encoding in a URL, and its wide alphabet keeps codes short. It is encoding, not encryption, so it hides nothing."
     },
     {
       "q": "Roughly how many distinct 7-character base62 codes exist?",
@@ -21,7 +22,8 @@
         "2^7, exactly 128 possible codes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each of the 7 positions independently holds one of 62 symbols, giving 62^7, about 3.5 trillion codes, which is why 7 characters is the usual default length."
     },
     {
       "q": "What is the core read-path flow when a user hits a short link?",
@@ -32,7 +34,8 @@
         "Proxy the target page's content through the shortener's servers"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The service is a lookup plus a 301/302 Location header; the browser then fetches the target itself. Codes are not reversible, so the mapping must be stored."
     },
     {
       "q": "Why is a URL shortener's workload described as read-heavy?",
@@ -43,7 +46,8 @@
         "Browsers prefetch every short link before users click it"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "One write creates a mapping that then serves an unbounded number of redirects, giving read-to-write ratios of 100:1 or more and making caching the dominant optimization."
     },
     {
       "q": "Which storage model fits the core mapping of a URL shortener?",
@@ -54,7 +58,8 @@
         "A columnar warehouse partitioned by creation date"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The access pattern is a single point lookup by primary key with no joins or scans, which is exactly what a key-value store does at low latency and easy horizontal scale."
     },
     {
       "q": "A 301 redirect differs from a 302 mainly in that browsers will:",
@@ -65,7 +70,8 @@
         "Retry a 301 with POST if the first request used GET"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "301 means permanently moved, so browsers cache the mapping and go straight to the target. That saves load but hides later clicks from your analytics and pins stale targets."
     },
     {
       "q": "Why does hashing the long URL (MD5, then truncating) require collision handling?",
@@ -76,7 +82,8 @@
         "Different URLs can truncate to the same short code"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Truncating to ~7 characters shrinks the output space enormously, so by pigeonhole plus the birthday bound distinct URLs will eventually map to the same prefix."
     },
     {
       "q": "What is the simplest collision-free key generation scheme?",
@@ -87,7 +94,8 @@
         "Derive the code from the request's timestamp in milliseconds"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A monotonically increasing ID is unique by construction, and base62 encoding is a bijection, so no collision check or retry loop is ever needed."
     },
     {
       "q": "You want click analytics per link but chose 301 redirects. What's the standard resolution?",
@@ -98,7 +106,8 @@
         "Embed a tracking pixel into every destination page at the exact moment of redirect"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "302/307 are temporary, so browsers re-request each time and every click hits your servers to be counted. The cost is extra load that caching would have avoided."
     },
     {
       "q": "A single-range auto-increment counter becomes a write bottleneck and single point of failure. What's the common fix?",
@@ -109,7 +118,8 @@
         "Hashing timestamps with server IDs to avoid coordination"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each server leases a block of IDs and hands them out locally, so coordination happens once per thousands of links instead of once per write, and uniqueness still holds."
     },
     {
       "q": "Redirect p99 latency must stay near 20ms globally. Which architecture serves that best?",
@@ -120,7 +130,8 @@
         "Synchronous multi-region writes so all replicas stay identical"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Speed of light makes cross-continent round trips alone exceed 20ms, so the answer must terminate the request near the user; a single region cannot beat physics."
     },
     {
       "q": "Users can pick custom aliases. Two requests race for 'summer-sale'. What prevents both from succeeding?",
@@ -131,7 +142,8 @@
         "A unique constraint or atomic conditional insert in the store"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only an atomic compare-and-set at the storage layer closes the race; a separate check then insert has a window between the two steps where both callers see the alias free."
     },
     {
       "q": "Deleting or expiring short links complicates one design choice above others. Which one?",
@@ -142,7 +154,8 @@
         "Read replicas, which never receive tombstone records"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Once a browser caches a 301 it may never ask you again, so a deleted link keeps redirecting from client caches you cannot purge. Temporary redirects avoid that trap."
     },
     {
       "q": "A celebrity tweets one short link; traffic spikes 10,000x on that key. Which layer absorbs this best?",
@@ -153,7 +166,8 @@
         "An in-memory cache layer (and CDN) serving that hot mapping"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "One immutable key read repeatedly is perfectly cacheable, so replicated caches and CDN edges serve it from memory. Consistent hashing cannot split a single key."
     },
     {
       "q": "Rate limiting link creation matters most to prevent what?",
@@ -164,7 +178,8 @@
         "Exhaustion of the 62-character encoding alphabet"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Creation is the abuse surface: bulk-generated links cloak malicious destinations and can get your domain blacklisted. Keyspace exhaustion is not a realistic worry at 62^7."
     },
     {
       "q": "Why do many shorteners pre-generate unused codes into a 'key pool'?",
@@ -175,7 +190,8 @@
         "It guarantees codes sort chronologically for analytics"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Uniqueness work moves offline to a background generator, so the online write path is a single fast pop with predictable latency and no coordination on the hot path."
     },
     {
       "q": "Estimate storage: 100M new links/year, about 500 bytes per mapping with metadata. Ignoring replication, five years is roughly:",
@@ -186,7 +202,8 @@
         "250 TB, demanding a large distributed storage cluster"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "100M times 5 years is 500M rows, and 500M times 500 bytes is 250 GB. That fits one node, so sharding here is driven by throughput, not capacity."
     },
     {
       "q": "Sequential base62 codes let attackers enumerate links. Which mitigation keeps O(1) generation without a collision-check loop?",
@@ -197,7 +214,8 @@
         "Encrypt stored URLs so enumeration reveals nothing useful"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A format-preserving permutation such as Feistel or a multiply-by-odd-modulo-2^n scrambles counters into unpredictable codes while staying one-to-one, so uniqueness is still free."
     },
     {
       "q": "You must guarantee a redirect is never served for a link deleted for phishing, while keeping edge caches. Which design meets it?",
@@ -208,7 +226,8 @@
         "Moving flagged mappings to a slower storage tier immediately"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Explicit purge removes the entry immediately, and a short TTL bounds exposure if a purge is missed. Long TTLs with weekly cleanup leave days of live phishing redirects."
     },
     {
       "q": "Multi-region active-active: a link created in Europe is clicked in Asia 100ms later and must resolve. Which approach handles this with lowest write latency?",
@@ -219,7 +238,8 @@
         "Async replication plus fallback read to the origin region on local miss"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Writes commit locally and replicate in the background, so creation stays fast; a rare local miss pays one cross-region read, which still returns the correct target."
     }
   ]
 }

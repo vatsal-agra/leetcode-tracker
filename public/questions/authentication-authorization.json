@@ -10,7 +10,8 @@
         "Authentication is optional; authorization is legally required"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Authentication establishes identity, authorization applies policy to that identity to decide permitted actions. Both run server-side; the distinction is identity versus permission, not location or mechanism."
     },
     {
       "q": "Where does session state live in classic cookie-based session auth?",
@@ -21,7 +22,8 @@
         "Server-side (store or DB), with the cookie holding only an opaque session ID"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The cookie carries only a random opaque identifier; the real session data sits in a server-side store, which is what makes instant server-side revocation possible."
     },
     {
       "q": "What makes a JWT verifiable without a database lookup?",
@@ -32,7 +34,8 @@
         "The browser validates it against the certificate authority"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A JWT carries its claims in the payload and a signature over them, so any party holding the issuer's key can verify integrity locally. Standard JWTs are signed and base64-encoded, not encrypted."
     },
     {
       "q": "In OAuth 2.0, what is the fundamental role of an access token?",
@@ -43,7 +46,8 @@
         "It identifies the client application's developer account"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An access token is a bearer credential representing a delegated, scope-limited grant to call an API. It says nothing about how or when the user authenticated; that is the ID token's job."
     },
     {
       "q": "Why do OAuth flows issue short-lived access tokens plus a refresh token?",
@@ -54,7 +58,8 @@
         "A stolen access token expires quickly; the refresh token can be guarded and revoked"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Splitting the credentials bounds the damage from a leaked access token while keeping the long-lived refresh token in one guarded place where the authorization server can revoke it."
     },
     {
       "q": "What does RBAC grant permissions to?",
@@ -65,7 +70,8 @@
         "Network segments, delegating checks to the firewall"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "RBAC attaches permissions to named roles and then assigns users to roles, so access changes by moving people between roles instead of editing thousands of per-user grants."
     },
     {
       "q": "Which flow is recommended for a browser SPA using OAuth 2.0 today?",
@@ -76,7 +82,8 @@
         "Client credentials flow using a secret embedded in the JS bundle"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "PKCE lets a public client with no secret prove it started the flow, so an intercepted code is useless. Implicit flow is deprecated because it exposes tokens in the URL."
     },
     {
       "q": "Why must passwords be hashed with an intentionally slow algorithm (bcrypt, argon2) rather than fast SHA-256?",
@@ -87,7 +94,8 @@
         "Fast hashes expire and must be recomputed monthly"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Deliberate work factors and memory hardness make each guess expensive, cutting an attacker's offline cracking rate by orders of magnitude. SHA-256 is not reversible, just far too fast."
     },
     {
       "q": "A microservice fleet must check 'is this request allowed?' on every call. Why do teams often pick JWTs here?",
@@ -98,7 +106,8 @@
         "Opaque tokens cannot cross service boundaries at all"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Local signature verification removes a network round trip to a central auth service on every request, avoiding a latency tax and a shared bottleneck. JWTs are still bearer tokens and stealable."
     },
     {
       "q": "The security team must lock out a compromised account immediately. Why are stateless JWTs a problem?",
@@ -109,7 +118,8 @@
         "JWTs cannot carry an expiry claim, so they never lapse"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Verification is purely local, so nothing consults a server that could say revoked. Immediate lockout requires a denylist or version check, which reintroduces the state JWTs were meant to avoid."
     },
     {
       "q": "Where should a refresh token for a web app be stored to reduce XSS risk?",
@@ -120,7 +130,8 @@
         "In the URL query string, so it travels with navigation"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "HttpOnly keeps the cookie out of reach of injected scripts and Secure keeps it off plaintext connections. Anything readable by JavaScript, like localStorage, is exfiltrated by a single XSS payload."
     },
     {
       "q": "'Managers may edit reports of their own department during business hours.' Which model expresses this naturally?",
@@ -131,7 +142,8 @@
         "ABAC, evaluating user, resource, and environment attributes per request"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The rule combines subject attributes, resource attributes, and environment context, which is exactly what ABAC policies evaluate. Encoding it in RBAC causes a combinatorial explosion of roles."
     },
     {
       "q": "Why does OAuth's authorization code flow return a code first instead of tokens directly?",
@@ -142,7 +154,8 @@
         "Codes allow the user to approve each API call individually"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The single-use code travels through the browser, but the actual tokens are exchanged over a direct back-channel call, so they never appear in URLs, logs, history, or referrer headers."
     },
     {
       "q": "What attack does the state parameter in OAuth flows prevent?",
@@ -153,7 +166,8 @@
         "A protocol downgrade from PKCE-protected code flow to the legacy implicit flow"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "state is an unguessable value tied to the user's session and checked on return, so a callback the client did not initiate is rejected, blocking login-CSRF and account-injection attacks."
     },
     {
       "q": "A user's permissions changed, but their JWT still carries the old role claim for 15 more minutes. Standard mitigation?",
@@ -164,7 +178,8 @@
         "Keep token lifetimes short and re-check critical permissions server-side"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Short TTLs bound how long stale claims survive, and consulting the authoritative store for high-risk operations closes the gap where it matters most, without abandoning stateless verification."
     },
     {
       "q": "Why is 'the user is logged in' insufficient as an authorization check for GET /invoices/123?",
@@ -175,7 +190,8 @@
         "The check fails for users with multiple sessions"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Without an object-level check tying the record to the caller, this is insecure direct object reference: authentication alone lets any logged-in user enumerate IDs and read others' data."
     },
     {
       "q": "Refresh token rotation with reuse detection: what does the server do when a rotated-out (old) refresh token is presented?",
@@ -186,7 +202,8 @@
         "Treats it as theft evidence and revokes the entire token family"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A consumed refresh token being replayed means two parties hold it, so the server cannot tell victim from attacker and invalidates the whole lineage, forcing re-authentication."
     },
     {
       "q": "An API gateway validates JWTs; internal services then trust the gateway's identity headers. What deployment mistake breaks this model?",
@@ -197,7 +214,8 @@
         "Caching validated tokens at the gateway for their lifetime"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The design assumes the gateway is the only path in. If services are directly reachable, an attacker sets the identity header themselves and bypasses all authentication."
     },
     {
       "q": "Sessions in Redis: what failure mode do you accept versus stateless JWTs?",
@@ -208,7 +226,8 @@
         "CSRF protection stops working without token claims"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Central session state buys instant revocation at the cost of a hard dependency: if the store is down or partitioned, no request can be validated. Stateless JWTs keep working but cannot be revoked."
     },
     {
       "q": "Zero-trust internal architecture: which statement captures the auth implication?",
@@ -219,7 +238,8 @@
         "A shared static API key per environment satisfies zero trust"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Zero trust drops the assumption that network location implies trust, so each call carries a verifiable workload identity, typically mTLS certificates, and is checked against policy at the receiver."
     }
   ]
 }

@@ -10,7 +10,8 @@
         "It guarantees exactly-once delivery across all downstream providers"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A common interface hides vendor-specific APIs, so you can fail over or replace a provider without touching core logic. It cannot add exactly-once semantics providers do not offer."
     },
     {
       "q": "What role does a message queue play between the notification service and channel workers?",
@@ -21,7 +22,8 @@
         "It converts payloads between the different channel formats"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The queue buffers traffic spikes and lets workers drain at provider-safe rates, so a slow vendor never blocks the request path. Token storage belongs in a database, not a queue."
     },
     {
       "q": "What exactly is a push device token?",
@@ -32,7 +34,8 @@
         "The device's hardware serial number registered with the OS vendor at activation time"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "APNs or FCM issues the token to a specific app installation on a specific device, so one user with several devices or reinstalls has several distinct tokens."
     },
     {
       "q": "Which channel's strict per-message cost makes deduplication and throttling most financially important?",
@@ -43,7 +46,8 @@
         "SMS texts"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "SMS is billed per message by carriers, often at cents each, so duplicates directly burn money. Push and in-app messages are essentially free per send."
     },
     {
       "q": "What does a quiet hours feature do in a notification system?",
@@ -54,7 +58,8 @@
         "Mutes only the channels showing low engagement scores"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Quiet hours holds low-priority sends until the user's local window ends, rather than dropping them. Urgent classes like security alerts typically bypass the window."
     },
     {
       "q": "Where should user notification preferences be enforced?",
@@ -65,7 +70,8 @@
         "In the analytics pipeline once sends have been recorded"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Filtering before enqueue avoids paying for and transmitting unwanted messages, and works uniformly across all clients. Client-side hiding still sends and still costs money."
     },
     {
       "q": "What is a dead-letter queue used for in a notification pipeline?",
@@ -76,7 +82,8 @@
         "Archiving successfully delivered notifications for audits"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DLQ parks messages that exhausted their retries so they stop blocking the main queue, while preserving them for debugging or manual replay after a fix."
     },
     {
       "q": "What does notification collapsing mean?",
@@ -87,7 +94,8 @@
         "Replacing several related pending notifications with a single summary"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Collapsing uses a key so newer messages supersede older undelivered ones, showing '5 new messages' instead of five alerts. It is about display, not byte compression."
     },
     {
       "q": "FCM responds that a device token is unregistered. What should your system do?",
@@ -98,7 +106,8 @@
         "Rotate the server's API credentials and resend the message"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Unregistered is a permanent error meaning the app was uninstalled or the token replaced, so pruning it keeps the registry clean. Retrying only wastes quota and never succeeds."
     },
     {
       "q": "A send request to a provider times out and your worker immediately retries. What risk does this create?",
@@ -109,7 +118,8 @@
         "A provider ban for exceeding the allowed concurrent connections"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A timeout is ambiguous: the provider may have accepted and delivered the message before the response was lost, so a blind retry can double-notify the user."
     },
     {
       "q": "The same business event triggers notification requests from two producer services. What is the standard guard against double-sending?",
@@ -120,7 +130,8 @@
         "An event-derived dedupe key checked against a recent-delivery store before send"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A deterministic idempotency key derived from the event id lets a fast store like Redis reject the second request. Ordering alone does not stop two distinct sends."
     },
     {
       "q": "How should per-user notification frequency capping be implemented?",
@@ -131,7 +142,8 @@
         "By slowing overall queue consumption whenever volume spikes"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Caps must be tracked per recipient server-side to limit fatigue, with exemptions so security codes and other critical alerts always get through. Account-level quotas are not per user."
     },
     {
       "q": "During a large marketing blast, how do you keep OTP delivery latency low?",
@@ -142,7 +154,8 @@
         "Tag OTP messages with a higher-priority collapse key"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Isolating transactional traffic in its own queue with dedicated workers prevents head-of-line blocking behind millions of bulk messages. Adding workers alone still drains one shared backlog."
     },
     {
       "q": "Your email provider reports a hard bounce for an address. What is the correct handling?",
@@ -153,7 +166,8 @@
         "Add the address to a suppression list to protect sender reputation"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A hard bounce means the address is permanently invalid; continuing to mail it raises your bounce rate and can get your domain blocklisted, so suppress it immediately."
     },
     {
       "q": "Where should message templates and localization be applied?",
@@ -164,7 +178,8 @@
         "At the provider, which localizes payloads automatically"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Rendering centrally at send time keeps events as structured data and lets copy, locale, and per-channel formatting change without redeploying every producer."
     },
     {
       "q": "How should a broadcast notification to 50 million users be dispatched?",
@@ -175,7 +190,8 @@
         "Devices hold persistent server connections and receive one broadcast frame"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Fanning out asynchronously in chunks lets you respect provider batch sizes and rate limits, checkpoint progress, and resume after failures. Providers cap multicast at a few hundred tokens per call."
     },
     {
       "q": "A push provider degrades and aggressive retries from your workers deepen the outage. What is the right defense?",
@@ -186,7 +202,8 @@
         "Backoff with jitter plus a circuit breaker that pauses sends to the sick provider"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Jittered backoff spreads retries apart and the breaker stops hammering a failing dependency, letting it recover. More retries would only amplify the retry storm."
     },
     {
       "q": "After a long outage you replay the dead-letter queue. What risk must be handled first?",
@@ -197,7 +214,8 @@
         "Replay may overload the DLQ itself; shard it before starting"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Time-sensitive content like expired OTPs or finished flash sales is worse than useless hours later, so a TTL check should discard obsolete messages before replay."
     },
     {
       "q": "A user reinstalls the app, and pushes sent to the old token silently vanish. What practice prevents this?",
@@ -208,7 +226,8 @@
         "Encrypt device tokens so that stale copies fail decryption and get purged automatically"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Refreshing the token at launch and unmapping superseded tokens for the same device or user keeps the registry current. Tokens do change on reinstall, OS updates, and restores."
     },
     {
       "q": "A notification pipeline advertises exactly-once delivery to devices. Why is that claim unsound?",
@@ -219,7 +238,8 @@
         "Exactly-once requires synchronized clocks, which mobile devices lack"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "You cannot atomically commit a send with a third-party provider and an offline device, so ambiguous outcomes are unavoidable. The realistic design is at-least-once with idempotent dedupe."
     }
   ]
 }

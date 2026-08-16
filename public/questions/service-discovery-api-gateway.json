@@ -10,7 +10,8 @@
         "The calling client, using instance data fetched from the registry"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Client-side discovery means the caller queries the registry for the instance list and runs the load-balancing choice itself. The registry only stores and serves addresses; it never proxies traffic."
     },
     {
       "q": "How does server-side discovery route a request?",
@@ -21,7 +22,8 @@
         "A sidecar rewrites DNS answers inside the client pod"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Server-side discovery moves selection out of the client: the caller hits a stable router or load balancer address, and that intermediary consults the registry and forwards to a healthy instance."
     },
     {
       "q": "Why do registries require heartbeats or health checks from instances?",
@@ -32,7 +34,8 @@
         "To decide which instance owns each data shard"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Heartbeats prove liveness so the registry can evict instances that crashed or hung, keeping the served instance list accurate and steering traffic away from dead nodes."
     },
     {
       "q": "Which concern belongs in an API gateway rather than inside each microservice?",
@@ -43,7 +46,8 @@
         "Publishing domain events after state changes"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Cross-cutting edge concerns like authentication, rate limiting, and routing apply uniformly to all traffic, so centralizing them at the gateway avoids duplicating them in every service. Business rules stay in the owning service."
     },
     {
       "q": "What is the main point of the Backend-for-Frontend (BFF) pattern?",
@@ -54,7 +58,8 @@
         "Moving business logic into the CDN edge"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A BFF gives mobile, web, and other clients each their own tailored aggregation layer, so payloads and call patterns fit that client instead of compromising on one generic API."
     },
     {
       "q": "What is the main drawback of plain DNS for service discovery?",
@@ -65,7 +70,8 @@
         "Cached TTLs delay clients noticing instance changes"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "DNS answers are cached by resolvers and clients for the TTL, so instances that scale up or die are not seen promptly. DNS can return multiple A records, so that is not the limitation."
     },
     {
       "q": "Which tool is purpose-built as a service registry with built-in health checking?",
@@ -76,7 +82,8 @@
         "Nginx"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Consul is designed as a service registry: it stores service catalogs, runs health checks, and serves discovery over DNS and HTTP. Nginx is a proxy, not a registry."
     },
     {
       "q": "In the self-registration pattern, which component writes the instance's address into the registry?",
@@ -87,7 +94,8 @@
         "A registrar sidecar watching the container runtime for new workloads"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Self-registration means the instance registers and deregisters itself and sends its own heartbeats. A separate registrar sidecar doing it is the third-party registration pattern."
     },
     {
       "q": "Your single API gateway saturates CPU at peak. Best structural fix?",
@@ -98,7 +106,8 @@
         "Scale the gateway vertically and cap client connections"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A stateless gateway scales horizontally, so adding replicas behind a load balancer removes the single-node CPU ceiling and the single point of failure. Vertical scaling only postpones the same limit."
     },
     {
       "q": "Instances sometimes crash without deregistering, and clients hit dead addresses briefly. What bounds this window?",
@@ -109,7 +118,8 @@
         "Gateway-level caching of successful responses"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A lease with a TTL means an instance that stops heartbeating is automatically evicted, so the stale-entry window is bounded by the heartbeat interval and miss threshold. Retries mask symptoms but do not bound the window."
     },
     {
       "q": "Compared with server-side discovery, what does client-side discovery mainly trade?",
@@ -120,7 +130,8 @@
         "One less network hop against discovery logic duplicated in every client"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Calling the instance directly removes the intermediary hop, but every client must now embed registry lookup and load-balancing logic in each language and keep it updated."
     },
     {
       "q": "Every instance goes unhealthy simultaneously whenever the shared database blips, causing a full outage. Likely cause?",
@@ -131,7 +142,8 @@
         "The gateway's health probe timeout is shorter than the database's normal response time"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Health checks that test shared dependencies turn one downstream blip into correlated failure of the whole fleet. Liveness checks should test only the instance itself."
     },
     {
       "q": "A service mesh sidecar primarily handles which traffic, versus an API gateway?",
@@ -142,7 +154,8 @@
         "CDN origin-pull requests for static assets"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A mesh sidecar proxies east-west calls between internal services, adding mTLS, retries, and telemetry. The gateway handles north-south traffic entering from outside."
     },
     {
       "q": "Where should per-customer API rate limits live so every backend is protected uniformly?",
@@ -153,7 +166,8 @@
         "In the client SDK's request scheduler"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The gateway sees all inbound traffic per customer, so enforcing there gives one consistent quota and rejects excess load before it reaches any backend. Per-service copies drift and each sees only part of the traffic."
     },
     {
       "q": "A mobile app issues six sequential API calls to render one screen over high-latency links. Standard fix?",
@@ -164,7 +178,8 @@
         "Cache all six responses on the device for reuse"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A BFF collapses the chatty round trips into one server-side aggregation, paying the latency once. HTTP/2 multiplexing does not help when the calls are sequential and dependent."
     },
     {
       "q": "During a network partition, what does an AP registry like Eureka prefer to do?",
@@ -175,7 +190,8 @@
         "Keep serving possibly stale instance lists so discovery still works"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An AP system chooses availability over consistency: Eureka keeps answering lookups with potentially stale data rather than blocking discovery, and even enters self-preservation to avoid mass eviction."
     },
     {
       "q": "Dozens of teams push routing and transformation logic into one shared gateway. What risk emerges?",
@@ -186,7 +202,8 @@
         "East-west traffic bypasses the mesh entirely"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Accumulating team-specific logic turns the gateway into a coupled monolith: every change needs coordinated deploys, and one bad config breaks traffic for all teams."
     },
     {
       "q": "Rolling deploys cause brief 502s even though replacement instances pass health checks. What step is likely missing?",
@@ -197,7 +214,8 @@
         "Deregistering old instances and draining in-flight requests before stopping them"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The errors come from the shutdown side: old instances must deregister first, then drain in-flight requests during a grace period, so no traffic is routed to a process that is already exiting."
     },
     {
       "q": "Heartbeats arrive every 30s and eviction requires 3 consecutive misses. Roughly how long can a dead instance keep receiving traffic?",
@@ -208,7 +226,8 @@
         "Until the next full deploy replaces the registry state"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Three missed 30-second heartbeats means roughly 3 x 30 = 90 seconds before eviction, so the stale entry can serve traffic for about that long, plus any client cache delay."
     },
     {
       "q": "The gateway authenticates users, then forwards the user ID in a plain header that services trust. Vulnerability?",
@@ -219,7 +238,8 @@
         "Clock skew between gateway and services eventually invalidates every forwarded claim"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "An unsigned identity header is trivially spoofed by anything that can reach the service, bypassing the gateway entirely. Fix it with signed tokens like JWT, mTLS, or strict network isolation."
     }
   ]
 }

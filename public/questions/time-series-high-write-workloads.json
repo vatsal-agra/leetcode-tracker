@@ -10,7 +10,8 @@
         "They skip the write-ahead log, halving the I/O per insert"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "LSM trees turn random writes into sequential ones: data lands in an in-memory memtable plus append-only WAL, and sorting into SSTables happens later during background compaction."
     },
     {
       "q": "Compared with LSM trees, what is a B-tree engine's typical strength?",
@@ -21,7 +22,8 @@
         "No need for background maintenance processes"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A B-tree keeps one sorted structure, so a lookup or range scan follows a single path. LSM reads may have to check several SSTable levels and merge results."
     },
     {
       "q": "What is downsampling in a time-series database?",
@@ -32,7 +34,8 @@
         "Compressing timestamps by storing deltas instead of absolutes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Downsampling aggregates older raw points into coarser buckets, keeping long-term trends queryable while shrinking storage. It reduces resolution, not the ingest rate."
     },
     {
       "q": "What does a retention policy in a time-series store control?",
@@ -43,7 +46,8 @@
         "How long data is kept before automatic expiry or deletion"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A retention policy is a TTL on data age: once points pass the configured window the database expires them automatically, bounding disk growth without manual cleanup."
     },
     {
       "q": "In time-series data models, what is 'tag cardinality'?",
@@ -54,7 +58,8 @@
         "The ratio of tags to fields in each written point"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Cardinality counts distinct tag values. Since each unique tag combination defines its own series, high cardinality multiplies series count and index size."
     },
     {
       "q": "Why are time-series writes considered append-friendly?",
@@ -65,7 +70,8 @@
         "New points mostly carry recent timestamps, extending the series' end"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Timestamps arrive in roughly increasing order, so writes append to the tail of each series rather than mutating older data, giving sequential I/O and immutable history."
     },
     {
       "q": "What is a common first-line technique to survive write spikes to a time-series store?",
@@ -76,7 +82,8 @@
         "Doubling the retention period so data spreads over more disk"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A queue like Kafka absorbs the burst and lets consumers drain at a steady rate the database can sustain. Read replicas do not help, since they take no writes."
     },
     {
       "q": "Which compression trick exploits the shape of typical metric data?",
@@ -87,7 +94,8 @@
         "Row-level gzip applied independently to every point"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The Gorilla scheme exploits regular scrape intervals and slowly changing values: delta-of-delta timestamps collapse to near zero bits and XORed floats share most leading bits."
     },
     {
       "q": "Ingest slows and read latency spikes while background disk I/O is saturated on an LSM store. What is the likely cause?",
@@ -98,7 +106,8 @@
         "The block cache keeps evicting hot pages because of large scans"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "When compaction cannot keep pace, SSTables accumulate so reads must check more files, and the engine eventually throttles or stalls writes to let merging catch up."
     },
     {
       "q": "You add request_id as a tag on every metric point. Weeks later the TSDB's memory explodes. Why?",
@@ -109,7 +118,8 @@
         "High-frequency writes bypass the buffer and fragment the WAL"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A unique per-request tag is a classic cardinality bomb: every request spawns a distinct series, and the in-memory inverted index over series keys grows without bound."
     },
     {
       "q": "Partitioning a metrics table by metric_name sends 40% of traffic to one node. Which repartitioning usually fixes this?",
@@ -120,7 +130,8 @@
         "Partition by a composite of series key and time bucket"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Hashing the full series key spreads the hot metric's many series across nodes, while the time bucket keeps each partition scannable. A random suffix would scatter reads unusably."
     },
     {
       "q": "Queries for 'last 5 minutes' dashboards are fast, but 90-day trend queries crush the cluster. Which design addresses the trend queries?",
@@ -131,7 +142,8 @@
         "Query-time sampling that reads every tenth raw point"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Aggregating once at write time turns a 90-day scan of billions of raw points into a read of a few thousand hourly buckets, and trend charts do not need raw resolution."
     },
     {
       "q": "Why does time-based partitioning (one partition per day) make retention cheap?",
@@ -142,7 +154,8 @@
         "Expiry becomes dropping whole partitions instead of row-by-row deletes"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Dropping a partition is a metadata operation that frees whole files at once, avoiding the per-row delete traffic, tombstones, and compaction churn of aging data out individually."
     },
     {
       "q": "A write-heavy IoT platform sees 10x write amplification on a B-tree store. What mostly drives that amplification?",
@@ -153,7 +166,8 @@
         "Timestamps stored as strings inflating each row's size"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each small insert dirties a whole page, and scattered keys touch many pages plus secondary indexes, so the engine flushes far more bytes than the rows contain. Compaction belongs to LSM, not B-trees."
     },
     {
       "q": "Dashboard queries using regex over metric names are slow at high series counts. What's the underlying reason?",
@@ -164,7 +178,8 @@
         "Metric names are hashed, so regex requires rebuilding names from hashes"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An exact label match is an index lookup, but a regex must be tested against every candidate name, so cost grows linearly with the number of series in the index."
     },
     {
       "q": "You must keep raw data 7 days, 1-minute rollups 90 days, hourly rollups 2 years. What implements this cleanly?",
@@ -175,7 +190,8 @@
         "Nightly exports of old raw data into CSV archives kept on object storage"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each resolution lives in its own store with its own TTL, fed by continuous aggregation, so expiry is automatic per tier and queries route to the right resolution."
     },
     {
       "q": "An LSM store shows fast writes but p99 reads degrade over weeks. Compaction is keeping up. What subtler cause fits?",
@@ -186,7 +202,8 @@
         "Timestamp compression breaks once epochs exceed 32 bits"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "As the dataset grows, bloom filters and block indexes spill out of RAM, so each lookup adds disk seeks just to decide which SSTables to read, inflating tail latency."
     },
     {
       "q": "Sizing: 200k devices send one 100-byte point every 10 seconds. Roughly what sustained write rate must the cluster absorb?",
@@ -197,7 +214,8 @@
         "About 1.2M points/sec, roughly 120 MB/sec before replication"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "200,000 divided by 10 seconds is 20k points/sec, and 20k times 100 bytes is 2 MB/sec. Option C wrongly assumes one point per device per second."
     },
     {
       "q": "A multi-tenant TSDB lets one tenant register unbounded tag values, degrading everyone. Which control is most effective?",
@@ -208,7 +226,8 @@
         "Per-tenant query timeouts that kill expensive scans"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The damage is series-index growth, so the limit must be on distinct series and rejected at write time. A slow trickle of unique tags still explodes cardinality under a rate limit."
     },
     {
       "q": "Writes arrive mostly in time order, but 2% are days late (device backfill). Why do very late writes hurt LSM/TSDB performance disproportionately?",
@@ -219,7 +238,8 @@
         "They land in already-compacted or sealed time blocks, forcing rewrites or overlaps"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Out-of-order points reopen or duplicate historical blocks, triggering extra compaction and creating overlapping time ranges that reads must merge, so a tiny fraction costs heavily."
     }
   ]
 }

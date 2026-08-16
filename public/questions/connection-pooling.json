@@ -10,7 +10,8 @@
         "Pooling upgrades every request to a prepared transaction"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each new connection costs a TCP handshake, TLS negotiation, authentication, and a fresh backend process or thread. Keeping warm connections around amortizes that setup across many requests."
     },
     {
       "q": "A request needs a connection but the pool is fully checked out. What typically happens?",
@@ -21,7 +22,8 @@
         "The request queues until a connection frees or a timeout fires"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Pools bound concurrency deliberately, so overflow callers wait in a checkout queue and receive an acquisition timeout error if nothing is released in time."
     },
     {
       "q": "For a CPU-bound database workload, a good starting pool size is closest to...",
@@ -32,7 +34,8 @@
         "ten connections for every application server instance deployed"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Only as many queries can truly run at once as there are cores, so sizing near a small multiple of core count keeps the database busy without adding context-switch contention."
     },
     {
       "q": "In PgBouncer, what does transaction pooling mode mean?",
@@ -43,7 +46,8 @@
         "Each individual SQL statement gets its own server connection assignment"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A server connection is assigned at BEGIN and returned at COMMIT or ROLLBACK, so many idle clients share few backends. That is why session state cannot survive across transactions."
     },
     {
       "q": "Which symptom points to pool exhaustion rather than a slow database?",
@@ -54,7 +58,8 @@
         "Requests stall before any SQL runs, then hit checkout timeouts"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Time spent waiting for a connection happens before the query is sent, so the database looks healthy while the application reports acquisition timeouts and queue wait."
     },
     {
       "q": "Why do serverless functions clash with traditional connection pooling?",
@@ -65,7 +70,8 @@
         "Pools need writable local disk that serverless platforms forbid"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Instances scale out independently and each holds its own pool, so connection count tracks concurrency and can swamp max_connections. An external pooler or data proxy is the usual fix."
     },
     {
       "q": "A pooled connection turns out to be dead at checkout. What should the pool do?",
@@ -76,7 +82,8 @@
         "Fail the request, since broken connections cannot be replaced"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Validation on checkout exists precisely so stale connections are evicted and replaced silently. The caller never sees the broken socket after a restart or network blip."
     },
     {
       "q": "What does a pool's idle timeout govern?",
@@ -87,7 +94,8 @@
         "How long a transaction may remain open before forced rollback"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Idle timeout reaps connections that have sat unused, shrinking the pool back toward its minimum after a traffic spike. Checkout timeout is the separate setting for queue wait."
     },
     {
       "q": "After a deploy, acquisition timeouts spike though query latency is unchanged. Most likely cause?",
@@ -98,7 +106,8 @@
         "The deploy disabled TCP keepalives on the pooler"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Pool capacity is throughput times hold time. If queries are as fast as before but connections are checked out earlier or released later, effective capacity drops and callers queue."
     },
     {
       "q": "30 app instances each run a 20-connection pool against max_connections=200. Core risk?",
@@ -109,7 +118,8 @@
         "Each instance gets automatically capped at six connections"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Client pools do not coordinate, so the aggregate ceiling is 30 x 20 = 600, triple the server limit. Postgres simply rejects connections past max_connections."
     },
     {
       "q": "Which application feature breaks under transaction-mode pooling?",
@@ -120,7 +130,8 @@
         "Session state like temp tables, SET values, and advisory locks"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Server connections are reassigned between transactions, so anything tied to a session, temp tables, SET, advisory locks, session-level prepared statements, may vanish or leak to another client."
     },
     {
       "q": "A nightly batch saturates the shared pool and starves the API. Reasonable mitigation?",
@@ -131,7 +142,8 @@
         "Run the batch on raw unpooled connections instead"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Isolating the workloads bulkheads them: the batch can only consume its own bounded share, so interactive traffic keeps its capacity. Raising limits just moves the contention onto the database."
     },
     {
       "q": "Why is simply enlarging the pool often the wrong fix for checkout timeouts?",
@@ -142,7 +154,8 @@
         "Beyond 100 connections, poolers switch to statement mode automatically"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "If the database is already at its concurrency limit, more connections add lock and scheduler contention while total throughput stays flat, so waiting moves from the pool into the server."
     },
     {
       "q": "Many microservices share one Postgres. Where does PgBouncer-style pooling belong?",
@@ -153,7 +166,8 @@
         "As a shared pooler before the database, with modest client-side pools"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only a shared pooler sees total demand and can enforce one global ceiling on backends. Per-service pools alone cannot coordinate, so their sum can exceed max_connections."
     },
     {
       "q": "A handler checks out a connection, calls a slow external API, then queries. Consequence?",
@@ -164,13 +178,15 @@
         "Nothing, because pools transparently multiplex idle connections to other callers"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Hold time now includes the external call, so a connection is reserved while doing no database work. Acquire the connection after the remote call instead."
     },
     {
       "q": "A service issues 1,000 queries/second, each holding a connection about 5 ms. Steady-state busy connections needed (Little's law)?",
       "options": ["About 50", "About 500", "About 5", "About 200"],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Little's law gives concurrency = arrival rate x hold time = 1000/s x 0.005 s = 5 busy connections on average. Headroom for bursts is added on top of that."
     },
     {
       "q": "During failover, every instance reconnects at once. What secondary failure threatens, and the usual defense?",
@@ -181,7 +197,8 @@
         "A reconnect storm crushing the new primary; jittered backoff plus caps"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Synchronized retries hammer a cold primary with authentication and backend startup work. Exponential backoff with random jitter and a connection-rate cap spreads the reconnects out."
     },
     {
       "q": "In benchmarks, a ~10-connection pool can beat a 100-connection pool on identical hardware. Why?",
@@ -192,7 +209,8 @@
         "The OS scheduler throttles any process owning many sockets"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Once cores and disks are saturated, additional concurrent backends add context switching, lock contention, and cache thrash, so throughput flattens and latency rises."
     },
     {
       "q": "Under PgBouncer transaction mode, a client runs SET search_path, then queries in a later transaction. Risk?",
@@ -203,7 +221,8 @@
         "Postgres raises an error because search_path needs session pooling"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Transaction mode rebinds a client to whatever backend is free, so the earlier SET does not follow it. Use SET LOCAL inside the transaction or qualify names explicitly."
     },
     {
       "q": "A leaked connection sits 'idle in transaction' overnight. Effect on Postgres MVCC?",
@@ -214,7 +233,8 @@
         "WAL archiving pauses entirely until that transaction commits"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The open transaction holds back the global xmin horizon, so vacuum must keep every row version that snapshot could still see. Tables and indexes bloat until it ends."
     }
   ]
 }
