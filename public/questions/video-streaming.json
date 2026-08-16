@@ -10,7 +10,8 @@
         "Compressing the file once into the single best format"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Devices and networks vary enormously, so one master is fanned out into a ladder of renditions and codecs that players can choose from. No single format serves a 4K TV and a 3G phone well."
     },
     {
       "q": "In HLS/DASH, what does the client actually download during playback?",
@@ -21,7 +22,8 @@
         "Short media segments listed in a manifest/playlist"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Both protocols are ordinary HTTP: the player reads a manifest and pulls a sequence of small segment files, which is what makes CDN caching and mid-stream quality switching possible."
     },
     {
       "q": "What does adaptive bitrate (ABR) mean?",
@@ -32,7 +34,8 @@
         "The CDN compresses segments further for slow clients"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The client measures throughput and buffer level and picks the next segment's rendition accordingly, so the adaptation decision lives in the player, not the server or CDN."
     },
     {
       "q": "Why do CDNs matter so much for video delivery?",
@@ -43,7 +46,8 @@
         "They automatically convert HTTP traffic into faster UDP streams by default"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Segments are immutable and shared by many viewers, so one edge copy serves thousands of requests, taking well over 95% of the bytes off the origin and shortening the network path."
     },
     {
       "q": "What information does a master manifest carry?",
@@ -54,7 +58,8 @@
         "The available renditions (bitrate, resolution, codec) and where to find their playlists"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The master manifest is the menu of renditions with their attributes and the URL of each variant playlist, letting the player choose a stream before fetching any media."
     },
     {
       "q": "Why are videos stored as short segments (2-6 seconds) rather than whole files?",
@@ -65,7 +70,8 @@
         "Segmenting reduces total storage cost by deduplicating repeated scenes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Segment boundaries start on keyframes, so the player can swap rendition or jump position at any boundary, and each small immutable file caches cleanly at the edge."
     },
     {
       "q": "Where does the original uploaded master file typically live?",
@@ -76,7 +82,8 @@
         "On the transcoding worker's local disk for the video's whole lifetime"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Object storage gives durable, cheap, effectively unbounded capacity and is readable by any worker, so the master is kept there for re-encoding when new codecs or ladders arrive."
     },
     {
       "q": "Which stage is the most compute-intensive in the upload pipeline?",
@@ -87,7 +94,8 @@
         "Virus-scanning the uploaded container file"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Encoding runs motion estimation over every frame and repeats that for each rung of the ladder, dwarfing thumbnailing or metadata writes and often needing a whole fleet of workers."
     },
     {
       "q": "Playback starts fast but stalls repeatedly on mobile networks. Which player-side factor most directly governs the stall/quality tradeoff?",
@@ -98,7 +106,8 @@
         "Whether the manifest lists its renditions in ascending bitrate order"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A deeper buffer plus a more conservative ABR ladder-climb absorbs bandwidth dips and prevents rebuffering, at the cost of slower startup and occasionally lower quality."
     },
     {
       "q": "A 2-hour movie upload must be transcoded quickly. How do pipelines parallelize this?",
@@ -109,7 +118,8 @@
         "Transcode only the first ten minutes before publishing"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Chunked (distributed) encoding splits at keyframe boundaries so hundreds of workers encode in parallel, then the outputs are concatenated with aligned GOPs so renditions stay switchable."
     },
     {
       "q": "Live streaming differs from VOD most fundamentally in that:",
@@ -120,7 +130,8 @@
         "Segments are produced continuously, and the manifest updates as new ones appear"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "In live the media is generated as it happens, so the playlist is a rolling window the player must re-fetch, whereas a VOD manifest is complete and static from the start."
     },
     {
       "q": "Viewers complain live latency is 30+ seconds behind. Which lever reduces glass-to-glass latency most directly?",
@@ -131,7 +142,8 @@
         "Moving transcoding from GPU to CPU instances"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Most live delay is segment duration multiplied by the player's buffered segment count, so shrinking both, or streaming partial chunks as they encode, attacks the dominant term."
     },
     {
       "q": "A new episode drops and millions request segment 1 simultaneously; the origin gets hammered despite a CDN. Which mechanism prevents this?",
@@ -142,7 +154,8 @@
         "Request coalescing and an origin shield so the CDN fetches each segment once"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Coalescing collapses concurrent misses for the same key into one upstream fetch, and a mid-tier shield funnels all edges through a single origin request instead of thousands."
     },
     {
       "q": "Why does per-title (content-aware) encoding save bandwidth versus a fixed ladder?",
@@ -153,7 +166,8 @@
         "It shifts encoding cost to the client's hardware decoder"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A static cartoon needs far fewer bits than a snowy action scene for the same perceptual quality, so choosing rungs from each title's own quality-versus-bitrate curve cuts bytes with no visible loss."
     },
     {
       "q": "DRM-protected playback requires which flow before video decrypts?",
@@ -164,7 +178,8 @@
         "The OS validates a watermark burned into each frame"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The content decryption module proves the device's identity and security level to a license server, which returns a key bound to that device, so segments stay encrypted end to end including on the CDN."
     },
     {
       "q": "Thumbnails, manifests, and segments have very different traffic patterns. Which caching statement is right?",
@@ -175,7 +190,8 @@
         "Thumbnails should bypass the CDN to keep them fresh"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "TTL should follow mutability: a published segment never changes and can cache for a year, while a live playlist changes every segment and must expire in seconds."
     },
     {
       "q": "Capacity: 10k concurrent viewers on a 5 Mbps rendition with 95% CDN offload. Roughly what origin egress remains?",
@@ -186,7 +202,8 @@
         "About 25 Mbps served from origin"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Total demand is 10,000 times 5 Mbps, or 50 Gbps; the origin serves the 5% the CDN misses, which is 2.5 Gbps."
     },
     {
       "q": "A global live event will hit 5M concurrent viewers. Which origin/CDN architecture handles the manifest update load?",
@@ -197,7 +214,8 @@
         "Pushing manifests to viewers over per-user WebSocket channels"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Even a one-second TTL collapses millions of identical manifest polls into one origin fetch per second per edge, and the shield tier reduces that further. Personalizing manifests would make them uncacheable."
     },
     {
       "q": "Storage math: a 1-hour video, ladder totaling 25 Mbps across all renditions. Approximate storage per video before replication?",
@@ -208,7 +226,8 @@
         "Roughly 110 MB"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "25 Mbps times 3,600 seconds is 90,000 megabits, and dividing by 8 gives about 11,250 MB, roughly 11 GB."
     },
     {
       "q": "Post-mortem: a bad encoder build produced corrupt mid-quality segments; players kept switching into them and failing. Which safeguard best prevents recurrence?",
@@ -219,7 +238,8 @@
         "Automated per-rendition validation (decode checks) gating publication"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Decoding and quality-checking every rendition before it is published catches bad encoder output at the source. Retrying at the CDN cannot help when the stored bytes are themselves corrupt."
     }
   ]
 }

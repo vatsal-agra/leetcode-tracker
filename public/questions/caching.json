@@ -10,7 +10,8 @@
         "The application reads the database, then stores the value in the cache"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "In cache-aside the application owns the miss path: it queries the database and writes the result back into the cache. A read-through cache is what fetches on the app's behalf."
     },
     {
       "q": "In write-through caching, a write is acknowledged when?",
@@ -21,7 +22,8 @@
         "After the entire cache is invalidated"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Write-through updates cache and store synchronously before acknowledging, keeping them consistent at the cost of write latency. Acknowledging from the cache alone is write-back."
     },
     {
       "q": "Which eviction policy removes the entry that has gone unused for the longest time?",
@@ -32,7 +34,8 @@
         "Random replacement"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "LRU evicts by recency of access, betting that recently used items will be used again. FIFO evicts by insertion order and LFU by access count, both ignoring recency."
     },
     {
       "q": "What is the main risk of write-back (write-behind) caching?",
@@ -43,7 +46,8 @@
         "Duplicate keys accumulating inside the cache"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Write-back acknowledges before the backing store is updated, so a crash loses whatever has not yet flushed. Its latency is lower than write-through, which is exactly why it takes this risk."
     },
     {
       "q": "What does setting a TTL on a cache entry accomplish?",
@@ -54,7 +58,8 @@
         "It reserves memory ahead of future writes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A TTL guarantees an entry is refetched after a known interval, capping how stale the served data can be. It is the simplest form of invalidation."
     },
     {
       "q": "A CDN primarily caches what, and where?",
@@ -65,7 +70,8 @@
         "Write buffers, held durably in regional data centers close to origins"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "CDNs replicate static or publicly cacheable assets to edge PoPs close to users, cutting round-trip latency and origin load. They are a read-path optimization, not a write buffer."
     },
     {
       "q": "A cache serves 900 of 1,000 reads without touching the database. What is the hit ratio?",
@@ -76,7 +82,8 @@
         "0.9%"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Hit ratio is hits divided by total requests: 900/1000 is 90%. The remaining 10% is the miss ratio that reaches the database."
     },
     {
       "q": "Which data is the best fit for aggressive caching?",
@@ -87,7 +94,8 @@
         "Product catalog pages read by millions"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Catalog pages are read far more often than written and tolerate brief staleness, the ideal caching profile. Balances, counters, and carts change frequently and demand fresh reads."
     },
     {
       "q": "A hot key expires and 10,000 concurrent requests all miss and hit the database at once. Name and fix?",
@@ -98,7 +106,8 @@
         "A hot partition; fixed by resharding the database tier"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "This is a cache stampede, and the fix is to let one request rebuild the key while others wait or serve stale, plus jittered TTLs. More RAM does not help since the key expired rather than being evicted."
     },
     {
       "q": "You update a database row while the cache still holds the old value with 10 minutes of TTL left. Best practice?",
@@ -109,7 +118,8 @@
         "Shorten every TTL globally to one second"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Explicit invalidation on write closes the staleness window immediately for just the affected key. Waiting out the TTL serves wrong data, and one-second TTLs everywhere destroys the hit ratio."
     },
     {
       "q": "Why can CDN caching break personalized pages?",
@@ -120,7 +130,8 @@
         "One user's cached response may be served to other users"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A shared edge cache keyed only by URL will hand one user's personalized HTML to the next visitor, a real data-leak class of bug. Mark such responses private or vary the cache key."
     },
     {
       "q": "Cache-aside: server A updates the DB then deletes the key; server B read the old DB value just before. What can happen?",
@@ -131,7 +142,8 @@
         "The database rejects A's write because of B's concurrently held read lock"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "B's in-flight read holds the pre-update value and can write it back after A's delete, leaving stale data cached indefinitely. Delayed double-delete or versioned writes mitigate this race."
     },
     {
       "q": "Repeated lookups for nonexistent users keep hammering your database. A standard fix?",
@@ -142,7 +154,8 @@
         "Route the lookups to a read replica"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Storing a short-lived tombstone for missing keys absorbs the repeats at the cache layer. A Bloom filter is the complementary defense against this cache-penetration pattern."
     },
     {
       "q": "Compared with an in-process per-instance cache, a shared cache like Redis offers?",
@@ -153,7 +166,8 @@
         "A consistent view across app instances at the cost of a network hop"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "One shared copy means every instance sees the same entries and one invalidation suffices, but each access pays a network round trip. Local memory is always faster; it just diverges per instance."
     },
     {
       "q": "Every entry was cached at deploy time with the same one-hour TTL. What happens an hour later?",
@@ -164,7 +178,8 @@
         "Entries refresh silently in the background by default"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Identical TTLs set at the same moment expire together, producing a thundering herd against the origin. Randomizing TTLs by some percentage spreads the refreshes out."
     },
     {
       "q": "A read-heavy service has a 95% hit ratio and its database tops out at 500 QPS. Sustainable total read QPS?",
@@ -175,7 +190,8 @@
         "About 100,000"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only the 5% miss traffic reaches the database, so 500 QPS of misses corresponds to 500/0.05, about 10,000 total reads per second."
     },
     {
       "q": "An LFU cache keeps serving last week's viral story while today's rising story keeps missing. Root cause?",
@@ -186,7 +202,8 @@
         "TTL expiry is fundamentally incompatible with maintaining LFU frequency counters"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Plain LFU never forgets, so a once-viral item's huge count keeps it resident while fresh items are evicted before building up counts. Aging or windowed counters, as in W-TinyLFU, fix this."
     },
     {
       "q": "Sessions live in one Redis node with persistence disabled; it restarts and users are logged out. What would have prevented this?",
@@ -197,7 +214,8 @@
         "Raising maxmemory on the node"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The loss came from a single non-durable node, so replicas with failover or a durable backing store is the real fix. TTLs, memory limits, and eviction policy are irrelevant once the process restarts empty."
     },
     {
       "q": "Why is 'cache everything with long TTLs' wrong for a read-mostly system with occasional critical updates?",
@@ -208,7 +226,8 @@
         "Redis and Memcached cap TTLs at sixty seconds"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A long TTL means a critical update stays invisible for that whole window, and reliably invalidating every derived entry is notoriously difficult. TTLs should match each data type's tolerance for staleness."
     },
     {
       "q": "A cache holds 1M entries; 10M distinct keys are requested uniformly at random. Expected steady-state hit ratio?",
@@ -219,7 +238,8 @@
         "About 10% in steady state"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "With a uniform key distribution the hit ratio is just cache size over key space, 1M/10M, about 10%. Caching only pays off when access is skewed, not uniform."
     }
   ]
 }

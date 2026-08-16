@@ -10,7 +10,8 @@
         "Both act for servers; the word forward refers to request direction"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A forward proxy sits next to the client and hides it from the internet; a reverse proxy sits in front of servers and hides them from clients. The direction names whose side it is on."
     },
     {
       "q": "What is TLS termination at a reverse proxy?",
@@ -21,7 +22,8 @@
         "The proxy tunnels the encrypted bytes untouched through to the backend"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Terminating means the TLS session ends at the proxy, which holds the certificate and decrypts. That plaintext view is what enables L7 routing, caching, and header inspection."
     },
     {
       "q": "What is a common use of a forward proxy in a corporate network?",
@@ -32,7 +34,8 @@
         "Filtering and logging employees' outbound internet access"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A forward proxy is the chokepoint for outbound traffic, so it is the natural place to enforce URL policy, log egress, and cache external content. The other options describe reverse proxies."
     },
     {
       "q": "Why does a backend behind a reverse proxy see the proxy's IP as the peer address?",
@@ -43,7 +46,8 @@
         "HTTP hides client IP addresses by default for privacy"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A proxy is two separate connections spliced together. The backend's socket peer is whoever dialed it, which is the proxy, so the original client address is simply not on that connection."
     },
     {
       "q": "Which header conventionally carries the original client IP through proxies?",
@@ -54,7 +58,8 @@
         "Content-Location, which records the request's source"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "X-Forwarded-For is the de facto convention, with each proxy appending the address it received from; RFC 7239's Forwarded header standardizes the same idea."
     },
     {
       "q": "What is a sidecar proxy?",
@@ -65,7 +70,8 @@
         "A per-service proxy deployed alongside each instance, handling its network traffic"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A sidecar runs in the same pod or host as one service instance and intercepts its inbound and outbound traffic, moving mTLS, retries, and telemetry out of application code."
     },
     {
       "q": "Which set of responsibilities typically belongs to a reverse proxy?",
@@ -76,7 +82,8 @@
         "Allocating virtual machine capacity for backend autoscaling"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "These are all cross-cutting edge concerns that apply to every request regardless of application logic, so centralizing them at the proxy keeps backends simpler."
     },
     {
       "q": "What does it mean for a proxy to be transparent?",
@@ -87,7 +94,8 @@
         "It is engineered to add zero measurable latency to any request"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Transparency refers to client visibility: the network redirects traffic through the proxy, so no proxy settings are configured on the client and it thinks it talks to the origin directly."
     },
     {
       "q": "The backend logs every request as coming from the proxy's IP. What restores real client IPs?",
@@ -98,7 +106,8 @@
         "Run the backend on the same host so that no proxy hop is needed"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Since the client address is lost at the TCP layer, it must be carried in-band at L7. The backend must also be configured to trust that header only from known proxy addresses."
     },
     {
       "q": "Why is blindly trusting X-Forwarded-For dangerous?",
@@ -109,7 +118,8 @@
         "It doubles the request size, degrading throughput measurably"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "It is just a client-settable header. Unless the edge proxy overwrites it and the backend counts hops from a trusted set, an attacker can forge any source IP they like."
     },
     {
       "q": "You need L7 routing at the proxy plus encrypted links to backends. What is the standard setup?",
@@ -120,7 +130,8 @@
         "Use IPsec tunnels between users and backends, skipping the proxy"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "L7 routing requires reading headers, which requires decryption, so passthrough is ruled out. Re-encrypting the upstream leg keeps the internal network confidential."
     },
     {
       "q": "Service mesh sidecars (like Envoy) add what capability, at what cost?",
@@ -131,7 +142,8 @@
         "Uniform mTLS, retries, and telemetry, at the cost of extra hops and resource overhead"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A mesh gives every service identical, language-agnostic networking policy without code changes, but each call now traverses two extra proxies burning CPU and memory."
     },
     {
       "q": "A reverse proxy buffers slow client uploads before forwarding them. What does this protect against?",
@@ -142,7 +154,8 @@
         "TLS downgrade attacks against resumed client sessions"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Buffering absorbs the slow drip at the proxy, which handles many idle connections cheaply, and only occupies a scarce backend worker once the full request is ready."
     },
     {
       "q": "Why does a backend behind a TLS-terminating proxy need X-Forwarded-Proto?",
@@ -153,7 +166,8 @@
         "To measure the proxy's added latency on each request hop"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The backend sees plain HTTP and would otherwise emit http:// absolute redirects and skip the Secure cookie flag, causing redirect loops and insecure cookies."
     },
     {
       "q": "Why must proxies strip hop-by-hop headers (those listed in Connection)?",
@@ -164,7 +178,8 @@
         "They describe one connection only; forwarding them can confuse downstream behavior"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Headers like Connection, Keep-Alive, and Transfer-Encoding govern a single TCP hop. Leaking them onward misrepresents the next connection and is a classic request-smuggling vector."
     },
     {
       "q": "A reverse proxy's health check marks a backend unhealthy. What should the proxy do?",
@@ -175,7 +190,8 @@
         "Cache the backend's last responses and serve them indefinitely"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The point of health checking is to eject bad instances from the pool so requests go only to healthy ones, then re-admit automatically once checks pass again."
     },
     {
       "q": "A proxy keeps a keepalive pool of 100 connections; the backend's concurrency limit is 80. What happens under burst?",
@@ -186,7 +202,8 @@
         "Excess in-flight requests exceed the backend limit, causing queuing or 503s"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The proxy's pool size is an implicit concurrency limit. Sizing it above what the backend can serve just moves the queue downstream, where it turns into latency or rejections."
     },
     {
       "q": "A layer-4 proxy forwards raw TCP, losing client IPs. How is client identity commonly preserved?",
@@ -197,7 +214,8 @@
         "By GRE-tunneling every single flow so the original headers stay intact end to end"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "At L4 there are no HTTP headers to use, so HAProxy's PROXY protocol prepends a small fixed header with the source and destination addresses before the first byte of payload."
     },
     {
       "q": "A shared proxy fleet fronts 200 services; one bad rewrite rule loops requests back to the proxy. Blast radius and guard?",
@@ -208,7 +226,8 @@
         "Only DNS suffers; the correct fix is lowering record TTLs during incidents"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A loop multiplies requests against a shared connection and worker pool, so one misconfigured route starves all 200 tenants. Via or hop-count checks break the cycle early."
     },
     {
       "q": "What is the realistic cost of running mTLS everywhere via sidecar proxies?",
@@ -219,7 +238,8 @@
         "Doubled bandwidth usage, because mTLS encrypts each packet twice"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Handshakes and record encryption cost CPU, each sidecar hop adds latency, and short-lived certificates need automated issuance and rotation or the mesh fails closed."
     }
   ]
 }

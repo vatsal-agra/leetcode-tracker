@@ -10,7 +10,8 @@
         "B-trees never need rebalancing after inserts or deletes"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "B-trees store keys in sorted order, so they serve ranges, prefixes, and ORDER BY as well as equality. Hash indexes only answer exact-match lookups, so they cover far fewer query shapes."
     },
     {
       "q": "What does a database actually do with an index during a point query like WHERE id = 42?",
@@ -21,7 +22,8 @@
         "Rewrites the query into a join between the index and the table"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The engine walks from the root down a few levels to the leaf holding the key, then uses the stored row pointer to fetch the tuple. That is a handful of page reads instead of a scan."
     },
     {
       "q": "Adding an index to a table speeds up certain reads. What is the unavoidable cost?",
@@ -32,7 +34,8 @@
         "Every insert, update, and delete must also maintain the index"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An index is a second structure that must stay in sync, so every write pays extra I/O and CPU to update it. Rows are not re-sorted, and the index copies only the indexed columns."
     },
     {
       "q": "Which column is the worst candidate for a standalone index?",
@@ -43,7 +46,8 @@
         "A foreign key column used in frequent joins"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A boolean matching half the table has terrible selectivity, so the index returns so many rows the planner prefers a sequential scan. Unique, range, and join columns all filter far more sharply."
     },
     {
       "q": "A composite index on (last_name, first_name) exists. Which query can use it efficiently?",
@@ -54,7 +58,8 @@
         "WHERE UPPER(last_name) = 'SILVA' with no expression index"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Composite indexes follow the leftmost-prefix rule: equality on last_name pins a contiguous slice, and the range on first_name scans inside it. Filtering on first_name alone skips the leading column."
     },
     {
       "q": "What makes an index 'covering' for a given query?",
@@ -65,7 +70,8 @@
         "It contains every column the query needs, so the table is never touched"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Covering means the index alone satisfies the query's column list, so the engine answers from index pages and skips the row lookups. Uniqueness and clustering are unrelated properties."
     },
     {
       "q": "Why does index selectivity matter to the query planner?",
@@ -76,7 +82,8 @@
         "Selectivity controls the on-disk compression ratio of the index"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each index match costs a random row fetch, so once a predicate matches a large fraction of rows, sequential scanning beats thousands of scattered lookups. Selectivity is the planner's cost signal."
     },
     {
       "q": "In which order do B-tree leaf pages store index entries?",
@@ -87,7 +94,8 @@
         "Physical row order, mirroring the heap file exactly"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Leaves hold entries sorted by key and are chained to their siblings, so a range scan finds the start key then walks the linked leaves without returning to the root."
     },
     {
       "q": "Why can adding five secondary indexes noticeably slow a write-heavy table?",
@@ -98,7 +106,8 @@
         "Each index doubles the WAL size regardless of columns touched"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "One row change becomes six structure updates, each dirtying different pages scattered across disk. Writes do not take table locks, but the amplified random I/O dominates throughput."
     },
     {
       "q": "A query filters on status ('active' = 95% of rows). The planner ignores your status index. Why is that reasonable?",
@@ -109,7 +118,8 @@
         "Fetching 95% of rows via the index costs more than scanning the table"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Reading nearly the whole table through an index means one random fetch per row plus the index pages. A sequential scan reads the same data in order, so the planner is choosing the cheaper plan."
     },
     {
       "q": "A query needs columns a, b, and c; you have an index on (a, b). What does adding c as an INCLUDE column achieve?",
@@ -120,7 +130,8 @@
         "It compresses the index by deduplicating repeated values of c"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "INCLUDE stores c as payload in the leaf pages without adding it to the key, so the query is answered entirely from the index. Because c is not a key column, it cannot be searched or affect uniqueness."
     },
     {
       "q": "Why might a range query on the second column of a composite index (a, b) perform poorly?",
@@ -131,7 +142,8 @@
         "The second column is stored unsorted to save page space"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The index is sorted by a first, so b is only ordered within each a group. Skipping a predicate on a leaves matching b values spread over the whole index, forcing a full index scan."
     },
     {
       "q": "Bulk-loading 100M rows into a table with six indexes is crawling. Common mitigation?",
@@ -142,7 +154,8 @@
         "Drop or disable the indexes, load the data, then rebuild them once"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Maintaining six trees per row is the bottleneck. Building each index once from sorted data afterward is a bulk sequential operation, far cheaper than 600M incremental updates."
     },
     {
       "q": "An index on created_at exists, but WHERE DATE(created_at) = '2026-08-16' scans the table. Why?",
@@ -153,7 +166,8 @@
         "The index only covers rows created after it was built"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The index stores raw created_at values, not DATE(created_at), so the predicate is non-sargable. Rewriting it as a half-open range, or indexing the expression, restores index use."
     },
     {
       "q": "What is write amplification in the context of an LSM-tree storage engine?",
@@ -164,7 +178,8 @@
         "Deletes expand into tombstones larger than the original values"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A key written once is copied again each time compaction merges it into a deeper level, so bytes written to disk far exceed bytes the application wrote."
     },
     {
       "q": "When is a partial (filtered) index the right tool?",
@@ -175,7 +190,8 @@
         "When the optimizer refuses hints and you must force index usage"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Indexing only the rows matching a WHERE clause keeps the structure tiny and cheap to maintain, which pays off when hot queries always target that same narrow, predictable subset."
     },
     {
       "q": "A UUIDv4 primary key on a clustered-index engine (InnoDB) causes heavy write degradation at scale. Root cause?",
@@ -186,7 +202,8 @@
         "The engine hashes UUIDs before storing, adding CPU per insert"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Random keys land in arbitrary leaf pages, so the working set is the whole index rather than a hot right edge, producing page splits, fragmentation, and buffer-pool misses. Sortable UUIDv7 or ULIDs fix this."
     },
     {
       "q": "Index-only scans sometimes still hit the heap in Postgres. Why?",
@@ -197,7 +214,8 @@
         "TOASTed column values always live in the heap even when the index covers that column"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Postgres index entries carry no MVCC visibility info, so unless the visibility map marks a heap page all-visible, the tuple must be checked. Keeping autovacuum current maximizes true index-only scans."
     },
     {
       "q": "You must support queries filtering on any 2 of 8 columns. Indexing every 2-column combination is infeasible. Reasonable approach?",
@@ -208,7 +226,8 @@
         "Add a trigger that builds temporary indexes per incoming query"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Eight single-column indexes cover all 28 pairs: the planner builds a bitmap from each relevant index and ANDs them before touching the heap. A wide composite index only helps its leftmost prefixes."
     },
     {
       "q": "A 500 GB table gets a new index; the build locks writes for hours. What do modern databases offer to avoid this?",
@@ -219,7 +238,8 @@
         "An online build that tracks concurrent table changes and applies them at the end"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Concurrent builds (CREATE INDEX CONCURRENTLY, ALGORITHM=INPLACE) scan the table while logging concurrent DML, then replay that log to catch up, so writes keep flowing at the cost of a slower build."
     }
   ]
 }

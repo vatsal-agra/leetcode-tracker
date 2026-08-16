@@ -10,7 +10,8 @@
         "Retried requests can be recognized and not charged twice"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Networks time out ambiguously, so clients must retry; the key lets the server recognize a repeat of an already-executed charge and return the original result instead of moving money again."
     },
     {
       "q": "In double-entry bookkeeping, every transaction:",
@@ -21,7 +22,8 @@
         "Locks both accounts until end-of-day settlement"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Money always moves from somewhere to somewhere, so debits must equal credits. That invariant is checkable, which is what makes the ledger auditable and self-validating."
     },
     {
       "q": "What is a PSP (payment service provider) in a typical e-commerce flow?",
@@ -32,7 +34,8 @@
         "A fraud-scoring vendor consulted after settlement"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The PSP sits between the merchant and the card networks and banks, handling authorization, capture, settlement, and compliance so the merchant does not integrate with each bank directly."
     },
     {
       "q": "Why do PSPs deliver payment outcomes via webhooks in addition to API responses?",
@@ -43,7 +46,8 @@
         "Webhooks bypass the strict rate limits that would throttle API status polling"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Many events are asynchronous, such as delayed bank confirmations, disputes, or a result that finalizes after the HTTP call timed out, so a callback channel is needed to report them."
     },
     {
       "q": "What does PCI DSS scope primarily depend on?",
@@ -54,7 +58,8 @@
         "Which database engine holds the transaction history"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Scope follows the cardholder data: any system that stores, processes, or transmits a PAN is in scope. Volume affects validation level, not which systems must be assessed."
     },
     {
       "q": "Why are money amounts stored as integer minor units (cents) rather than floats?",
@@ -65,7 +70,8 @@
         "Currency symbols only attach cleanly to integers"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Values like 0.10 have no exact binary representation, so float arithmetic accumulates tiny errors that break balance invariants. Integer cents make every amount exact."
     },
     {
       "q": "What is authorization versus capture?",
@@ -76,7 +82,8 @@
         "Auth happens at the bank; capture happens at the card network only"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Authorization places a hold confirming funds and validity, and capture later requests the actual transfer, which is why merchants can authorize at checkout and capture at shipment."
     },
     {
       "q": "What is tokenization of card numbers for?",
@@ -87,7 +94,8 @@
         "Replacing the PAN with a reference so systems avoid storing card data"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A token is a meaningless reference the PSP can map back to the card, so a breach of merchant systems yields nothing usable and PCI scope shrinks dramatically."
     },
     {
       "q": "A charge request times out. The client retries with the same idempotency key. The first attempt actually succeeded. What should the server return?",
@@ -98,7 +106,8 @@
         "A partial refund covering the accidental second attempt"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The server recorded the outcome under that key, so replaying the stored response makes the retry a safe no-op and gives the client the answer it lost to the timeout."
     },
     {
       "q": "Why must webhook handlers be idempotent?",
@@ -109,7 +118,8 @@
         "Events always arrive in order, so replays are the only risk"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Webhook delivery is at-least-once: a slow or failed acknowledgement triggers redelivery, so processing the same event ID twice must not credit an account twice."
     },
     {
       "q": "Your ledger says the customer paid; the PSP report says the charge failed. Which process is designed to catch exactly this?",
@@ -120,7 +130,8 @@
         "Reconciliation: comparing internal records against PSP settlement files"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Reconciliation systematically matches internal ledger entries against the PSP's authoritative settlement file and surfaces every disagreement as an exception to investigate."
     },
     {
       "q": "An order service must charge a card and mark the order paid, across two systems. Which pattern avoids charging without recording (or vice versa)?",
@@ -131,7 +142,8 @@
         "Use a message queue so that the charge and the database write happen simultaneously"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Persisting a pending intent before calling the PSP means any crash leaves a record a recovery job can query and resolve. An external PSP cannot enlist in an XA transaction."
     },
     {
       "q": "Why should refunds reference the original charge rather than issue a fresh opposite-direction transfer?",
@@ -142,7 +154,8 @@
         "Refund latency is lower because no bank is involved"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A linked refund returns funds to the exact card used, caps the amount at what was captured, reverses fees correctly, and gives dispute handling a clear audit trail."
     },
     {
       "q": "A balance is stored as a single mutable column, updated in place. What key auditability property is lost versus an append-only ledger?",
@@ -153,7 +166,8 @@
         "Reconstructing how and why the balance reached its current value"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Overwriting discards history, so you cannot replay entries to explain or verify the number. An append-only ledger derives the balance from immutable entries you can always re-sum."
     },
     {
       "q": "Payments must survive a region outage. Which component is hardest to make active-active, and why?",
@@ -164,7 +178,8 @@
         "The fraud model, because feature stores cannot replicate"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Balance checks demand linearizable writes per account; concurrent multi-region writes could each approve a spend against the same funds, so the ledger needs a single authoritative writer."
     },
     {
       "q": "Retrying a failed PSP call safely requires the retry to be:",
@@ -175,7 +190,8 @@
         "Delayed until the nightly reconciliation batch has confirmed the failure"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The key identifies the operation and matching parameters prove it is the same request, so the PSP can dedupe. Changing the amount under a reused key is typically rejected outright."
     },
     {
       "q": "Design review: idempotency keys are stored with a 24-hour TTL. A client retries a timed-out charge 25 hours later. What's the failure mode?",
@@ -186,7 +202,8 @@
         "The ledger blocks the retry via its balanced-entry invariant"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Once the dedupe record is evicted the key looks brand new, so the server executes the charge a second time. Retention must exceed the longest realistic client retry window."
     },
     {
       "q": "Under load, two workers process the same 'payment_succeeded' webhook concurrently. Idempotent handlers still double-credit. What's the likely bug?",
@@ -197,7 +214,8 @@
         "Webhook payload compression corrupted the event ID"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Read-then-write dedupe has a race window; only an atomic guard such as a unique index on the event ID, or an insert-first pattern, makes exactly one worker win."
     },
     {
       "q": "Daily reconciliation finds 0.01% of transactions mismatched. Volumes are 10M/day. What's the sound operational design?",
@@ -208,7 +226,8 @@
         "Queue the ~1,000 exceptions into a workflow with alerting and aging SLAs"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Mismatches are real money and never noise, but they also should not stop the business, so they go into a tracked exception queue with ownership and age limits. Auto-adjusting the ledger hides genuine bugs."
     },
     {
       "q": "To shrink PCI scope, card data entry is moved to PSP-hosted fields (iframe or redirect). What is the resulting architecture property?",
@@ -219,7 +238,8 @@
         "Your frontend must be certified, but backends fall out of scope"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The card is typed into the PSP's own origin, so your backend only ever sees a token, which removes those systems from cardholder-data scope. Fraud liability is unchanged by this."
     }
   ]
 }

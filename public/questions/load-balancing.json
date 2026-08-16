@@ -10,7 +10,8 @@
         "Running periodic health checks against registered backends"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Only L7 parses the application protocol, so only it can route on paths, headers, or cookies. Connection distribution and health checks are things both layers do."
     },
     {
       "q": "When is least-connections a better choice than round-robin?",
@@ -21,7 +22,8 @@
         "When session stickiness is strictly required"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "With variable request durations, open-connection count is a live proxy for how busy a backend is, so least-connections adapts. Round-robin is fine only when work per request is uniform."
     },
     {
       "q": "What is the purpose of an active health check from a load balancer?",
@@ -32,7 +34,8 @@
         "To probe backends and stop routing to failing ones"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Active health checks periodically probe each backend so unhealthy instances are removed from rotation before users hit them. They are about availability, not encryption or CPU-based weighting."
     },
     {
       "q": "What problem do sticky sessions solve?",
@@ -43,7 +46,8 @@
         "Slow DNS propagation between regions"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Stickiness pins a client to the backend that holds its in-memory session so state stays reachable. It trades even load distribution for that affinity."
     },
     {
       "q": "What is the main benefit of consistent hashing for backend selection?",
@@ -54,7 +58,8 @@
         "Minimizing remapping when servers are added or removed"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Consistent hashing moves only the keys owned by the changed node instead of reshuffling everything as modulo hashing does. Distribution is approximately even, not perfect, which is why virtual nodes exist."
     },
     {
       "q": "A balancer that decides using only IP addresses and TCP/UDP ports operates at which layer?",
@@ -65,7 +70,8 @@
         "Layer 5"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Ports belong to the transport layer, so IP-and-port routing is Layer 4. Layer 7 would require reading the application payload such as HTTP."
     },
     {
       "q": "Why do L4 load balancers generally push more throughput than L7 proxies?",
@@ -76,7 +82,8 @@
         "They use UDP instead of TCP for internal forwarding"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Forwarding packets without parsing or buffering HTTP costs far less CPU per byte. L7 proxies pay for the visibility that enables content-based routing."
     },
     {
       "q": "In weighted round-robin, a server weighted 3 versus others at 1 will?",
@@ -87,7 +94,8 @@
         "Be probed three times during every health-check cycle"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Weights set the relative share of requests, so weight 3 draws roughly triple what a weight-1 peer gets. The actual fraction depends on how many other servers exist."
     },
     {
       "q": "A backend passes TCP health checks but its application is deadlocked and returns nothing. What helps?",
@@ -98,7 +106,8 @@
         "Switch the balancer from L7 to L4 mode"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A TCP handshake only proves the socket is listening, so an application-level check that requires a valid HTTP response is needed. Probing a broken check more often just fails faster at nothing."
     },
     {
       "q": "Sticky sessions are enabled and one backend dies. What typically happens to its users?",
@@ -109,7 +118,8 @@
         "They get rerouted and lose in-memory session state unless it's stored externally"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The balancer reassigns those clients to healthy backends, but local session data dies with the instance. Externalizing state to Redis or a database is the standard fix."
     },
     {
       "q": "Under plain round-robin one backend becomes five times slower but stays healthy. The effect?",
@@ -120,7 +130,8 @@
         "Health checks eject it within one cycle"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Round-robin is oblivious to latency and load, so the slow node keeps its equal share and queues grow. Least-connections or latency-aware policies would shift traffic away."
     },
     {
       "q": "A single load balancer is a single point of failure. The standard remedy?",
@@ -131,7 +142,8 @@
         "Have every client library retry failed requests until the single balancer restarts itself"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Redundant balancers sharing a floating VIP, DNS failover, or anycast remove the single point of failure. A bigger single instance is still one instance."
     },
     {
       "q": "All employees behind one corporate NAT hash to the same backend under source-IP affinity. Consequence?",
@@ -142,7 +154,8 @@
         "The NAT gateway automatically rewrites their requests to reach other backends instead"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "IP hashing is uniform over distinct IPs, but NAT collapses many users into one source address, so they all land on one backend. That concentration creates a hot spot."
     },
     {
       "q": "What is a key limitation of DNS-based (GSLB) load balancing?",
@@ -153,7 +166,8 @@
         "It requires deep L7 inspection of every single DNS query passing through"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Resolvers and clients cache records, often ignoring TTLs, so draining a region by DNS takes minutes or longer. DNS can absolutely return multiple A records."
     },
     {
       "q": "Connection draining (deregistration delay) exists so that?",
@@ -164,7 +178,8 @@
         "The balancer can compress idle connections safely"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Draining stops sending new requests while letting existing ones complete, so deploys and scale-downs do not sever active work. Without it, users see reset connections."
     },
     {
       "q": "You need TLS termination, path-based routing to microservices, and gRPC awareness. Which fits?",
@@ -175,7 +190,8 @@
         "An L7 proxy such as Envoy or an application load balancer"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Path routing and gRPC or HTTP/2 awareness require parsing the application protocol, which is exactly what an L7 proxy does. L4 passthrough cannot see paths at all."
     },
     {
       "q": "Why does 'power of two choices' beat naive random backend assignment?",
@@ -186,7 +202,8 @@
         "Two independent hash functions eliminate assignment collisions entirely across the pool"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Comparing just two random candidates reduces maximum load from logarithmic to log-log growth, a large win for almost no extra cost. It is about smoothing load, not raw throughput."
     },
     {
       "q": "Backends slow down, health checks fail, the pool shrinks, and survivors get more load — a spiral. Best mitigation?",
@@ -197,7 +214,8 @@
         "Use circuit breaking, retry budgets, and gradual ejection instead"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Circuit breakers, retry budgets, and capped outlier ejection shed load and stop the feedback loop. Tighter thresholds or aggressive retries add load and accelerate the collapse."
     },
     {
       "q": "Consistent hashing over three equal servers; one dies. Ideally, what fraction of keys must remap?",
@@ -208,7 +226,8 @@
         "None; requests simply queue up until the dead server eventually returns"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Only the failed node's arc of the ring moves, so about 1/N of keys, here one-third, are reassigned to its successors. Modulo hashing would instead remap nearly everything."
     },
     {
       "q": "Long-lived gRPC (HTTP/2) connections through an L4 balancer end up imbalanced. Why?",
@@ -219,7 +238,8 @@
         "The balancer downgrades HTTP/2 streams to HTTP/1.1 connections unevenly across backends"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "L4 balances at connection setup, but HTTP/2 multiplexes thousands of pinned requests over one persistent connection. The fix is L7 request-level balancing or client-side load balancing."
     }
   ]
 }

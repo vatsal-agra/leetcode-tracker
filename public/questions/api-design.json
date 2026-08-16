@@ -10,7 +10,8 @@
         "CONNECT, because tunnels are established at most one time per client"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "PUT sends the complete desired representation, so applying it once or ten times leaves the resource identical. PATCH can be non-idempotent when the delta is relative, like increment."
     },
     {
       "q": "A request lacks valid credentials vs a valid user lacking permission. Which codes apply?",
@@ -21,7 +22,8 @@
         "401 for both cases, distinguished only by the response body"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "401 means unauthenticated, so re-authenticating may help. 403 means the identity is known but not allowed, so retrying with the same credentials never will."
     },
     {
       "q": "In REST semantics, what should GET requests never do?",
@@ -32,7 +34,8 @@
         "Cause observable state changes on the server beyond logs or caching"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "GET is a safe method, which is why caches, crawlers, and proxies feel free to replay it. Side effects on GET turn a prefetch into an unintended mutation."
     },
     {
       "q": "What is the main reason to version a public API (e.g., /v2/)?",
@@ -43,7 +46,8 @@
         "To reduce payload sizes by silently dropping deprecated fields"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "You cannot force third-party clients to upgrade, so a new version lets incompatible contracts coexist while old integrations continue running unchanged."
     },
     {
       "q": "What is offset pagination's basic mechanism?",
@@ -54,7 +58,8 @@
         "Clients pass the ID of the last seen row to anchor the next page"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Offset pagination maps directly to LIMIT and OFFSET: skip N rows, return M. It is stateless and allows page jumps, but the database must still scan the skipped rows."
     },
     {
       "q": "Which is a defining trait of gRPC compared with typical REST/JSON?",
@@ -65,7 +70,8 @@
         "gRPC uses binary protobuf over HTTP/2 with generated client stubs"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "gRPC is schema-first: protobuf definitions generate typed stubs, and the compact binary encoding rides HTTP/2 with multiplexing and streaming. The cost is losing human-readable payloads."
     },
     {
       "q": "Why should DELETE be idempotent?",
@@ -76,7 +82,8 @@
         "Proxies automatically replay DELETE requests to improve reliability"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A client that times out cannot tell whether the delete happened, so it retries. Idempotence makes the second call harmless: the resource is already gone either way."
     },
     {
       "q": "What is the purpose of a machine-readable error body (e.g., problem+json)?",
@@ -87,7 +94,8 @@
         "It hides stack traces by encrypting diagnostic details for support staff"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Structured errors give a stable machine identifier alongside human text, so client logic keeps working when the wording is reworded or localized."
     },
     {
       "q": "A user pages through offset-paginated results while rows are being inserted. What symptom appears?",
@@ -98,7 +106,8 @@
         "Responses interleave rows from other users' concurrent sessions"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each page is a fresh query against a changed dataset, so an insert before the offset pushes rows forward and the next page re-shows or skips them. Keyset cursors avoid this drift."
     },
     {
       "q": "Why do cursor (keyset) APIs typically not support jumping straight to page N?",
@@ -109,7 +118,8 @@
         "Keyset queries only support descending sort orders on primary keys"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A cursor is a sort-key boundary meaning \"rows after this value\", which has no notion of counting pages. That is precisely why it stays stable and fast on huge tables."
     },
     {
       "q": "A client retries POST /payments after a timeout. How does an Idempotency-Key header help?",
@@ -120,7 +130,8 @@
         "It forces the client to wait for a webhook instead of a response"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The server records the key with its outcome, so a retry returns the original response instead of charging twice. It makes an inherently non-idempotent POST safe to replay."
     },
     {
       "q": "When is gRPC a poor fit versus REST/JSON?",
@@ -131,7 +142,8 @@
         "Public browser-facing APIs where plain HTTP and JSON tooling matter"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Browsers cannot speak native gRPC without a proxy layer, and public consumers expect curl-able JSON. gRPC's strengths are all internal service-to-service scenarios."
     },
     {
       "q": "Which of these changes to a stable API is a breaking change?",
@@ -142,7 +154,8 @@
         "Renaming an existing response field consumed by clients"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Removing or renaming a field clients already read breaks their parsing. Purely additive changes are backward compatible because existing clients simply ignore what they do not know."
     },
     {
       "q": "What is the semantic difference between PUT and PATCH?",
@@ -153,7 +166,8 @@
         "PUT is for JSON bodies while PATCH is reserved for form encoding"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "PUT carries the entire target representation, so omitted fields are cleared. PATCH sends only a delta, leaving untouched fields intact."
     },
     {
       "q": "An API returns 200 with an error field in the body on failures. Why is this harmful?",
@@ -164,7 +178,8 @@
         "Load balancers drop 200 responses that contain error fields in the body"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The whole HTTP ecosystem treats the status line as the outcome signal, so 200-on-error hides failures from dashboards and lets caches store broken responses."
     },
     {
       "q": "What should a well-designed 429 rate-limit response include?",
@@ -175,7 +190,8 @@
         "A reduced-quality response body instead of an outright rejection"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Retry-After tells the client exactly when capacity returns, converting blind hammering into coordinated backoff. Without it, clients retry immediately and worsen the overload."
     },
     {
       "q": "A bulk update of 500 items partially succeeds. What is the best response design?",
@@ -186,7 +202,8 @@
         "Process asynchronously and always return 202 with no status endpoint"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A batch outcome is not a single boolean, so the response must report each item individually. That lets the client retry just the failures instead of resubmitting all 500."
     },
     {
       "q": "A REST API fronts a long-running video transcode. What is the standard pattern?",
@@ -197,7 +214,8 @@
         "Return 202 with an operation URL clients poll (or a webhook) for completion"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "202 Accepted plus a job resource decouples request duration from work duration, surviving client disconnects and proxy timeouts while giving a durable handle on progress."
     },
     {
       "q": "URL versioning vs header versioning: what is the honest tradeoff?",
@@ -208,7 +226,8 @@
         "URL versioning requires a separate DNS zone per version, which header versioning avoids"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A version in the path is visible in logs, browsers, and cache keys at the cost of duplicated routes. Header negotiation is purer REST but invisible to casual tooling and needs correct Vary handling."
     },
     {
       "q": "Mobile clients on flaky networks call six endpoints to render one screen. What is the best remedy?",
@@ -219,7 +238,8 @@
         "Cache each endpoint's response in localStorage for later offline reuse"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "On high-latency links round trips dominate, and six calls means six chances to fail. A backend-for-frontend composes the data server-side and returns it in one request."
     }
   ]
 }

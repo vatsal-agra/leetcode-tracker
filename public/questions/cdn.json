@@ -10,7 +10,8 @@
         "TCP is replaced by a proprietary protocol that needs no handshake"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Latency is dominated by physical distance and round trips, so terminating the connection at a nearby edge cuts RTT for the handshake and every byte after it."
     },
     {
       "q": "What happens on a CDN cache miss?",
@@ -21,7 +22,8 @@
         "The request is queued at the edge until a scheduled origin sync runs"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A miss triggers a transparent fill: the edge proxies to origin or shield, returns the response to the client, and stores it so later requests hit."
     },
     {
       "q": "What does a TTL on a cached object control?",
@@ -32,7 +34,8 @@
         "How long the edge may serve the copy before revalidating or refetching"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "TTL is a freshness lifetime in time, not request count or size. Once it elapses the object is stale and must be revalidated or refetched."
     },
     {
       "q": "What is a cache key?",
@@ -43,7 +46,8 @@
         "The origin's private identifier for each file on its local disk"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The cache key decides which stored object answers a request. Adding attributes such as headers or query params creates more variants and lowers hit rate."
     },
     {
       "q": "Which content is the most natural fit for CDN edge caching?",
@@ -54,7 +58,8 @@
         "Responses that differ on every request due to random tokens"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Caching pays off when one stored copy serves many users. Static assets are identical for everyone and change rarely, unlike personalized or mutating requests."
     },
     {
       "q": "What does cache invalidation (a purge) actually do?",
@@ -65,7 +70,8 @@
         "Forces every client browser worldwide to clear its local copy of the object immediately"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A purge only affects CDN-held copies, forcing the next request to refill from origin. It cannot reach into browser caches already holding the object."
     },
     {
       "q": "Cache-Control: public, max-age=86400 tells the CDN what?",
@@ -76,7 +82,8 @@
         "The object may be cached forever because it is immutable content"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "public authorizes shared caches like a CDN to store the response, and max-age=86400 gives it a 24-hour freshness window before revalidation is required."
     },
     {
       "q": "How are users typically routed to a nearby CDN edge?",
@@ -87,7 +94,8 @@
         "DNS resolution or anycast steers the client to a close healthy edge"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Routing happens before the request: DNS returns a nearby PoP's address, or anycast advertises one IP from many PoPs so BGP picks the closest. Both also route around unhealthy edges."
     },
     {
       "q": "What problem does an origin shield (parent cache tier) solve?",
@@ -98,7 +106,8 @@
         "It collapses misses from many edges so the origin sees far fewer requests"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Without a shield every PoP misses independently and hits origin. A parent tier funnels those misses through one cache, so the origin serves roughly one fill instead of hundreds."
     },
     {
       "q": "You configure the cache key to vary on the entire Cookie header. What is the consequence?",
@@ -109,7 +118,8 @@
         "Cookies get stripped from forwarded requests, silently logging users out"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Cookies carry session and analytics IDs that are unique per user, so keying on the whole header fragments the cache into per-user copies that are almost never reused."
     },
     {
       "q": "How do fingerprinted filenames (app.3f9c.js) interact with CDN caching on deploys?",
@@ -120,7 +130,8 @@
         "They require a global purge on each deploy to avoid serving stale code"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Content-hashed URLs make each build immutable, so a deploy publishes new keys rather than mutating old ones. Only the short-lived HTML referencing them needs a low TTL."
     },
     {
       "q": "A viral object expires at thousands of edges at once. What protects the origin?",
@@ -131,7 +142,8 @@
         "Automatic TTL doubling whenever the origin's error rate starts rising"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Coalescing collapses concurrent misses at a PoP into a single origin fetch, and stale-while-revalidate keeps serving the old copy meanwhile, so no thundering herd reaches origin."
     },
     {
       "q": "Why is caching authenticated API responses at the edge risky?",
@@ -142,7 +154,8 @@
         "Tokens expire mid-TTL, which corrupts the cached response body itself"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A CDN is a shared cache, so if identity is not part of the cache key one user's stored response is handed to the next requester. That is a data-leak bug, not a protocol prohibition."
     },
     {
       "q": "Negative caching: why cache 404 responses briefly?",
@@ -153,7 +166,8 @@
         "To stop repeated misses for missing objects from hammering the origin"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Uncached errors mean every request for a missing URL becomes an origin fetch. A short negative TTL absorbs that traffic while keeping the delay small once the object appears."
     },
     {
       "q": "Why do HLS/DASH video segments cache so well on CDNs?",
@@ -164,7 +178,8 @@
         "Segment URLs rotate every few seconds, keeping caches perpetually warm"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Every viewer of a stream requests the same fixed-URL segment files that never change once published, so one cached copy at a PoP serves an entire local audience."
     },
     {
       "q": "You set s-maxage=600 and max-age=60. How do the CDN and browser behave?",
@@ -175,7 +190,8 @@
         "The directives conflict, so both caches revalidate on every request"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "s-maxage applies only to shared caches and overrides max-age there, while private browser caches fall back to max-age. This lets the edge hold content longer than clients."
     },
     {
       "q": "Purge-on-change vs short TTLs for a breaking-news site: what is the tradeoff?",
@@ -186,7 +202,8 @@
         "Purging additionally clears every client browser's cache, while TTLs only ever affect the edge tier"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "TTLs are a blunt time-based guarantee that costs origin traffic on every expiry, while purging keeps content fresh cheaply but requires reliable change tracking and global purge propagation."
     },
     {
       "q": "After adding a random analytics query param to asset URLs, origin load spikes despite long TTLs. Why?",
@@ -197,7 +214,8 @@
         "TTLs reset whenever the query string changes, expiring existing objects"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The query string is part of the default cache key, so a random value makes every request a unique object that has never been cached. Fix it by stripping the param from the key."
     },
     {
       "q": "10M users each fetch a 2 MB bundle daily; the CDN hit rate is 90%. Approximate daily origin egress for it?",
@@ -208,7 +226,8 @@
         "About 2 TB, the 10% of the 20 TB total that misses the edge"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Total demand is 10M x 2 MB = 20 TB, and only the 10% miss rate reaches origin, so origin egress is about 2 TB. The 18 TB figure is what the edge absorbs, not what origin serves."
     },
     {
       "q": "One PoP serves a corrupted copy of an immutable JS asset after a disk fault. Best remediation lever?",
@@ -219,7 +238,8 @@
         "Re-deploy the application so all asset fingerprints change everywhere"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The problem is one bad cached copy, so evicting that key forces a clean refill immediately. Draining the PoP or redeploying is far broader disruption than the fault warrants."
     }
   ]
 }

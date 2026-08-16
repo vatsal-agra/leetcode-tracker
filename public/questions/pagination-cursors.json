@@ -10,7 +10,8 @@
         "Deep pages bypass the buffer pool, forcing reads straight from disk"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "OFFSET is not a seek: the engine still walks and throws away every row before the offset, so cost grows linearly with page depth regardless of storage layout."
     },
     {
       "q": "How does keyset pagination fetch the next page?",
@@ -21,7 +22,8 @@
         "Re-run the full query and slice the desired page in application code"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Keyset pagination turns each page into a range predicate on the sort key (WHERE key > last_seen ... LIMIT n), letting the index seek straight to the start of the page."
     },
     {
       "q": "Why should a keyset-paginated query sort on a unique column or add a tiebreaker?",
@@ -32,7 +34,8 @@
         "Ties make ordering ambiguous, so rows can repeat or vanish across pages"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Without a unique tiebreaker the order among equal keys is undefined, so the cursor boundary can land mid-tie and duplicate or drop those rows between pages."
     },
     {
       "q": "A user pages through a feed while new items are inserted. With OFFSET pagination, what happens?",
@@ -43,7 +46,8 @@
         "New items are held in a staging area until the session ends"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An offset counts positions in a moving result set. Inserts push existing rows down, so the next page starts at a shifted position and items repeat or get skipped."
     },
     {
       "q": "What does an opaque pagination cursor typically encode?",
@@ -54,7 +58,8 @@
         "A checksum of every row already delivered to the client"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The cursor carries the position in the sort order, i.e. the last row's sort-key values, so the server can rebuild the range predicate for the next page without server state."
     },
     {
       "q": "Why do APIs return opaque, encoded cursors instead of raw column values?",
@@ -65,7 +70,8 @@
         "Opaque cursors are required by the HTTP specification for list endpoints"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Opacity keeps the cursor an implementation detail: clients treat it as a blob they echo back, so the server can change sort keys or encoding without breaking them."
     },
     {
       "q": "Which pagination style suits an infinite-scroll feed best?",
@@ -76,7 +82,8 @@
         "Cursor pagination, since it stays fast and stable as items arrive"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Infinite scroll only ever asks for \"what comes after this\", which is exactly a cursor seek: constant cost per page and no shifting when new items are inserted at the head."
     },
     {
       "q": "What ability do you give up when moving from OFFSET to keyset pagination?",
@@ -87,7 +94,8 @@
         "Paginating tables larger than available memory"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A cursor names a position in the sort order, not an ordinal page, so you can only walk forward or backward from a known row rather than jump to page N."
     },
     {
       "q": "An API sorts by created_at only, and many rows share timestamps. Pages sometimes skip rows. What's the fix?",
@@ -98,7 +106,8 @@
         "Cache each page server-side so repeated requests return identical rows"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Adding id makes the sort key totally ordered, so the (created_at, id) comparison resumes exactly where the last page ended instead of skipping the rest of a tie group."
     },
     {
       "q": "A dashboard needs 'go to page 47 of 3,000'. Which approach fits?",
@@ -109,7 +118,8 @@
         "OFFSET pagination, accepting the scan cost for random page access"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Random page access is exactly what OFFSET gives you and cursors do not. For bounded admin-style result sets the scan cost is an acceptable price for jump-to-page."
     },
     {
       "q": "Your cursor encodes {last_id: 900}. Row 900 is deleted before the next request. What does a well-built keyset query do?",
@@ -120,7 +130,8 @@
         "Returns an empty page until the client requests a fresh cursor"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The query is a range predicate like id > 900; it never looks the anchor row up, so deleting it changes nothing about which rows follow that boundary value."
     },
     {
       "q": "Search results use offset pagination over lagging replicas. Users see duplicates across pages. Why?",
@@ -131,7 +142,8 @@
         "Offset queries bypass replicas and race against the primary's writes"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An offset is only meaningful against one consistent snapshot. Routing successive pages to replicas at different replication positions shifts row positions, so rows repeat."
     },
     {
       "q": "You must paginate a feed ranked by a score that changes between requests. What's a common practical approach?",
@@ -142,7 +154,8 @@
         "Round all scores to integers so ordering changes less often between pages"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Freezing the ranking values in the cursor gives the pagination a stable frame of reference, so later pages stay consistent even as live scores drift underneath."
     },
     {
       "q": "An endpoint returns next_cursor even when no more rows exist, and clients loop forever. What's the standard fix?",
@@ -153,7 +166,8 @@
         "Encode the total row count into every cursor for client-side checks"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Reading one extra row cheaply proves whether a next page exists. Return only limit rows and omit the cursor when the extra row is absent, giving clients a real terminator."
     },
     {
       "q": "Cursors your API issued last month break after you rename an internal sort column. What practice would have prevented client-visible failures?",
@@ -164,7 +178,8 @@
         "Versioning the cursor payload and keeping decode support for old versions"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A version tag lets the server recognize old payloads and translate them to the new schema, so long-lived cursors keep working across internal changes."
     },
     {
       "q": "For a keyset query filtering (created_at, id) < (?, ?) ordered by both descending, which index serves it best?",
@@ -175,7 +190,8 @@
         "A full-text index covering both columns to allow flexible range matching"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A composite B-tree in the same column order lets the engine seek to the tuple boundary and read rows already sorted, so no separate sort or merge of two indexes is needed."
     },
     {
       "q": "A public API gets scraped via deep pagination, causing heavy load. Which mitigation preserves legitimate use while cutting the scan cost?",
@@ -186,7 +202,8 @@
         "Shrink the page size so each individual request scans fewer rows"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Cursors make deep pages as cheap as the first, removing the quadratic scan cost entirely, while rate limits bound throughput without blocking real clients."
     },
     {
       "q": "Total-count display ('page 3 of 812') on a 500M-row filtered table is timing out. Which tradeoff do large systems usually pick?",
@@ -197,7 +214,8 @@
         "Show an estimate or 'many results' and drop exact deep counts"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Exact counts over arbitrary filters require touching every matching row, so big systems relax the requirement and serve a cheap estimate that users barely notice."
     },
     {
       "q": "You paginate across shards by fanning out and merging. What must each shard request include so the merged stream stays correct?",
@@ -208,7 +226,8 @@
         "The merged result of the previous page for deduplication on the shard"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Only a shared sort-key boundary defines the same global cut on every shard, so the merge resumes exactly after the last emitted row. Per-shard offsets drift apart immediately."
     },
     {
       "q": "A cursor API must tolerate the client retrying the same page request. Why are cursors naturally better here than offsets under concurrent writes?",
@@ -219,7 +238,8 @@
         "Cursor requests are cached by the CDN, so retries never hit the database"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A cursor request is effectively idempotent: it re-issues a fixed range predicate anchored to a value, so a retry returns the same window instead of a position shifted by concurrent writes."
     }
   ]
 }

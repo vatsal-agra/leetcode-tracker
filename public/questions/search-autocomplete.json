@@ -10,7 +10,8 @@
         "It compresses queries better than any inverted index"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A trie encodes shared prefixes as shared paths, so walking one node per character lands on the subtree containing exactly the matching completions. Hashing gives exact-match lookups only, not prefix enumeration."
     },
     {
       "q": "What does 'top-k suggestions' mean in autocomplete?",
@@ -21,7 +22,8 @@
         "Return the k shortest completions that match the prefix"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Top-k means ranking all completions of the prefix by a relevance score (usually frequency plus recency) and returning the best k, since a UI can only show a handful."
     },
     {
       "q": "Roughly what end-to-end latency budget does keystroke autocomplete target?",
@@ -32,7 +34,8 @@
         "Around 500 milliseconds, comparable to a typical full page load"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Suggestions must land before the next keystroke to feel instant, which puts the budget near 100ms. A millisecond is unattainable over a network round trip, and half a second reads as visibly laggy."
     },
     {
       "q": "Why is caching so effective for autocomplete traffic?",
@@ -43,7 +46,8 @@
         "Prefix popularity is highly skewed; a few prefixes dominate requests"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Query prefixes follow a Zipf-like distribution, so a small hot set absorbs most traffic and a modest cache yields very high hit rates. Suggestions do change, so caches still need TTLs."
     },
     {
       "q": "Where do suggestion candidates usually come from?",
@@ -54,7 +58,8 @@
         "Random walks over a knowledge graph seeded per session"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "What real users actually searched is the best predictor of what the next user wants, so candidates are mined from aggregated query logs and scored by frequency and recency. Manual curation cannot scale to billions of phrases."
     },
     {
       "q": "What client-side technique cuts request volume while typing?",
@@ -65,7 +70,8 @@
         "Debouncing: waiting briefly after a keystroke before querying"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Debouncing waits out a short pause (roughly 50-100ms) so a burst of fast keystrokes produces one request instead of many, cutting load without a latency cost the user notices."
     },
     {
       "q": "Why precompute and store top-k completions per prefix instead of ranking at query time?",
@@ -76,7 +82,8 @@
         "Search engines cannot sort by score during a live request"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Traversing a subtree and sorting candidates per keystroke is too slow at scale; precomputing shifts that work offline so serving becomes a single key lookup that fits the ~100ms budget."
     },
     {
       "q": "What is a compressed (radix/Patricia) trie's advantage over a plain trie?",
@@ -87,7 +94,8 @@
         "It rebalances automatically as popular terms shift"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A radix trie merges each chain of single-child nodes into one edge labeled with the whole substring, so it stores far fewer node objects and traverses fewer pointers per lookup."
     },
     {
       "q": "Typo tolerance ('bierber' to 'bieber') is usually implemented how at scale?",
@@ -98,7 +106,8 @@
         "Fuzzy candidates via edit-distance automata or precomputed variants on a bounded set"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Bounded edit-distance automata (or deletion-variant tables) generate only candidates within one or two edits, keeping work small. Scanning every dictionary term per keystroke is far too slow."
     },
     {
       "q": "New trending queries ('earthquake now') must surface within minutes. Pure daily batch rebuilds fail this. What's the standard architecture?",
@@ -109,7 +118,8 @@
         "Ranking purely by recency so new queries always outrank old ones"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A lambda-style split keeps the large, stable index on a batch cadence while a small streaming layer over recent logs is merged at serve time, giving minute-level freshness cheaply."
     },
     {
       "q": "Autocomplete for a 100M-term index must be sharded. Sharding by first letter causes what problem?",
@@ -120,7 +130,8 @@
         "The trie cannot be split without breaking parent pointers"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Letter frequencies are wildly skewed, so the 's' shard gets orders of magnitude more terms and traffic than 'z', creating hotspots. Routing itself works fine, which is why fan-out is not the issue."
     },
     {
       "q": "Users in Japan see suggestions ranked for US traffic. What design choice most directly fixes relevance?",
@@ -131,7 +142,8 @@
         "Serving all suggestions from the geographically nearest datacenter"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Relevance comes from the candidate pool, so building indexes from each region's own query logs fixes it at the source. A nearby datacenter only improves latency, not what is suggested."
     },
     {
       "q": "The suggestion service goes down. What is the correct degradation for the search page?",
@@ -142,7 +154,8 @@
         "Redirect users to a cached static copy of the results page"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Autocomplete is a convenience layered on search, so its failure must never block the core flow; the box stays usable and suggestions silently disappear."
     },
     {
       "q": "Suggestions must exclude offensive or policy-violating phrases. Where is the filter best applied primarily?",
@@ -153,7 +166,8 @@
         "Post-serving, by retracting suggestions after user reports"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Filtering during the offline build means banned phrases are never stored or served, costs nothing at request time, and cannot be bypassed. Client-side blocklists are visible and trivially skipped."
     },
     {
       "q": "Keystroke responses can arrive out of order ('ca' results after 'cat' results). How do clients prevent stale lists?",
@@ -164,7 +178,8 @@
         "Disable suggestions while any request remains in flight"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The client stamps each request with the prefix or a monotonic sequence number and renders a response only if it matches the current input, discarding late arrivals from older keystrokes."
     },
     {
       "q": "Prefix hit rates in the CDN drop sharply for longer prefixes. Why?",
@@ -175,7 +190,8 @@
         "Longer prefixes are more unique, so requests rarely repeat"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The space of possible prefixes grows exponentially with length, so long prefixes are nearly unique per user and rarely requested twice before eviction, leaving nothing to hit."
     },
     {
       "q": "In a precomputed-table design storing top-8 completions for prefixes up to 6 characters, what dominates memory?",
@@ -186,7 +202,8 @@
         "Checksum metadata verifying each list's integrity"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Every distinct observed prefix gets its own materialized list of 8 strings, so footprint is roughly prefix count times k times average suggestion size. Raw logs live offline, not in the serving tier."
     },
     {
       "q": "Edge caches hold hot prefixes; origin holds the full index. A celebrity scandal makes a cold prefix hot instantly. Main risk and mitigation?",
@@ -197,7 +214,8 @@
         "Stale ranking; shorten every TTL to one second globally"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A simultaneous miss on one key sends the whole surge to origin; request coalescing collapses it to a single fetch, and proactive warming on trend signals fills edges before the spike."
     },
     {
       "q": "Personalized autocomplete (user history biases ranking) conflicts with edge caching. Which architecture reconciles them?",
@@ -208,7 +226,8 @@
         "Cache generic top-k at the edge; re-rank lightly with user context at the client or app tier"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Splitting the work keeps the expensive, shareable candidate generation cacheable while the cheap personal re-rank happens per user, so hit rates stay high. Per-user cache keys destroy sharing entirely."
     },
     {
       "q": "You must bound tail latency: p99 under 80ms even when a shard is slow. Which technique targets exactly this?",
@@ -219,7 +238,8 @@
         "Caching each previous response and always serving it before querying shards"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Hedging fires a second copy to a replica once a request exceeds, say, the p95 mark and takes whichever returns first, cutting the tail for a few percent extra load. Retries only help after a failure, too late for p99."
     }
   ]
 }

@@ -10,7 +10,8 @@
         "Leaky bucket with a constant drain rate"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Token bucket accumulates unused credits up to its capacity, so an idle client can spend them in one burst while the refill rate still caps the long-run average."
     },
     {
       "q": "What is the main weakness of the fixed window counter algorithm?",
@@ -21,7 +22,8 @@
         "It drains requests at a constant rate regardless of load"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The counter resets abruptly at each boundary, so a full quota spent at the end of one window plus a full quota at the start of the next passes 2x the limit in a short span."
     },
     {
       "q": "What is the defining behavior of the leaky bucket algorithm?",
@@ -32,7 +34,8 @@
         "It stores one timestamp per request for exact rolling accounting"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Leaky bucket queues arrivals and drains them at a fixed rate, producing a perfectly smooth output stream. Unlike token bucket, it never lets a burst through downstream."
     },
     {
       "q": "Which HTTP status code should a rate limiter return when a client exceeds its quota?",
@@ -43,7 +46,8 @@
         "429 Too Many Requests"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "429 is the status defined specifically for quota exhaustion; it signals a retryable, temporary condition and pairs with Retry-After, unlike 403 which implies permanent denial."
     },
     {
       "q": "What does the Retry-After response header communicate to a throttled client?",
@@ -54,7 +58,8 @@
         "The timestamp when the server last reset all of its rate-limit counters globally"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Retry-After carries a delay in seconds or an HTTP date, telling the client when capacity returns so it can back off instead of hammering the endpoint."
     },
     {
       "q": "Where is a rate limiter typically placed in a service architecture?",
@@ -65,7 +70,8 @@
         "In the TLS termination handshake before any HTTP parsing occurs"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Limiting at the edge rejects excess traffic before it consumes application and database resources, and centralizes policy so every backend service inherits it."
     },
     {
       "q": "What does the sliding window log algorithm store for each client?",
@@ -76,7 +82,8 @@
         "A weighted average of the request counts from the previous two windows"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Keeping every request timestamp lets the limiter evict entries older than the window and count exactly, giving perfect accuracy at the cost of memory proportional to traffic."
     },
     {
       "q": "How does the sliding window counter algorithm approximate a rolling limit cheaply?",
@@ -87,7 +94,8 @@
         "It blends the previous window's count, weighted by overlap, with the current count"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Two counters plus a linear interpolation of the prior window's overlap approximate a rolling count in O(1) memory, smoothing the fixed window's boundary spike."
     },
     {
       "q": "Each API node keeps rate-limit counters in local memory behind a round-robin load balancer. What is the consequence?",
@@ -98,7 +106,8 @@
         "Latency rises sharply because nodes must synchronize on every request"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each node independently enforces the full limit against the fraction of traffic it sees, so the client can spend N separate quotas across N nodes."
     },
     {
       "q": "Why implement check-and-increment as a Lua script in Redis rather than separate commands?",
@@ -109,7 +118,8 @@
         "Redis persists Lua results to disk so counters survive restarts"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Redis executes a script as a single uninterrupted unit, so the read and the update cannot interleave with another client's and the limit is enforced correctly under concurrency."
     },
     {
       "q": "A team implements the limit check as a GET followed by a separate INCR call. Under high concurrency, what happens?",
@@ -120,7 +130,8 @@
         "Concurrent clients can both read a stale count and slip past the limit"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The gap between GET and INCR is a classic check-then-act race: many requests can observe the same under-limit value before any increment lands, so all are admitted."
     },
     {
       "q": "A rate limiter's Redis backend goes down and the limiter is configured to fail open. What results?",
@@ -131,7 +142,8 @@
         "The limiter falls back to exact sliding-window logs kept locally"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Fail open means an unavailable counter store is treated as permission to proceed, keeping the API serving at the risk of unprotected backends during the outage."
     },
     {
       "q": "For a login endpoint, should the rate limiter fail open or fail closed when its backing store is unreachable?",
@@ -142,7 +154,8 @@
         "Neither one; disable login rate limits and rely entirely on CAPTCHAs"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "On security-sensitive endpoints the cost of unthrottled brute force exceeds the cost of temporary unavailability, so the safe default is to deny when the limiter cannot verify."
     },
     {
       "q": "An API sees abuse from many accounts behind one corporate NAT. What would limiting by IP address alone do?",
@@ -153,7 +166,8 @@
         "Punish legitimate users who share that IP along with the abusers"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Behind NAT one IP represents many users, so an IP-keyed limit is collective punishment. Keying on account or API key isolates the actual abusers."
     },
     {
       "q": "A token bucket has capacity 100 and refills at 10 tokens per second. What traffic does it permit?",
@@ -164,7 +178,8 @@
         "Up to 110 requests every second until the bucket fully empties"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Capacity sets the maximum burst (100 saved tokens) and the refill rate sets the steady state (10/s), since once the bucket empties throughput is limited by refill."
     },
     {
       "q": "A service wants approximately global rate limiting while adding minimal latency to each request. What is the best approach?",
@@ -175,7 +190,8 @@
         "Fan out each request to every peer node and wait for agreement"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Deciding locally keeps the hot path free of network round trips; periodic delta reconciliation bounds the error, and rate limiting rarely needs exactness."
     },
     {
       "q": "When does the sliding window counter's weighted estimate misjudge traffic the most?",
@@ -186,7 +202,8 @@
         "When previous-window requests clustered near one edge, breaking the uniformity assumption"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The estimate prorates the previous window's count assuming requests were spread evenly. If they were bunched at one edge, the interpolation over- or under-counts sharply."
     },
     {
       "q": "Why can a multi-key rate-limiting Lua script fail when moved from a single Redis node to Redis Cluster?",
@@ -197,7 +214,8 @@
         "EVAL loses its atomicity guarantee in cluster mode, reintroducing races"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A script executes on one node, so every key it touches must live in the same hash slot. The usual fix is hash tags like {user:123} to force co-location."
     },
     {
       "q": "Why is a sliding window log prohibitively expensive at 10 million clients sending 100 requests per minute each?",
@@ -208,7 +226,8 @@
         "The timestamps must be replicated synchronously to every node in the cluster"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Memory scales with total requests in flight, not clients: 10M x 100 entries dwarfs the O(1) per-client state a counter-based algorithm needs."
     },
     {
       "q": "Thousands of throttled clients receive 429 responses carrying identical Retry-After values. What failure follows, and what is the standard fix?",
@@ -219,7 +238,8 @@
         "DNS caches expire simultaneously across clients, fixed by lengthening record TTLs"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Identical delays synchronize every client into a thundering herd at the same instant. Randomized jitter on top of exponential backoff decorrelates them and smooths the load."
     }
   ]
 }

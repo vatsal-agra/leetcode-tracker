@@ -10,7 +10,8 @@
         "Either drop the partitioned nodes or restart the whole cluster"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "When nodes cannot talk, a node either answers from possibly outdated local state or refuses until it can confirm the latest value. CAP says you cannot have both at once."
     },
     {
       "q": "In CAP, what does the C (consistency) actually mean?",
@@ -21,7 +22,8 @@
         "Every read reflects the most recent completed write (linearizability)"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "CAP's C is linearizability: the system behaves as if there were one copy, and reads never go backwards in time. It is unrelated to ACID's constraint-based C and stronger than eventual convergence."
     },
     {
       "q": "Why can't a distributed system simply 'choose CA' and ignore partitions?",
@@ -32,7 +34,8 @@
         "Consistency can only be sacrificed after a quorum vote"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Cables break, switches fail, and links time out, so P is a fact of the environment rather than a design option. The real decision is only what to do when a partition happens."
     },
     {
       "q": "During a partition, a CP system that cannot reach quorum typically does what?",
@@ -43,7 +46,8 @@
         "Keeps both sides writable and merges the histories afterward"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A minority cannot know whether the majority has newer writes, so the safe move is to return errors or block until connectivity returns. Correctness is preserved by sacrificing availability there."
     },
     {
       "q": "During a partition, an AP system keeps responding. What is the accepted trade?",
@@ -54,7 +58,8 @@
         "Responses may be stale or conflicting and need reconciliation later"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Both sides keep accepting operations from local state, so their histories diverge and must be merged after healing via version vectors, CRDTs, or application logic."
     },
     {
       "q": "Which everyday product behavior smells like an AP design decision?",
@@ -65,7 +70,8 @@
         "A bank rejecting transfers when a region is unreachable"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The cart favors always accepting the operation and reconciles divergent versions afterward, because a duplicated cart line is cheap to fix. The other three refuse service to protect correctness, which is CP behavior."
     },
     {
       "q": "What does the CAP 'availability' property formally require?",
@@ -76,7 +82,8 @@
         "Failed nodes restart automatically within a bounded time"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "CAP availability is an absolute per-request property proven over all executions, not a percentage. Any node still running must answer, which is why a partitioned minority breaks it."
     },
     {
       "q": "Why is 'this database is CP, that one is AP' an oversimplification?",
@@ -87,7 +94,8 @@
         "CP and AP differ only in marketing, not in behavior"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Stores like Cassandra and DynamoDB let each query pick a consistency level, so the same cluster behaves CP for one call and AP for the next. The label describes a default, not a fixed identity."
     },
     {
       "q": "A quorum system has 5 replicas with W=3, R=3. A partition isolates 2 nodes. What happens on the minority side?",
@@ -98,7 +106,8 @@
         "It buffers writes durably and reports them as committed"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Both W and R need three acknowledgements and only two nodes are reachable, so every quorum operation fails. That refusal is exactly what stops the two sides from diverging."
     },
     {
       "q": "What does the PACELC formulation add beyond CAP?",
@@ -109,7 +118,8 @@
         "A ranking of consensus protocols by message complexity"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "PACELC covers the normal case CAP ignores: else, the choice is latency versus consistency, since strong reads require coordination round trips even on a healthy network."
     },
     {
       "q": "An inventory service shows one item left; two buyers in partitioned regions both purchase it. Which stance did the system take?",
@@ -120,7 +130,8 @@
         "CP: quorum writes allowed both sides to commit safely"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Both sides accepted a write without confirming the global count, which is the availability choice. A CP design would have rejected the minority-side purchase instead of overselling."
     },
     {
       "q": "A coordination service (like ZooKeeper) picks CP. What is the practical consequence during partitions?",
@@ -131,7 +142,8 @@
         "The minority partition cannot elect a leader or serve strongly consistent operations"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Leader election and lock grants need a majority, so the minority side stops serving rather than hand out a second lock. That is precisely why such services are trusted for fencing."
     },
     {
       "q": "Why is a single-node relational database not a meaningful example of 'CA'?",
@@ -142,7 +154,8 @@
         "CA requires at least two datacenters by definition"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "CAP describes behavior of a replicated system under partition; with no replicas there is nothing to partition, so calling it CA is vacuous rather than an achievement."
     },
     {
       "q": "Under PACELC, why might a system choose EL (latency over consistency) with no partition present?",
@@ -153,7 +166,8 @@
         "Latency and consistency are equivalent, so the choice is stylistic"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Strong reads need a quorum or leader round trip, which can add tens of milliseconds across regions. Serving from the nearest replica is far faster when slightly stale data is acceptable."
     },
     {
       "q": "DynamoDB offers both eventually consistent and strongly consistent reads. What does choosing strong reads cost you?",
@@ -164,7 +178,8 @@
         "Writes must pause while any strong read is in flight"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A strong read must be served by the partition leader, costing double the read units, more latency, and an error when that leader is unreachable. Eventually consistent reads can use any replica."
     },
     {
       "q": "Why does a 2-of-3 quorum system remain available when one node is partitioned away?",
@@ -175,7 +190,8 @@
         "The majority side still reaches quorum, so operations proceed consistently there"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Two surviving nodes satisfy the majority requirement, so reads and writes overlap on a current copy and continue safely. Only the isolated node loses the ability to serve."
     },
     {
       "q": "A 'CP' database advertises 99.999% availability. How do you reconcile this with CAP?",
@@ -186,7 +202,8 @@
         "The system silently switches to AP mode whenever uptime drops"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "CAP forbids answering every request during a partition, but partitions are rare and brief, so measured uptime can still be extremely high. The two use the word availability differently."
     },
     {
       "q": "Spanner-style systems claim both strong consistency and very high availability. What makes this practically achievable?",
@@ -197,7 +214,8 @@
         "They run every replica inside a single rack to avoid partitions"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Spanner is still CP and would reject minority-side requests, but private redundant fiber and Paxos majorities make those events so rare that observed availability stays near five nines."
     },
     {
       "q": "During partition healing in an AP store, siblings (conflicting versions) surface. Which resolution strategy risks silent data loss?",
@@ -208,7 +226,8 @@
         "Timestamp-based last-write-wins across nodes with unsynchronized clocks"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "LWW discards the losing version outright, and with clock skew the discarded one may actually be newer. The other strategies preserve information from both siblings."
     },
     {
       "q": "A payments flow needs linearizable balance checks; feed rendering tolerates staleness. Both hit one datastore. Sound per-CAP design?",
@@ -219,7 +238,8 @@
         "Run two identical strongly consistent clusters and split traffic between them"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Consistency is a per-operation requirement, so paying coordination cost only on balance checks gives correctness where it matters and fast local reads for the feed."
     }
   ]
 }

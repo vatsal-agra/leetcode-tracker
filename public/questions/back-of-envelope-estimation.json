@@ -10,7 +10,8 @@
         "Exactly 86,400"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A day holds 86,400 seconds, so 86.4 million requests divide out to about 1,000 QPS. The 86,400 option confuses the seconds-per-day constant with the rate."
     },
     {
       "q": "Roughly how long does a single main-memory (RAM) reference take on modern hardware?",
@@ -21,7 +22,8 @@
         "About 100 nanoseconds"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DRAM reference costs roughly 100 ns in the standard latency numbers. About 1 ns is an L1 cache hit, and 10 ms is closer to a spinning-disk seek."
     },
     {
       "q": "2^20 bytes is closest to which size?",
@@ -32,7 +34,8 @@
         "About 10 megabytes"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each factor of 2^10 is about a thousand, so 2^20 is roughly a million bytes, or 1 MB. 2^30 would be the gigabyte."
     },
     {
       "q": "Ten million users each upload one 2 MB photo daily. Approximate new storage per day?",
@@ -43,7 +46,8 @@
         "200 TB"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "10 million times 2 MB is 20 million MB, which is 20 TB per day. Watch the factor of a thousand between MB, GB, and TB."
     },
     {
       "q": "What is a typical network round-trip time within a single data center?",
@@ -54,7 +58,8 @@
         "Roughly 5 seconds"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Intra-datacenter round trips are sub-millisecond, around 0.5 ms. Tens of milliseconds is what you expect across regions or continents."
     },
     {
       "q": "Which is a reasonable figure for reading 1 MB sequentially from an SSD?",
@@ -65,7 +70,8 @@
         "About 1 millisecond"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "At roughly 1 GB/s of sequential SSD throughput, 1 MB takes about 1 ms. A microsecond would imply terabytes per second, which no SSD delivers."
     },
     {
       "q": "A platform stores 500 million short posts daily at about 200 bytes of text each. Approximate daily text storage?",
@@ -76,7 +82,8 @@
         "100 TB"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "5 x 10^8 posts times 200 bytes is 10^11 bytes, about 100 GB per day. Text is cheap; media would dominate this number."
     },
     {
       "q": "Why estimate peak QPS separately from average QPS?",
@@ -87,7 +94,8 @@
         "Peak QPS only matters for storage sizing, not compute capacity"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Traffic is bursty by time of day and events, so capacity sized to the average will fail during peaks that run several times higher. Peak drives compute, not just storage."
     },
     {
       "q": "A pastebin gets 1 million new pastes daily, averaging 10 KB, retained for 5 years. Approximate total storage needed?",
@@ -98,7 +106,8 @@
         "About 18 TB"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Daily volume is 10 GB, and 5 years is about 1,825 days, giving roughly 18 TB. Dropping or adding a factor of ten here is the classic slip."
     },
     {
       "q": "A service must serve 30,000 QPS; each app server handles 1,000 QPS at a 70% utilization target. Servers needed?",
@@ -109,7 +118,8 @@
         "Around 300"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Usable capacity per server is 700 QPS, so 30,000 divided by 700 is about 43. Answering 30 ignores the headroom the utilization target reserves."
     },
     {
       "q": "A service does 10,000 QPS with 100 KB average responses. Approximate egress bandwidth?",
@@ -120,7 +130,8 @@
         "About 100 GB/s"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "10,000 times 100 KB is 1,000,000 KB per second, which is about 1 GB/s. That is roughly 8 Gbps of network, enough to matter for NIC sizing."
     },
     {
       "q": "A network round trip between the US and Europe is closest to?",
@@ -131,7 +142,8 @@
         "About 10 ms"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Transatlantic round trips land near 100 ms once fiber speed and routing overhead are included. Speed of light alone sets a floor of several tens of milliseconds."
     },
     {
       "q": "A URL shortener uses 7-character base-62 IDs. Roughly how many unique IDs are possible?",
@@ -142,7 +154,8 @@
         "Quintillions (about 3.5 x 10^18)"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "62^7 is about 3.5 x 10^12, so seven base-62 characters cover trillions of keys. That is ample headroom for decades of typical shortener traffic."
     },
     {
       "q": "1 billion users, 1% concurrently connected over WebSockets, 100,000 connections per server. Approximately how many servers?",
@@ -153,7 +166,8 @@
         "About 10,000"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "1% of a billion is 10 million concurrent connections, and dividing by 100,000 per server gives about 100 servers. Real deployments add more for redundancy and headroom."
     },
     {
       "q": "Which ordering of typical latencies is correct, smallest first?",
@@ -164,7 +178,8 @@
         "L1 cache hit < RAM read < disk seek"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The hierarchy runs about 1 ns for L1, 100 ns for RAM, and milliseconds for a disk seek. Each step down the memory hierarchy costs orders of magnitude more."
     },
     {
       "q": "200 million daily active users each make 50 read requests per day. Approximate average read QPS?",
@@ -175,7 +190,8 @@
         "About 11,500"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "That is 10 billion reads per day, and dividing by 86,400 seconds gives roughly 115,000 QPS. Peak traffic would run several times higher than this average."
     },
     {
       "q": "A cache serves 90% of reads at 1 ms; misses go on to the database at 10 ms. Approximate average read latency?",
@@ -186,7 +202,8 @@
         "About 9.1 ms"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The weighted mean is 0.9 x 1 plus 0.1 x 10, which is 1.9 ms, about 2 ms. Note the 10% of misses contribute as much as all the hits combined."
     },
     {
       "q": "1 TB of 1 KB records gets a per-record index entry of 100 bytes. Total index overhead?",
@@ -197,7 +214,8 @@
         "About 1 GB"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "1 TB of 1 KB records is about a billion records, and a billion 100-byte entries is roughly 100 GB. That is 10% overhead, often too large to keep fully in RAM."
     },
     {
       "q": "Why do p99 latency targets matter more than averages for pages with large backend fanout?",
@@ -208,7 +226,8 @@
         "With many parallel calls, most page loads include at least one slow backend response"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A page waiting on 100 parallel calls each with a 1% slow tail almost always hits at least one, so the tail becomes the typical user experience. Parallelism spreads tail latency rather than hiding it."
     },
     {
       "q": "A log partition sustains about 10 MB/s. You must ingest 1 GB/s with 2x headroom. Minimum partitions?",
@@ -219,7 +238,8 @@
         "About 2,000"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "2x headroom means provisioning for 2 GB/s, and 2,000 MB/s divided by 10 MB/s per partition is 200. Answering 100 forgets to apply the headroom factor."
     }
   ]
 }

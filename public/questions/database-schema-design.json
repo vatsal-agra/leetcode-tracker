@@ -10,7 +10,8 @@
         "Update anomalies from the same fact stored in multiple places"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Normalization stores each fact exactly once, so an update touches one row and copies cannot drift out of sync. Its goal is consistency, not read speed."
     },
     {
       "q": "How is a many-to-many relationship modeled in a relational schema?",
@@ -21,7 +22,8 @@
         "A nullable foreign key on whichever table is larger"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A junction (join) table gives each pairing its own row, keeping both sides indexable and referentially intact. Comma-separated ID lists cannot be constrained or joined efficiently."
     },
     {
       "q": "What makes a good primary key?",
@@ -32,7 +34,8 @@
         "A hash of all the row's columns concatenated"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Every foreign key copies the primary key, so it must be unique and never change; compactness keeps indexes small. Business-meaningful values fail the stability test."
     },
     {
       "q": "Why choose a surrogate key (auto-ID) over a natural key like email?",
@@ -43,7 +46,8 @@
         "Surrogate keys are required by the SQL standard"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A user can change their email, which would cascade through every referencing table. A meaningless surrogate has no business reason to ever change."
     },
     {
       "q": "What does a foreign key constraint actually enforce?",
@@ -54,7 +58,8 @@
         "The referencing column is automatically made unique"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Referential integrity means the database rejects inserts pointing at missing parents and blocks or cascades deletes that would orphan children. It says nothing about uniqueness or storage."
     },
     {
       "q": "What is denormalization?",
@@ -65,7 +70,8 @@
         "Deliberately duplicating data to make specific reads cheaper"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Denormalization intentionally copies data to avoid joins or aggregations on hot read paths, accepting extra write work and the risk of drift as the price."
     },
     {
       "q": "A soft delete marks rows with deleted_at instead of removing them. What is the main operational catch?",
@@ -76,7 +82,8 @@
         "Soft-deleted rows lock their pages until purged"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The rows remain fully visible to any query lacking the deleted_at IS NULL predicate, so one forgotten filter resurrects deleted data. Views or query-scope defaults mitigate this."
     },
     {
       "q": "Third normal form (3NF) mainly eliminates what?",
@@ -87,7 +94,8 @@
         "Composite keys with more than two columns"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "3NF removes transitive dependencies: every non-key attribute must depend on the key directly, not through another non-key column such as zip determining city."
     },
     {
       "q": "An orders table stores product price at purchase time, though products has price. Why is this duplication correct?",
@@ -98,7 +106,8 @@
         "A foreign key into products would lock the entire catalog during each checkout"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The price paid is a distinct historical fact, not a copy of the current catalog price. Joining to products would silently rewrite past invoices whenever pricing changed."
     },
     {
       "q": "Your users table has 40 mostly-NULL columns like 'fax_number2'. What schema smell is this?",
@@ -109,7 +118,8 @@
         "Improper sharding of a wide-column store"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Sparse, unrelated columns signal that several distinct concepts were bolted onto one table. Extracting them into related tables or a JSON attributes column restores coherence."
     },
     {
       "q": "Why does the entity-attribute-value (EAV) pattern usually backfire?",
@@ -120,7 +130,8 @@
         "Simple queries become sprawling self-joins, and types and constraints go unenforced"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "EAV pushes schema into data, so each attribute needs another self-join and the engine can no longer enforce types, NOT NULL, or foreign keys. Query plans degrade badly."
     },
     {
       "q": "A migration must add a NOT NULL column (no static default fits) to a 500M-row hot table. Safe approach?",
@@ -131,7 +142,8 @@
         "Copy into a new table and swap a view over the top in one step"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Nullable adds are cheap metadata changes; batched backfills avoid one giant long-held lock and huge transactions. The constraint is validated only after all rows are populated."
     },
     {
       "q": "Comments belong to posts, and a post renders with its latest 3 comments. What is the standard relational model?",
@@ -142,7 +154,8 @@
         "Copying the latest three comments into the posts row"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A one-to-many foreign key with an index on (post_id, created_at) serves the top-3 query cheaply while keeping comments independently queryable, editable, and paginable."
     },
     {
       "q": "Why do append-only (event-sourced) schemas store immutable events instead of updating rows in place?",
@@ -153,7 +166,8 @@
         "Updates are forbidden once a table has a clustered index"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "In-place updates destroy the prior value; an event log keeps every transition, so current state is a replay and any historical state or audit trail remains reconstructable."
     },
     {
       "q": "A status column holds 'active', 'actve', 'ACTIVE' across rows. Which design would have prevented this?",
@@ -164,7 +178,8 @@
         "Weekly data-quality jobs that fix drifted values"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only the database rejecting invalid values at write time prevents drift. Cleanup jobs and conventions repair damage after the fact; a constraint makes bad data impossible."
     },
     {
       "q": "When is denormalizing a read-heavy aggregate (like post like_counts) into a column justified?",
@@ -175,7 +190,8 @@
         "When counting on demand is too costly and slightly stale counts are acceptable"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A cached counter trades exactness and extra write cost for cheap reads, so it pays off precisely when reads dominate and approximate freshness is tolerable."
     },
     {
       "q": "Multi-tenant SaaS: single shared tables with tenant_id versus schema-per-tenant. What chiefly argues for shared tables at 50k tenants?",
@@ -186,7 +202,8 @@
         "Shared tables make noisy-neighbor isolation automatic"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "One shared schema means one migration and one pool. Fifty thousand schemas multiply every DDL change by 50k and bloat catalog metadata past what most tooling handles."
     },
     {
       "q": "You must rename a heavily-used column with zero downtime. Standard multi-step pattern?",
@@ -197,7 +214,8 @@
         "Add new column, dual-write, backfill, migrate readers, then drop the old one"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The expand-migrate-contract sequence keeps both names valid while old and new code run together, so no deploy ordering can break. An atomic rename breaks in-flight clients instantly."
     },
     {
       "q": "An audit requirement demands provable knowledge of a row's state on any past date. Which schema approach fits?",
@@ -208,7 +226,8 @@
         "The database write-ahead log at its default retention, replayed whenever auditors ask"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "System-versioned tables keep every row version with valid-from/valid-to bounds, so an as-of query returns the exact state at any instant. Snapshots and last_modified lose intermediate changes."
     },
     {
       "q": "Your M2M junction table (user_id, group_id) now needs 'role within group' and 'joined date'. Correct evolution?",
@@ -219,7 +238,8 @@
         "Denormalize memberships into a JSON column on groups"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The junction row is the membership entity, so attributes of that relationship belong on it. Role and joined date depend on the (user, group) pair, not on either side alone."
     }
   ]
 }

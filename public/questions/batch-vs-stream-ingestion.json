@@ -10,7 +10,8 @@
         "Stream latency grows with data volume while batch latency stays constant"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Batch latency is bounded by its collection window plus job runtime, while streaming handles each record on arrival, giving sub-second freshness at higher per-event overhead."
     },
     {
       "q": "Which workload is the classic fit for batch processing?",
@@ -21,7 +22,8 @@
         "Nightly aggregation of a full day's records into reports"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Nightly reports have no freshness requirement and need complete, settled input, which is exactly what a scheduled batch pass over stored data provides most cheaply."
     },
     {
       "q": "In stream processing, what problem do watermarks address?",
@@ -32,7 +34,8 @@
         "Assigning each event to a partition based on its key"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A watermark is the system's estimate of event-time progress: it declares that events older than a threshold are unlikely to arrive, letting windows emit results."
     },
     {
       "q": "What does 'event time' mean, as opposed to 'processing time'?",
@@ -43,7 +46,8 @@
         "The timestamp the message broker assigns on enqueue"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Event time is stamped at the source when the thing happened, so results stay correct and reproducible regardless of network delay or when the pipeline processes it."
     },
     {
       "q": "Why is throughput per unit of compute typically higher in batch than in streaming?",
@@ -54,7 +58,8 @@
         "Batch frameworks can skip serialization because data already sits at rest"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Batch amortizes planning, I/O, and coordination over millions of rows and reads them sequentially, whereas streaming pays scheduling and bookkeeping cost per record."
     },
     {
       "q": "What is backpressure in a streaming pipeline?",
@@ -65,7 +70,8 @@
         "Duplicate events created when a producer retries a send"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Backpressure propagates slowness upstream so buffers stay bounded, trading throughput for stability instead of letting queues grow until the system runs out of memory."
     },
     {
       "q": "What does 'at-least-once' delivery imply for consumers?",
@@ -76,7 +82,8 @@
         "Events arrive in strict order but may be batched together"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "At-least-once guarantees no loss by retrying, which necessarily admits redelivery. Consumers must make effects idempotent so a repeat produces the same final state."
     },
     {
       "q": "Which component typically decouples event producers from stream consumers?",
@@ -87,7 +94,8 @@
         "A partitioned, replicated log such as Kafka"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A durable partitioned log buffers events independently of consumers, letting producers write at their own rate and multiple consumers read, replay, and scale separately."
     },
     {
       "q": "A team needs hourly business reports and sub-second anomaly alerts from the same events. What's a sound architecture?",
@@ -98,7 +106,8 @@
         "A stream path for alerts plus a batch or warehouse path for reports"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The two needs have opposite requirements: alerts want low latency, reports want completeness. Splitting the paths lets each optimize for its own constraint from shared input."
     },
     {
       "q": "Your dashboard counts drop briefly, then correct themselves minutes later. Events are arriving late. Which mechanism produces this correction behavior?",
@@ -109,7 +118,8 @@
         "Consumer rebalancing replaying the entire partition"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Allowed lateness keeps window state alive past the watermark, so late arrivals trigger an updated emission that revises the earlier, incomplete result."
     },
     {
       "q": "A consumer crashes after writing results but before committing its offset. On restart, what happens under at-least-once semantics?",
@@ -120,7 +130,8 @@
         "The consumer halts until an operator resolves the conflict"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The committed offset is the only durable record of progress, so the consumer resumes from the older offset and redoes work whose side effects already landed."
     },
     {
       "q": "Which technique gives effectively-exactly-once results on top of at-least-once delivery?",
@@ -131,7 +142,8 @@
         "Compressing events so duplicates collapse into one message"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Deduplicating at the sink with a stable key makes repeated delivery harmless, achieving exactly-once effects without needing exactly-once transport."
     },
     {
       "q": "Reprocessing 90 days of history after a logic bug is trivial in one paradigm and painful in the other. Which statement captures it?",
@@ -142,7 +154,8 @@
         "Neither can reprocess without vendor-specific snapshot tooling"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Batch inputs sit immutably in storage, so you just re-run the job. Streaming backfill needs the log to still retain 90 days plus a way to rebuild operator state."
     },
     {
       "q": "Event counts differ between your streaming output and a batch recount of the same day. Which is the usual authoritative choice, and why?",
@@ -153,7 +166,8 @@
         "Batch, because batch frameworks checksum every record they read"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Batch runs after the fact over the full dataset, so it sees late arrivals the streaming windows already closed on. Watermarks are heuristics and cannot certify completeness."
     },
     {
       "q": "Micro-batching (small periodic batches) primarily trades what for what?",
@@ -164,7 +178,8 @@
         "Schema flexibility for compatibility with columnar storage formats"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Grouping events into small batches amortizes per-record overhead and lets offsets commit per batch, buying efficiency and simpler recovery at the cost of added delay."
     },
     {
       "q": "A streaming job keyed by user_id holds 30 days of per-user state. What is the main operational cost this introduces?",
@@ -175,7 +190,8 @@
         "Large state must be checkpointed and restored on failure or rescale"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Long-lived keyed state turns the job stateful: checkpoints grow large, recovery means reloading them, and rescaling requires redistributing state across new partitions."
     },
     {
       "q": "A window closes at watermark, but 0.5% of events arrive after it. The business demands complete daily numbers. Which design is standard?",
@@ -186,7 +202,8 @@
         "Store late events in a dead-letter queue reviewed manually each week"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Serving fast provisional numbers and correcting them with an authoritative batch recount satisfies both freshness and completeness; a 24-hour watermark destroys the latency benefit."
     },
     {
       "q": "Exactly-once 'end to end' still breaks when your sink is an external email API. Why?",
@@ -197,7 +214,8 @@
         "Watermarks cannot be computed for events leaving the cluster"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Exactly-once relies on committing output atomically with progress. A sent email cannot be unsent or joined to the checkpoint, so a retry after a crash sends it twice."
     },
     {
       "q": "Throughput is fine on average, but one partition lags badly. Keying is by customer_id and one customer dominates traffic. Best fix?",
@@ -208,7 +226,8 @@
         "Salt the hot key into sub-keys, then re-aggregate downstream"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "One key always hashes to one partition, so adding partitions cannot split it. Salting fans the hot customer across several sub-keys, with a second stage merging the partials."
     },
     {
       "q": "You can deliver a feature with a 6-hour batch job or a streaming pipeline costing 4x more to run and operate. What should drive the decision?",
@@ -219,7 +238,8 @@
         "Batch always wins on cost, so streaming needs executive approval"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Freshness is only worth its cost if someone acts on the newer data. Tie the latency requirement to a concrete decision, then pick the cheapest design that meets it."
     }
   ]
 }

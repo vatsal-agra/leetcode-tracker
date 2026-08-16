@@ -10,7 +10,8 @@
         "Splitting data across nodes so no single machine stores or serves it all"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Sharding partitions one dataset into disjoint subsets on separate nodes, so storage and write throughput scale horizontally past one machine. Keeping full copies everywhere is replication, a different goal."
     },
     {
       "q": "How does hash partitioning assign a row to a shard?",
@@ -21,7 +22,8 @@
         "By the region of the client that first wrote the row"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A hash function spreads keys pseudo-randomly, so the digest deterministically selects a shard and load lands evenly. The cost is that key order is destroyed, making range scans scatter."
     },
     {
       "q": "What key advantage does range partitioning hold over hash partitioning?",
@@ -32,7 +34,8 @@
         "Rows are perfectly evenly distributed without tuning"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Because contiguous keys share a partition, a range query touches one or a few shards instead of all of them. The trade-off is exactly the hot spots and uneven splits the other options deny."
     },
     {
       "q": "What is a 'hot spot' in a sharded system?",
@@ -43,7 +46,8 @@
         "The coordinator node that routes every query in the cluster"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Skewed keys concentrate load on one partition, so that shard saturates while the rest idle and cluster capacity is effectively bounded by its slowest member."
     },
     {
       "q": "Why is the choice of shard key so consequential?",
@@ -54,7 +58,8 @@
         "It controls which replication mode each shard may use"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The key decides both distribution (skew versus balance) and routability: queries filtering on it hit one shard, everything else scatters. Changing it later usually means rewriting the whole dataset."
     },
     {
       "q": "A query filters on a column that is not part of the shard key. What must the router typically do?",
@@ -65,7 +70,8 @@
         "Broadcast (scatter-gather) the query to all shards and merge results"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Without the shard key there is no way to know where matching rows live, so every shard must be asked in parallel and the partial results combined. Latency then tracks the slowest shard."
     },
     {
       "q": "Time-ordered IDs as a range-sharding key create which classic problem?",
@@ -76,7 +82,8 @@
         "IDs collide across shards because time is not unique"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Monotonic keys always fall in the highest range, so one shard absorbs the entire write stream while older shards go read-only. Prefixing the key with a hashed attribute spreads the load."
     },
     {
       "q": "Why do sharded systems often pre-create many more logical partitions than physical nodes?",
@@ -87,7 +94,8 @@
         "More partitions increase the replication factor automatically"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "With a fixed large partition count, adding a node just reassigns some partitions to it; keys never change partition, so no rehashing or row-by-row redistribution is needed."
     },
     {
       "q": "A multi-tenant app shards by tenant_id. One tenant grows to 30% of all traffic. What happens?",
@@ -98,7 +106,8 @@
         "The tenant's queries slow down only for cross-tenant joins"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The shard key is the unit of distribution, so a single tenant is indivisible and its whole load lands on one node. Hashing cannot help; the fix is a compound key or a dedicated shard for whales."
     },
     {
       "q": "Why does naive modulo (key % N) sharding make adding a node painful?",
@@ -109,7 +118,8 @@
         "The modulo must be recomputed per query, doubling read latency"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Going from N to N+1 changes the result for nearly every key, so almost the entire dataset must move at once. Consistent hashing or fixed logical partitions limit movement to roughly 1/N of the data."
     },
     {
       "q": "An order and its line items are always fetched together. What does sharding both by order_id give you?",
@@ -120,7 +130,8 @@
         "Related rows co-locate, so the common query stays single-shard"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Sharing a shard key puts parent and children on the same node, so the join and any transaction over them stay local. Other access paths can still go cross-shard, so option two overstates it."
     },
     {
       "q": "What makes cross-shard joins expensive?",
@@ -131,7 +142,8 @@
         "The SQL parser reparses the query once per participating shard"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The matching rows live on different machines, so the engine moves data over the network and joins it at a coordinator, paying bandwidth and latency a local join never sees."
     },
     {
       "q": "During live resharding, how do systems avoid downtime while moving a partition?",
@@ -142,7 +154,8 @@
         "They drop the partition and rebuild it from a recent backup"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A bulk copy plus a tail of replicated changes lets the destination catch up while the source still serves traffic; only the final ownership switch needs a momentary pause."
     },
     {
       "q": "A unique username constraint must hold across all shards. Why is this harder than on one database?",
@@ -153,7 +166,8 @@
         "Each individual shard enforces its uniqueness constraint only for reads and never for writes"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A per-shard unique index only sees its own rows, so two shards can each accept the same name. Enforcement requires a global index or a username table sharded by username itself."
     },
     {
       "q": "Why do many systems route by a directory (lookup service) instead of pure hashing?",
@@ -164,7 +178,8 @@
         "Explicit mappings allow targeted moves of hot keys without global remapping"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An explicit key-to-shard table can be edited per entry, so a whale tenant or hot key is relocated on its own. The cost is that the directory becomes critical infrastructure to keep available."
     },
     {
       "q": "An analytics query must aggregate across all shards nightly. Reasonable pattern?",
@@ -175,7 +190,8 @@
         "Disable writes cluster-wide so the aggregate is consistent"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Computing partial sums and counts locally means each shard returns a tiny result the coordinator can combine, keeping network transfer proportional to groups rather than rows."
     },
     {
       "q": "A celebrity user makes a single key hot beyond one shard's capacity. Which mitigation works?",
@@ -186,7 +202,8 @@
         "Enable synchronous replication so the writes are shared evenly"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Appending a random suffix turns one key into many that hash to different shards, splitting the write load; reads fan out and combine the pieces. Replication adds read copies but never spreads writes."
     },
     {
       "q": "Two-phase commit coordinates a cross-shard transaction. What is its well-known failure mode?",
@@ -197,7 +214,8 @@
         "A crashed coordinator can leave participants blocked, holding locks in doubt"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Once a participant votes yes it must await the verdict and cannot unilaterally decide, so a coordinator failure strands it holding locks. This blocking property is why sagas are often preferred."
     },
     {
       "q": "Geo-sharding places EU users' data in EU shards for latency and residency. What new problem appears?",
@@ -208,7 +226,8 @@
         "Latency inside the EU rises because the shards are smaller"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Locality only helps when both parties sit in the same region; a cross-region message or shared object now traverses an inter-continental link, and residency rules limit caching a copy locally."
     },
     {
       "q": "Your shard map lives in ZooKeeper; routers cache it. A partition moves and a router's cache is stale. Robust handling?",
@@ -219,7 +238,8 @@
         "TTL the cache at one week to keep the ZooKeeper load minimal"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Shards know their own key ownership, so returning a redirect on a misroute makes staleness self-correcting and cheap. Relying on TTL expiry alone leaves a long window of wrong answers."
     }
   ]
 }

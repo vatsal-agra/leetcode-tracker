@@ -10,7 +10,8 @@
         "Mounting as a raw block device with fsync semantics"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Object stores expose a flat key-to-blob namespace over a REST API. Objects are immutable units, so there is no in-place editing, no locking, and no filesystem semantics."
     },
     {
       "q": "What does a presigned URL grant in S3-style storage?",
@@ -21,7 +22,8 @@
         "A way to bypass bucket policies for as long as the link is shared"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The signature embeds the key, HTTP method, and an expiry, and it can never exceed the signing principal's own permissions. It is delegated, narrowly scoped access."
     },
     {
       "q": "Why use multipart upload for a large object?",
@@ -32,7 +34,8 @@
         "It splits the object into many small objects to dodge size limits"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Multipart gives throughput through parallelism and resilience through granular retries, so a network blip costs one part instead of the entire transfer. The result is still one object."
     },
     {
       "q": "Since 2020, what consistency does Amazon S3 provide?",
@@ -43,7 +46,8 @@
         "Strong read-after-write consistency for PUTs and DELETEs, including LISTs"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "S3 became strongly consistent in December 2020: a successful write is immediately visible to subsequent GETs and LISTs, eliminating the old read-after-overwrite workarounds."
     },
     {
       "q": "What is the core tradeoff of archive storage classes like Glacier?",
@@ -54,7 +58,8 @@
         "Free retrievals in exchange for a long minimum storage commitment"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Archive tiers cut per-GB storage cost by an order of magnitude but add restore delays from minutes to hours plus per-GB retrieval fees, so they only pay off for rarely read data."
     },
     {
       "q": "Which workload is a better fit for block storage than object storage?",
@@ -65,7 +70,8 @@
         "Retaining several months of application log archives"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A live database needs low-latency random reads and writes to arbitrary offsets, which only block devices provide. The other three are write-once, read-whole workloads."
     },
     {
       "q": "S3's famous 'eleven nines' figure describes what?",
@@ -76,7 +82,8 @@
         "Uptime of the bucket's regional endpoints"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Durability is about not losing data and comes from redundancy across devices and zones. Availability, whether you can reach it right now, is a much lower number like 99.99%."
     },
     {
       "q": "How is an existing object modified in object storage?",
@@ -87,7 +94,8 @@
         "The whole object is rewritten, or a new version is created"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Objects are immutable, so any change means uploading a complete replacement under the same key; with versioning enabled that replacement becomes a new version."
     },
     {
       "q": "A single PUT of a 500 GB file to S3 fails immediately. Why?",
@@ -98,7 +106,8 @@
         "The bucket must have versioning enabled before accepting large uploads"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The 5 GB ceiling applies to one PUT, not to objects: multipart upload raises the maximum object size to 5 TB by assembling many parts server-side."
     },
     {
       "q": "A presigned PUT URL leaks publicly. What limits the damage?",
@@ -109,7 +118,8 @@
         "The attacker would also need the bucket's access policy"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The signature covers the method, key, and expiry, so a leaked link only lets someone overwrite that one object until it expires. Short expiries keep the window small."
     },
     {
       "q": "Uploads often crash mid-way. No new objects appear, yet the storage bill keeps climbing. Likely cause?",
@@ -120,7 +130,8 @@
         "Failed uploads are retried server-side and stored in a hidden tier"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Uploaded parts are billed storage even though the object never completes and never appears in LIST. An AbortIncompleteMultipartUpload lifecycle rule reclaims them automatically."
     },
     {
       "q": "One key prefix returns '503 Slow Down' at high request rates. Best fix?",
@@ -131,7 +142,8 @@
         "Batch objects together so each request moves more bytes"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "S3 scales request capacity per key prefix as it partitions the index, so hashing or randomizing the leading path segment spreads load across partitions."
     },
     {
       "q": "Data is read roughly once per quarter but needs millisecond access when requested. Best storage class?",
@@ -142,7 +154,8 @@
         "One Zone-IA, because quarterly data needs less durability"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Standard-IA keeps the same millisecond latency and multi-AZ durability at lower per-GB cost, and the retrieval fee is negligible at quarterly reads. Glacier's restore delay violates the latency need."
     },
     {
       "q": "App servers saturate their bandwidth proxying large downloads from object storage. Standard fix?",
@@ -153,7 +166,8 @@
         "Hand clients presigned GET URLs so they download directly"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Presigned URLs keep authorization in the app while moving the bytes out of it, so the object store or CDN serves the payload and app bandwidth stops being the bottleneck."
     },
     {
       "q": "After enabling versioning, deleting objects no longer reduces the bill. Why?",
@@ -164,7 +178,8 @@
         "Billing meters update only when the bucket is fully emptied"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "In a versioned bucket a plain DELETE is non-destructive: it hides the object behind a marker while all prior versions remain billable until explicitly deleted or expired."
     },
     {
       "q": "You compare a downloaded file's MD5 against the object's ETag; big files always mismatch. Why?",
@@ -175,7 +190,8 @@
         "MD5 is unreliable above the 4 GB boundary on most platforms"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A multipart ETag is the MD5 of the concatenated part MD5s with a -N part-count suffix, so it can never equal the whole-file MD5. Use checksum headers instead."
     },
     {
       "q": "Two clients PUT the same key at the same moment in an unversioned bucket. What is guaranteed?",
@@ -186,7 +202,8 @@
         "Both are kept and exposed as sibling versions"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Object stores offer no compare-and-swap by default, so concurrent PUTs simply race and one silently overwrites the other. Versioning or conditional writes are needed to detect it."
     },
     {
       "q": "Objects in Standard-IA are each read about ten times a month, and the bill now exceeds Standard. Why?",
@@ -197,7 +214,8 @@
         "Per-GB retrieval fees at that read rate outweigh the storage discount"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "IA trades a lower storage rate for a per-GB retrieval charge. Read the data often enough and the retrieval charges accumulate past the storage savings, inverting the economics."
     },
     {
       "q": "Why do object stores favor erasure coding over 3x replication for cold data?",
@@ -208,7 +226,8 @@
         "It allows partial in-place updates of stored stripes"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Splitting data into k fragments plus m parity fragments tolerates m losses while storing far less than three full copies. The cost is CPU for encoding and slower reconstruction reads."
     },
     {
       "q": "A pipeline 'renames' millions of objects daily and is slow and surprisingly expensive. Why?",
@@ -219,7 +238,8 @@
         "There is no rename; each one is a server-side copy plus delete"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The flat keyspace has no rename primitive, so every move rewrites the full object bytes under the new key and then deletes the old one, costing time and request charges."
     }
   ]
 }

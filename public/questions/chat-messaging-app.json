@@ -10,7 +10,8 @@
         "WebSockets guarantee ordered, exactly-once message delivery at the protocol level with built-in acknowledgments"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "One long-lived duplex connection lets the server initiate delivery the moment a message arrives, avoiding polling's latency floor and its wasted empty requests."
     },
     {
       "q": "In a chat system, what does a delivered receipt actually indicate?",
@@ -21,7 +22,8 @@
         "The message reached the recipient's device but may be unread"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Delivered means the recipient's client acknowledged receipt of the payload. Whether a human looked at it is a separate, later signal called the read receipt."
     },
     {
       "q": "Which component tracks which gateway server currently holds each user's live connection?",
@@ -32,7 +34,8 @@
         "A sticky cookie maintained by the load balancer for each user"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A shared registry (often Redis) answers \"where is this user connected?\", so any node can route a message to the exact gateway holding the recipient's socket."
     },
     {
       "q": "What is the standard way to order messages within a single conversation?",
@@ -43,7 +46,8 @@
         "A global wall-clock timestamp synchronized across devices via NTP"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A single server-side sequence per conversation gives one authoritative total order that every device agrees on, immune to client clock skew and varying network delay."
     },
     {
       "q": "How do messages reach a user whose devices are all offline?",
@@ -54,7 +58,8 @@
         "The server stores them in the user's inbox and syncs on reconnect"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Store-and-forward is the core of offline delivery: the server durably persists the message and the client pulls everything past its cursor when it reconnects."
     },
     {
       "q": "With end-to-end encryption enabled, who can read a message's plaintext?",
@@ -65,7 +70,8 @@
         "The push notification provider, so it can render message previews"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "In E2EE the keys live only on endpoint devices, so relays and servers move ciphertext they cannot decrypt. That is precisely the property E2EE provides."
     },
     {
       "q": "What purpose do heartbeats serve on chat gateway connections?",
@@ -76,7 +82,8 @@
         "Synchronizing client clocks so message timestamps stay comparable"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "TCP can stay open long after a peer vanishes. Periodic pings expose half-open sockets so the gateway can free resources and mark the user offline promptly."
     },
     {
       "q": "How is a message delivered to all members of a small group chat?",
@@ -87,7 +94,8 @@
         "The CDN replicates the message into edge caches in each member's home region for faster reads"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Server-side fanout writes to each member's inbox or pushes to their open socket, which handles offline members and keeps clients from needing peer-to-peer connectivity."
     },
     {
       "q": "A user runs the app on a phone and a laptop. How should the system deliver an incoming message?",
@@ -98,7 +106,8 @@
         "Queue the message until all of the user's devices are online simultaneously"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Treating each device as an independent endpoint with its own cursor means every device converges on the full history whenever it comes online, without depending on a peer."
     },
     {
       "q": "The sender is connected to gateway A and the recipient to gateway B. How does the message travel?",
@@ -109,7 +118,8 @@
         "The load balancer migrates the recipient's socket over to gateway A"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A session-registry lookup turns delivery into a targeted hop to the one gateway holding the socket, which scales far better than broadcasting to the whole cluster."
     },
     {
       "q": "In a 200-member group, naive per-message read receipts create a problem. What is it, and the usual mitigation?",
@@ -120,7 +130,8 @@
         "Receipt volume scales with readers times messages; use per-user last-read cursors instead"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "One receipt per member per message is a multiplicative blowup. Storing a single last-read sequence number per member collapses it to O(members) and still implies everything before."
     },
     {
       "q": "A client's connection drops before it receives a send acknowledgment, so it resends. What prevents a duplicate message?",
@@ -131,7 +142,8 @@
         "The client waits for the next heartbeat before attempting the resend"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An idempotency key minted by the client survives reconnects, so the server recognizes the retry as the same logical message. TCP guarantees nothing across a new connection."
     },
     {
       "q": "Why does a mobile chat app still need APNs or FCM push even though it uses WebSockets?",
@@ -142,7 +154,8 @@
         "Mobile OSes suspend background connections, so only platform push can wake the app"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "iOS and Android reclaim background sockets to save battery, so the OS-level push channel is the only reliable way to reach a backgrounded or killed app."
     },
     {
       "q": "Why is a wide-column store like Cassandra a common choice for chat message history?",
@@ -153,7 +166,8 @@
         "It stores media blobs inline more efficiently than object storage does"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Partitioning by conversation with a clustering key on message ID matches the access pattern exactly: append-heavy writes and ordered range reads of recent history."
     },
     {
       "q": "How should typing indicators be handled compared to regular chat messages?",
@@ -164,7 +178,8 @@
         "Batch them together with read receipts into the message log"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A typing signal is worthless a second later, so durability and retries add cost with no benefit. Dropping them under load degrades gracefully."
     },
     {
       "q": "Why should a conversation not be ordered by sender device timestamps?",
@@ -175,7 +190,8 @@
         "Encrypted payloads hide the timestamps from the ordering service until each device decrypts them"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Device clocks drift and can be set arbitrarily, so client time gives no causal guarantee and can invert cause and effect in the rendered transcript."
     },
     {
       "q": "A channel grows to 500k members and per-member inbox writes per message become untenable. What is the standard remedy?",
@@ -186,7 +202,8 @@
         "Move the fanout work onto client devices over mesh networking"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "This is fanout-on-read: for huge channels one shared log plus per-member cursors replaces 500k writes per message with a read each member does only when they look."
     },
     {
       "q": "In Signal-style group encryption, why use sender keys instead of pairwise sessions for each message?",
@@ -197,7 +214,8 @@
         "Pairwise sessions are unable to provide any forward secrecy"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Pairwise encryption is O(members) ciphertexts per message. A sender key is distributed once, then each message is encrypted a single time for the whole group."
     },
     {
       "q": "A gateway pushes a message to a socket that silently died before its heartbeat timeout fired. What prevents message loss?",
@@ -208,7 +226,8 @@
         "The message is persisted first and only marked delivered on client acknowledgment"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Durable-then-ack means an unacknowledged message stays pending in the inbox and is redelivered on reconnect. A successful socket write proves nothing about client receipt."
     },
     {
       "q": "A user in 300 groups reconnects after a month offline. How do production systems make this sync tractable?",
@@ -219,7 +238,8 @@
         "Push the full message backlog through APNs in sequence order"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Fetching just the latest message and unread count per conversation makes the list usable in one small round trip, deferring bulk history to the conversations actually opened."
     }
   ]
 }

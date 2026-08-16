@@ -10,7 +10,8 @@
         "It removes the need for replication by storing keys on multiple nodes"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Modulo hashing remaps almost every key when N changes, whereas the ring only reassigns the arc belonging to the joining or leaving node, roughly 1/N of keys."
     },
     {
       "q": "On a consistent hash ring, which node owns a given key?",
@@ -21,7 +22,8 @@
         "A node chosen by taking the key's hash modulo the current node count"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Ownership is defined by successor lookup: hash the key onto the ring and walk clockwise to the next node position. This rule is stable, so it depends only on nearby positions, not on N."
     },
     {
       "q": "What is the primary purpose of virtual nodes (vnodes)?",
@@ -32,7 +34,8 @@
         "They speed up lookups by shrinking the number of ring positions searched"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Many small random arcs per server average out, so each machine ends up with close to its fair share instead of whatever a few random placements happened to give it."
     },
     {
       "q": "A node is removed from the ring. Which keys must move?",
@@ -43,7 +46,8 @@
         "Only the departed node's keys, which shift to the next node clockwise"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Removing a position merges its arc into the successor's arc, so only the keys that node owned change hands. Every other key's successor is unchanged."
     },
     {
       "q": "With N evenly loaded nodes, roughly what fraction of keys moves when one node leaves?",
@@ -54,7 +58,8 @@
         "Essentially none of the keys"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each node owns about 1/N of the keyspace, and only its share is reassigned. That minimal-disruption property is the whole point compared with modulo hashing."
     },
     {
       "q": "Which component most commonly uses consistent hashing?",
@@ -65,7 +70,8 @@
         "A compiler allocating registers across basic blocks"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Caches like memcached and Dynamo-style stores need stateless key-to-server routing that survives membership churn without invalidating the whole cache, which is exactly what the ring provides."
     },
     {
       "q": "Without virtual nodes and with only a few physical nodes, what tends to go wrong?",
@@ -76,7 +82,8 @@
         "Keys become unreachable in the gaps between distant node positions"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A handful of random positions rarely divides the circle evenly, so arc sizes vary widely and some servers get several times the load of others. Keys are never lost, just unevenly spread."
     },
     {
       "q": "Which data structure enables efficient successor lookup on the ring?",
@@ -87,7 +94,8 @@
         "A sorted array of node positions searched with binary search"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Keeping positions sorted lets a binary search find the first position greater than the key's hash in O(log V), wrapping to index zero at the end. A hash table cannot answer successor queries."
     },
     {
       "q": "You add one node to a consistent-hashed cache cluster. What happens to hit rate right away?",
@@ -98,7 +106,8 @@
         "A rise, because the extra capacity immediately serves more requests"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only the keys whose successor became the new empty node miss and get refetched; everything else still routes to a server that already holds it, so the dip is roughly 1/N."
     },
     {
       "q": "Your fleet has one server with double the RAM and CPU. How do you give it proportionally more load?",
@@ -109,7 +118,8 @@
         "Assign it more virtual nodes than the smaller machines"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Load is proportional to total arc length, which is proportional to vnode count, so giving it twice as many tokens yields roughly twice the share. This is standard weighted consistent hashing."
     },
     {
       "q": "In Dynamo-style stores, how is replication layered onto the ring?",
@@ -120,7 +130,8 @@
         "The ring is duplicated N times, each copy holding one full replica"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The coordinator plus the following N-1 distinct physical nodes form the preference list, so replica placement needs no extra metadata. Skipping duplicates keeps copies on different machines."
     },
     {
       "q": "A node fails abruptly (no virtual nodes in use). Where does its load go?",
@@ -131,7 +142,8 @@
         "Its keys stay unavailable until an operator rebuilds the ring"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "With one position per node, the dead node's entire arc merges into the next node's, so a single neighbor inherits all of it and can be pushed into overload."
     },
     {
       "q": "Why do virtual nodes make failure recovery smoother?",
@@ -142,7 +154,8 @@
         "They pause the failed node's tokens until it rejoins the ring"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each of the node's hundreds of arcs has a different clockwise successor, so recovery load and data transfer parallelize across the fleet instead of hammering one machine."
     },
     {
       "q": "Consistent hashing vs a central placement directory for shards: what is the core tradeoff?",
@@ -153,7 +166,8 @@
         "Hashing allows fine-grained manual placement while a directory does not"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The ring computes placement from the key alone, so there is nothing to store or keep highly available, but you lose the ability to relocate an individual hot key the way a directory allows."
     },
     {
       "q": "A cache client library does consistent hashing client-side. What goes wrong during a rolling membership change?",
@@ -164,7 +178,8 @@
         "Clients with stale views route some keys to different servers, causing misses"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Ring correctness depends on all clients sharing one membership view; while views differ, the same key resolves to different servers, causing misses and duplicate cached copies."
     },
     {
       "q": "Jump consistent hash is a ring alternative. What is its key limitation?",
@@ -175,7 +190,8 @@
         "It cannot achieve an even distribution of keys across buckets"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Jump hash maps a key to an integer in [0, n), so it handles growing or shrinking the count at the tail but has no notion of deleting bucket 3 from the middle. Its balance and O(log n) speed are excellent."
     },
     {
       "q": "10 nodes, 100 virtual nodes each; one node dies. Roughly how does load shift?",
@@ -186,7 +202,8 @@
         "Each survivor gains roughly one-ninth more load as the arcs scatter evenly"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The 100 orphaned arcs have successors spread randomly over the 9 survivors, so each absorbs about 1/9 of the dead node's share, raising its own load by roughly 11%."
     },
     {
       "q": "You raise vnodes per node from 8 to 512. What is the real tradeoff?",
@@ -197,7 +214,8 @@
         "Stronger consistency, but extra coordination required on every write"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "More tokens tighten load variance, but the ring table grows 64x for every client to hold and gossip, and rebalancing becomes many tiny scattered range transfers instead of few sequential ones."
     },
     {
       "q": "A single celebrity key overloads its owner. Why don't more vnodes help, and what does?",
@@ -208,7 +226,8 @@
         "Vnodes fail under high QPS; widening the ring's bit space spreads the key"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Vnodes balance many keys, but a single key has one hash and therefore one owner no matter how finely the ring is cut. Extra replicas for reads, or salted sub-keys, actually distribute the traffic."
     },
     {
       "q": "Scaling a consistent-hashed cache from 20 to 40 nodes with minimal client-visible misses: best plan?",
@@ -219,7 +238,8 @@
         "Double every key's TTL so entries survive until the ring stabilizes"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Incremental joins keep each miss wave small, and prefilling a new node's arcs before it takes traffic means the origin never sees a thundering herd. Adding all 20 at once invalidates half the keyspace instantly."
     }
   ]
 }

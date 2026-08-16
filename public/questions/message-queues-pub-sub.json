@@ -10,7 +10,8 @@
         "Messages arrive in the exact order producers originally sent them"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "At-least-once trades duplicates for durability: the broker redelivers until acked, so nothing is lost but a message can arrive twice. Consumers must therefore be idempotent."
     },
     {
       "q": "In pub/sub, what happens when a message is published to a topic?",
@@ -21,7 +22,8 @@
         "Every subscription attached to the topic receives its own copy"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Pub/sub is fan-out: each subscription gets an independent copy of the message. Round-robin to one consumer is queue semantics, not topic semantics."
     },
     {
       "q": "What is the purpose of a consumer group (as in Kafka)?",
@@ -32,7 +34,8 @@
         "To encrypt traffic between the broker and a trusted set of consumers"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A consumer group divides partitions among its members so the group collectively processes each message once, giving horizontal scale. Fan-out happens across groups, not within one."
     },
     {
       "q": "What is a dead-letter queue (DLQ) for?",
@@ -43,7 +46,8 @@
         "Buffering messages during broker restarts so none are dropped"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A DLQ isolates messages that exhausted their retries so they stop blocking the main flow and can be inspected or replayed after a fix."
     },
     {
       "q": "What is the core difference between a queue and a pub/sub topic?",
@@ -54,7 +58,8 @@
         "Queues scale horizontally while topics are limited to a single broker"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The distinction is cardinality of delivery: queues distribute work one-consumer-per-message, topics broadcast the same event to every subscriber. Persistence and scaling are orthogonal to both."
     },
     {
       "q": "Why do brokers require consumer acknowledgements?",
@@ -65,7 +70,8 @@
         "So the broker knows when to compress older segments of the log"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An ack signals that processing actually completed. Without one the broker assumes failure and redelivers, which is what makes at-least-once delivery possible."
     },
     {
       "q": "What does backpressure mean in a messaging pipeline?",
@@ -76,7 +82,8 @@
         "Downstream slowness propagates upstream, forcing producers to slow or buffer"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Backpressure is the feedback signal that a slow consumer sends upstream, throttling producers instead of letting queues grow unbounded until memory or disk fails."
     },
     {
       "q": "Where is ordering typically guaranteed in Kafka-style logs?",
@@ -87,7 +94,8 @@
         "Nowhere; consumers must reorder using timestamps in each message"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each partition is an independent append-only log with its own offsets, so ordering holds inside a partition only. Partitions are consumed in parallel, so topic-wide order does not exist."
     },
     {
       "q": "A consumer crashes after processing but before acking. With at-least-once delivery, what happens?",
@@ -98,7 +106,8 @@
         "The whole partition pauses until the crashed consumer rejoins"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The broker only knows about acks, not side effects, so an unacked message is redelivered and the work repeats. This is exactly why handlers must be idempotent."
     },
     {
       "q": "Orders for each customer must be processed in sequence, with high throughput overall. Best approach?",
@@ -109,7 +118,8 @@
         "Timestamp each event and rely on the broker to sort before delivery"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Keying by customer ID gives per-key ordering inside one partition while different customers spread across partitions, so you get sequence where it matters plus parallelism. A single partition would cap throughput."
     },
     {
       "q": "One member of a Kafka consumer group is much slower than the rest. What is the effect?",
@@ -120,7 +130,8 @@
         "Lag builds on its partitions while other members' partitions stay current"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Partitions are exclusively assigned, so a slow member's partitions simply accumulate lag; peers cannot help because they are not allowed to read those partitions."
     },
     {
       "q": "A message keeps failing and being redelivered forever (a poison pill). What is the standard remedy?",
@@ -131,7 +142,8 @@
         "Restart the consumer group so offsets reset past the bad message"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A bounded retry count plus DLQ routing removes the bad message from the hot path while preserving it for diagnosis, so the rest of the stream keeps flowing."
     },
     {
       "q": "Why can an exactly-once delivery claim be misleading?",
@@ -142,7 +154,8 @@
         "It only works when there is exactly one producer and one consumer"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Network retries make duplicate transmission unavoidable; systems achieve exactly-once processing by deduplicating with sequence numbers or committing offsets and output atomically."
     },
     {
       "q": "Producers outpace consumers for hours and queue depth keeps growing. Which mitigation attacks the root cause?",
@@ -153,7 +166,8 @@
         "Scale out consumers or shed load at the producer side"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The root cause is a throughput imbalance, so you must raise consumption capacity or reduce ingress. More disk or compression only buys time before the same limit is hit."
     },
     {
       "q": "Why prefer log-based brokers (Kafka) over classic queues for event sourcing and replay?",
@@ -164,7 +178,8 @@
         "Log brokers guarantee global ordering across every partition and topic"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A log retains messages after consumption, and reading is just an offset, so a consumer can rewind and rebuild state. Classic queues delete on ack, making replay impossible."
     },
     {
       "q": "Twelve services need the same order events. Why publish once to a topic rather than send twelve queue messages?",
@@ -175,7 +190,8 @@
         "A topic lets subscribers share one consumer offset, halving broker storage"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "With a topic the producer publishes one event and never learns who consumes it, so subscribers can be added or removed without redeploying the producer."
     },
     {
       "q": "Frequent consumer restarts cause repeated Kafka rebalances. What is the impact and mitigation?",
@@ -186,7 +202,8 @@
         "Processing pauses during reassignment; use cooperative rebalancing and static membership"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Eager rebalancing stops the world while partitions are reassigned. Cooperative (incremental) rebalancing moves only affected partitions, and static membership keeps IDs stable across brief restarts."
     },
     {
       "q": "You need strict ordering AND horizontal scale for a payments stream. What is the realistic design?",
@@ -197,7 +214,8 @@
         "Consumer-side sorting with a five-minute buffering window before applying events"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Global ordering and parallelism are fundamentally at odds, so real systems narrow the ordering requirement to a key. Per-account sequencing is what correctness actually needs, and accounts scale independently."
     },
     {
       "q": "An at-least-once consumer writes to a non-idempotent downstream API. What is the safest pattern?",
@@ -208,7 +226,8 @@
         "Batch downstream calls so duplicates land in the same HTTP request"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Recording processed message IDs durably lets the consumer skip repeats, adding idempotence in front of an API that lacks it. At-most-once would avoid duplicates only by risking lost payments."
     },
     {
       "q": "A broker cluster sits at 80% disk, consumers lag by hours, and producers spike 3x for a day. What likely fails first?",
@@ -219,7 +238,8 @@
         "Partition leaders migrate continuously, halving the cluster's throughput"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Lag means data must sit on disk longer while a 3x spike writes faster, so the finite disk or retention window is the binding constraint: segments get evicted or producers are throttled."
     }
   ]
 }

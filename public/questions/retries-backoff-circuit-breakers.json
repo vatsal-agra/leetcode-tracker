@@ -10,7 +10,8 @@
         "It prioritizes premium traffic over background jobs during recovery"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Doubling the wait between attempts sheds retry load as failures persist, giving an overloaded dependency room to recover instead of hammering it at a constant rate."
     },
     {
       "q": "Why add jitter to retry delays?",
@@ -21,7 +22,8 @@
         "Jitter guarantees perfectly fair scheduling between competing clients under load"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Clients that fail together would otherwise retry at identical instants. Randomizing delays spreads attempts over time, smoothing the thundering-herd spikes that re-overload a recovering service."
     },
     {
       "q": "In which circuit breaker state are calls rejected instantly without reaching the dependency?",
@@ -32,7 +34,8 @@
         "Open"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Open means the breaker has tripped: calls fail fast locally and never reach the dependency. Closed is the healthy pass-through state, which is why the naming often trips people up."
     },
     {
       "q": "What happens in a circuit breaker's half-open state?",
@@ -43,7 +46,8 @@
         "Traffic is duplicated to a standby replica so both paths can be compared live"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Half-open is a controlled trial: a limited number of probe calls test whether the dependency healed. Success closes the breaker; any failure sends it back to open."
     },
     {
       "q": "Why must every remote call carry an explicit timeout?",
@@ -54,7 +58,8 @@
         "Load balancers silently drop any connection that does not advertise timeout headers"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Without a bound, a hung downstream call holds a thread and socket indefinitely, exhausting the caller's pool so its own callers fail too. Timeouts cap that resource exposure."
     },
     {
       "q": "Which response is generally worth retrying automatically?",
@@ -65,7 +70,8 @@
         "404 Not Found"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "503 signals a transient server-side condition, so the same request may well succeed later. The 4xx codes reflect a client-side problem that retrying identically will never fix."
     },
     {
       "q": "Safely retrying a write generally requires what?",
@@ -76,7 +82,8 @@
         "Routing the write through a durable message queue before it executes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A timeout does not tell you whether the write applied, so retrying risks duplicates. Idempotency, typically via an idempotency key the server dedupes on, makes repeats harmless."
     },
     {
       "q": "What is the primary purpose of a circuit breaker?",
@@ -87,7 +94,8 @@
         "Failing fast and shielding a failing dependency so it can recover"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A breaker stops sending doomed calls: the caller fails fast instead of blocking, and the sick dependency gets a load reprieve. It complements retries rather than implementing them."
     },
     {
       "q": "Three call layers each retry 3 times on failure. Worst-case attempts hitting the bottom layer?",
@@ -98,7 +106,8 @@
         "27"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Retries multiply rather than add across layers: 3 x 3 x 3 = 27 attempts reach the bottom. This combinatorial amplification is why retrying at every tier is dangerous."
     },
     {
       "q": "What does a retry budget, say retries capped at 10% of requests, protect against?",
@@ -109,7 +118,8 @@
         "Uneven shard traffic during rebalancing events"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A budget caps retry traffic as a fraction of normal load, so a broad failure cannot multiply request volume and turn a partial outage into a total, self-inflicted one."
     },
     {
       "q": "Retries run at the client, the gateway, and the service layer, and small blips become outages. Best remedy?",
@@ -120,7 +130,8 @@
         "Replace exponential backoff with fixed one-second delays"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Concentrating retries in one layer removes the multiplicative amplification; a budget then bounds the extra load. Raising timeouts only lengthens how long the amplified storm lasts."
     },
     {
       "q": "Service A calls B with a 2s timeout; B calls C with a 5s timeout. What is wrong?",
@@ -131,7 +142,8 @@
         "Nothing — hop timeouts are independent by design"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A abandons the call at 2s, but B and C keep burning capacity for up to 5s on work nobody will read. Timeouts must shrink as you go deeper into the call chain."
     },
     {
       "q": "What is the practical risk of exponential backoff with no maximum cap?",
@@ -142,7 +154,8 @@
         "Throughput exceeds intended limits once the service heals"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Uncapped doubling reaches minutes or hours, so clients stay idle long after the dependency heals. Capping the delay keeps recovery time bounded while preserving backoff's load relief."
     },
     {
       "q": "A breaker trips after 2 consecutive failures and flaps constantly on a low-traffic service. Better trigger?",
@@ -153,7 +166,8 @@
         "An error-rate threshold with a minimum request volume per window"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A minimum volume gate means the breaker only acts on statistically meaningful samples, so two unlucky failures out of three requests cannot trip it. Hair-trigger counts guarantee flapping."
     },
     {
       "q": "How does AWS-style 'full jitter' choose a retry delay?",
@@ -164,7 +178,8 @@
         "A Gaussian sample centered on the base delay"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Full jitter picks uniformly from [0, exponential_backoff], spreading attempts across the whole window. A small fixed bump leaves clients tightly clustered and does little to break up herds."
     },
     {
       "q": "A dependency is down, so the caller queues incoming requests to replay later. Likely outcome?",
@@ -175,7 +190,8 @@
         "Automatic deduplication of the queued requests"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "An unbounded buffer during an outage grows until memory fails, and the requests inside expire anyway. Shedding load or failing fast beats hoarding work no client still wants."
     },
     {
       "q": "One slow endpoint trips a breaker shared across all of a dependency's endpoints. Consequence?",
@@ -186,7 +202,8 @@
         "Nothing — breakers are always per-endpoint by default"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A coarse breaker treats the whole dependency as one failure domain, so one bad route blocks perfectly healthy ones. Scoping per endpoint keeps the blast radius on the actual failure."
     },
     {
       "q": "Latency rises near capacity; clients time out and retry; overload persists even after the trigger clears. Why?",
@@ -197,7 +214,8 @@
         "Circuit breakers hold open until manually reset"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The retry feedback loop becomes self-sustaining: timeouts generate retries that keep the system saturated, generating more timeouts. Escaping requires shedding load, not just removing the original trigger."
     },
     {
       "q": "What does deadline propagation add beyond per-hop timeouts?",
@@ -208,7 +226,8 @@
         "Downstream work is abandoned once the caller's overall budget is spent"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Passing an absolute deadline down the chain lets every hop see the caller's remaining budget and stop immediately when it expires, eliminating work on requests already abandoned upstream."
     },
     {
       "q": "After a long outage the dependency returns, thousands of breakers half-open at once, and it collapses again. Mitigation?",
@@ -219,7 +238,8 @@
         "Close every breaker immediately on the first success signal seen anywhere"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A cold dependency cannot absorb full load instantly. Jittering probe times desynchronizes the herd, and ramping traffic slowly lets caches and pools warm before full volume returns."
     }
   ]
 }

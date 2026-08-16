@@ -10,7 +10,8 @@
         "It executes atomically inside a single transaction"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Idempotency is a property of resulting state, not of responses. An idempotent operation may absolutely have side effects; applying it N times just must equal applying it once."
     },
     {
       "q": "Which HTTP method is NOT defined as idempotent by the spec?",
@@ -21,7 +22,8 @@
         "POST"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "POST is defined as an unsafe, non-idempotent submission that may create a new resource each time. PUT, DELETE, and GET are all specified as idempotent."
     },
     {
       "q": "How does a server typically use an idempotency key?",
@@ -32,7 +34,8 @@
         "It rate-limits each client according to its key"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The key indexes a record of the first execution and its response, so any later request bearing that key short-circuits to the stored result instead of re-running the side effect."
     },
     {
       "q": "A request times out. Why is blindly retrying a non-idempotent operation risky?",
@@ -43,7 +46,8 @@
         "The network guarantees at-most-once delivery, so retries get rejected upstream"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A timeout is an ambiguous outcome: the request may have completed with only the response lost. Retrying then applies the side effect a second time."
     },
     {
       "q": "A client DELETEs a resource twice; the second call returns 404. Is DELETE still idempotent?",
@@ -54,7 +58,8 @@
         "Yes — idempotency concerns the resulting state, not identical responses"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "After one DELETE or ten, the resource is equally gone, so the state condition holds. HTTP explicitly allows the status code to differ between the first and later calls."
     },
     {
       "q": "How is 'exactly-once' processing actually achieved in practice?",
@@ -65,7 +70,8 @@
         "Two-phase commit spanning every service in the request path"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Exactly-once delivery is impossible over an unreliable network, so systems deliver at least once and make the effect idempotent, producing exactly-once semantics overall."
     },
     {
       "q": "Which operation is naturally idempotent without extra machinery?",
@@ -76,7 +82,8 @@
         "Charge the customer's card ten dollars"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Absolute assignment is idempotent because the final value does not depend on how many times it was applied. The others are relative or append-style operations that accumulate."
     },
     {
       "q": "Why can PUT create resources idempotently while POST typically cannot?",
@@ -87,7 +94,8 @@
         "PUT skips the server-side validation that POST must run"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "PUT names the resource in the URL, so a repeat simply overwrites the same target. POST asks the server to mint a new identifier, so each call creates another resource."
     },
     {
       "q": "A retry with the same idempotency key arrives while the original request is still executing. Best server behavior?",
@@ -98,7 +106,8 @@
         "Evict the key and restart the operation from scratch"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The key record must be claimed before execution and marked in-progress, so concurrent retries block or get 409 rather than racing into a second execution."
     },
     {
       "q": "Idempotency keys expire after 1 minute, but clients retry for up to 10 minutes. What can happen?",
@@ -109,7 +118,8 @@
         "The dedupe table grows without bound and exhausts storage"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Once the record is gone the server has no memory of the first execution, so the retry looks brand new. Key retention must exceed the maximum client retry window."
     },
     {
       "q": "A client reuses an idempotency key with a different request body. Best server behavior?",
@@ -120,7 +130,8 @@
         "Reject with an error indicating the key was reused with a mismatched payload"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Storing a payload fingerprint with the key lets the server detect a client bug and fail loudly, rather than silently dropping a genuinely different request the caller believes succeeded."
     },
     {
       "q": "A queue redelivers messages occasionally, and the consumer inserts an order per message. How do you prevent duplicate orders?",
@@ -131,7 +142,8 @@
         "Hash the order contents client-side before sending"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Committing the dedupe marker and the business write atomically means a redelivery either sees the marker and skips, or sees neither and safely redoes the work."
     },
     {
       "q": "A POST /charge with no idempotency support times out. Safest client policy?",
@@ -142,7 +154,8 @@
         "Reissue the request as a PUT so it becomes idempotent"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Without server-side dedupe, only reconciliation resolves the ambiguity: look up whether the charge exists before deciding to retry. Backoff changes timing, never duplication risk."
     },
     {
       "q": "What is the simplest robust backstop against duplicate order rows from retries?",
@@ -153,7 +166,8 @@
         "A unique constraint on a client-supplied operation ID"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The database enforces uniqueness atomically, so the duplicate insert simply fails no matter how requests interleave. Check-then-insert has a race window between the two steps."
     },
     {
       "q": "The server completes a payment but crashes before saving the idempotency record. A retry arrives. Result?",
@@ -164,7 +178,8 @@
         "The database automatically detects the orphaned write and rolls the payment back"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Dedupe only works if claiming the key and performing the effect commit together. Claiming the key before executing, rather than after, closes this crash window."
     },
     {
       "q": "A proxy retries failed requests against another backend. Why is this dangerous for POSTs?",
@@ -175,7 +190,8 @@
         "It defeats sticky sessions and misroutes the user"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A failure after the request reached the first backend is indistinguishable from one before, so automatic retries should be restricted to idempotent methods or keyed requests."
     },
     {
       "q": "Service A dedupes with idempotency keys, then calls B without one. A times out on B and retries. What can happen?",
@@ -186,7 +202,8 @@
         "B's side effect duplicates — dedupe must extend end to end"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A's key only protects A's own writes. Its internal retry to B is a fresh unkeyed request, so B applies the effect twice; A must propagate a derived key downstream."
     },
     {
       "q": "Idempotency keys live in a cache with LRU eviction. What failure emerges under memory pressure?",
@@ -197,7 +214,8 @@
         "TTLs silently reset each time a key is read"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "LRU may drop a record before its retry window closes, making the correctness guarantee depend on memory pressure. Dedupe state belongs in durable storage with explicit TTLs."
     },
     {
       "q": "Two identical requests with one key arrive simultaneously; both find no stored record and both execute. Fix?",
@@ -208,7 +226,8 @@
         "Compare payload hashes after both executions complete"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "This is a check-then-act race, so the check and the claim must be one atomic step. A unique-constraint insert or SETNX lets exactly one caller win the right to execute."
     },
     {
       "q": "A consumer dedupes by message ID in its database, then sends an email. Duplicate emails still occur. Why?",
@@ -219,7 +238,8 @@
         "The dedupe table's TTL expires before redelivery stops"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The email is an external side effect that cannot join the database transaction, so any crash between the two leaves them inconsistent. Use an outbox with a keyed, idempotent send."
     }
   ]
 }

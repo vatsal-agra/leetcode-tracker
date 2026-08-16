@@ -10,7 +10,8 @@
         "Multiple databases, one per module, joined together at query time"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A modular monolith gets logical separation through enforced module interfaces while keeping one artifact to deploy, so you get design discipline without distributed-systems overhead."
     },
     {
       "q": "What is the primary organizational benefit claimed for microservices?",
@@ -21,7 +22,8 @@
         "All services share one database schema, which eases joins"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Independent deployability removes cross-team release coordination, letting each team ship and scale on its own cadence. The benefit is organizational autonomy more than raw performance."
     },
     {
       "q": "What immediate cost appears when an in-process call becomes a network hop?",
@@ -32,7 +34,8 @@
         "It doubles the number of database connections each service holds"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A function call either returns or throws, but a network call adds partial failure and unbounded latency, so every caller needs timeouts, retries, and failure handling."
     },
     {
       "q": "Why do microservices typically avoid sharing one database?",
@@ -43,7 +46,8 @@
         "Shared schemas couple services, so one team's change breaks others"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A shared schema is a shared contract, so a migration by one team can break every other reader. Private data stores are what make independent deployment real."
     },
     {
       "q": "In a monolith, how do modules typically communicate?",
@@ -54,7 +58,8 @@
         "Through files written into a shared temporary directory"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Modules call each other directly in memory, costing nanoseconds and able to share one database transaction. That simplicity is the main thing a split gives up."
     },
     {
       "q": "Which deployment property do monoliths retain that microservices lose?",
@@ -65,7 +70,8 @@
         "The ability to canary a release to a small fraction of traffic"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "One artifact means every component is always at a mutually tested version, and rollback restores that whole state. Distributed systems must instead tolerate mixed versions in production."
     },
     {
       "q": "Which scenario genuinely favors extracting a module into its own service?",
@@ -76,7 +82,8 @@
         "A module with resource needs wildly different from the rest, like GPU inference"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Divergent resource profiles are a real reason to split, since you can then scale expensive GPU capacity independently instead of replicating it with every monolith instance."
     },
     {
       "q": "What is a distributed monolith?",
@@ -87,7 +94,8 @@
         "Any system mixing REST calls with message-based communication"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "It is the worst of both worlds: you pay network latency, partial failure, and operational overhead while still needing lockstep releases, so you gain none of the autonomy."
     },
     {
       "q": "Checkout spans orders, payments, and inventory services. What replaces the monolith's single ACID transaction?",
@@ -98,7 +106,8 @@
         "A saga: local transactions with compensating actions on failure"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each service commits locally and a failure triggers explicit compensating steps such as refunds or stock release. This trades atomicity for availability, unlike blocking 2PC."
     },
     {
       "q": "A startup has 6 engineers and unclear domain boundaries. Why start with a monolith?",
@@ -109,7 +118,8 @@
         "Investors and auditors generally require a single deployable artifact"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Moving code between modules is an IDE refactor, while moving it between services means new APIs, data migration, and deploys. Commit to boundaries once the domain is understood."
     },
     {
       "q": "A shared library of domain models is used by 15 services. What is the hidden danger?",
@@ -120,7 +130,8 @@
         "It prevents the services from ever being written in the same language"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A shared model becomes a shared contract, so lockstep upgrades reintroduce exactly the release coordination microservices were meant to eliminate: a distributed monolith by library."
     },
     {
       "q": "A page now fans out to 8 sequential service calls of ~25ms each; the monolith took 30ms total. What is the lesson?",
@@ -131,7 +142,8 @@
         "Latency is unrelated to architecture and comes entirely from the database"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Serial hops sum to roughly 200ms because each adds a full round trip. Fixes are structural: parallelize independent calls, aggregate them, or cache rather than micro-optimize the wire."
     },
     {
       "q": "Debugging a failed request now spans six services. What tooling becomes essential?",
@@ -142,7 +154,8 @@
         "A scheduled job that diffs each service's database nightly"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A propagated trace ID stitches per-service logs and spans into one timeline, showing where a request actually failed or stalled. Isolated logs cannot reconstruct that path."
     },
     {
       "q": "Traffic doubles, the team is 5 people, and the bottleneck is one SQL query. Why avoid splitting into services?",
@@ -153,7 +166,8 @@
         "Because the database cannot be accessed by two services at once"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Architecture should target the actual constraint. Indexing or rewriting the query solves it directly, whereas a split moves the same slow query behind a network boundary."
     },
     {
       "q": "What does Conway's law imply for choosing service boundaries?",
@@ -164,7 +178,8 @@
         "Architecture mirrors team communication, so align services with team ownership"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Systems end up shaped like the organization that builds them, so boundaries matching team ownership minimize cross-team coordination. Boundaries cutting across teams create constant friction."
     },
     {
       "q": "What is the recommended pattern for safely extracting the first service from a monolith?",
@@ -175,7 +190,8 @@
         "Extract the database first, then move the application code six months later"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A facade lets you shift a slice of traffic at a time, verify behavior, and roll back instantly. The old path keeps serving until the new one is proven, so risk stays small."
     },
     {
       "q": "An org runs 40 services with 5 engineers; delivery is slow and the pager never stops. What is the root issue?",
@@ -186,7 +202,8 @@
         "Wrong language choices; consolidating onto one runtime fixes the pager load"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Each service carries fixed costs in deploys, dashboards, alerts, and on-call, so eight services per engineer consumes all capacity. Consolidating is the fix, not more infrastructure."
     },
     {
       "q": "A service writes its database then publishes an event, and can crash in between. What is the robust fix?",
@@ -197,7 +214,8 @@
         "Transactional outbox: write the event to the DB atomically, relay it asynchronously"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Writing state and the outbox row in one local transaction removes the dual-write gap: if the commit succeeds the event exists, and a relay process publishes it with retries."
     },
     {
       "q": "A monolith ran at 60% CPU on 20 VMs. Split into 8 services with the same traffic, total footprint grows. Why?",
@@ -208,7 +226,8 @@
         "Every mainstream orchestrator reserves one full virtual machine per service by default"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Every service needs its own runtime, connection pools, sidecars, and spare capacity for redundancy, and calls that were free in-process now cost serialization and TLS on both ends."
     },
     {
       "q": "A flow degrades when any of 5 chained services is slow; each meets a 99.9% SLO. What is the effect and lever?",
@@ -219,7 +238,8 @@
         "The gateway absorbs the slowness, so SLOs only apply to edge services"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Dependencies in series multiply, so five 99.9% services give about 99.5% and a p99 at each hop makes slow responses common end to end. Shortening the chain attacks the cause."
     }
   ]
 }

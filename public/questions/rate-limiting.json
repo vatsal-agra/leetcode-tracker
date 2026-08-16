@@ -10,7 +10,8 @@
         "The maximum burst size allowed above the steady refill rate"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Capacity is how many tokens can accumulate while a client is idle, so it bounds the burst that can be spent at once. The refill rate, not capacity, sets the long-run average."
     },
     {
       "q": "In a token bucket, what does the refill rate correspond to?",
@@ -21,7 +22,8 @@
         "The penalty duration applied to clients exceeding quota"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Over a long interval a client can only spend tokens as fast as they are added, so refill rate is the sustained throughput ceiling. Capacity governs short bursts above it."
     },
     {
       "q": "Which status code signals a rate-limited HTTP request?",
@@ -32,7 +34,8 @@
         "409, indicating the request conflicts with another one"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "429 Too Many Requests specifically means the client exceeded its quota and should retry later, which Retry-After quantifies. 403 implies retrying will never help."
     },
     {
       "q": "What is the leaky bucket's defining behavior?",
@@ -43,7 +46,8 @@
         "It rejects all traffic for a cooldown period after any single breach"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The leaky bucket queues arrivals and releases them at a fixed drain rate, so downstream sees perfectly smooth output. Overflow beyond the queue is dropped."
     },
     {
       "q": "What is the classic flaw of a fixed window counter?",
@@ -54,7 +58,8 @@
         "Counters must be stored separately per URL path, which explodes memory usage quickly"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Because the counter resets abruptly, a client can spend its full quota just before the boundary and again just after, delivering 2x the limit within one rolling window."
     },
     {
       "q": "Why rate limit per API key or user rather than only globally?",
@@ -65,7 +70,8 @@
         "Per-key limits make every response automatically cacheable at CDN edge locations"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A global cap protects the backend but distributes pain indiscriminately. Per-identity limits contain the blast radius so a single runaway client cannot degrade everyone else."
     },
     {
       "q": "What does the sliding window log approach store?",
@@ -76,7 +82,8 @@
         "The average latency of each client's requests in the window"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Keeping every request timestamp lets the limiter count exactly how many fall inside the true rolling window, giving perfect accuracy at the cost of per-request memory."
     },
     {
       "q": "Where is a rate limiter most commonly enforced?",
@@ -87,7 +94,8 @@
         "At the API gateway or edge, before requests reach backend services"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Rejecting at the gateway costs almost nothing and shields every downstream service. Client-side enforcement cannot be trusted because the client is exactly what you are limiting."
     },
     {
       "q": "Sliding window counter (two weighted windows) vs a full log: what do you give up?",
@@ -98,7 +106,8 @@
         "It cannot express limits over any interval shorter than a full minute of wall time"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Interpolating the previous window's count assumes traffic was evenly spread there, so the estimate can be slightly off. In exchange you store two integers rather than every timestamp."
     },
     {
       "q": "A distributed limiter keeps per-node local counters with no synchronization. What is the effect?",
@@ -109,7 +118,8 @@
         "A client can reach roughly N times the limit by spreading requests across nodes"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Each of the N nodes independently permits a full quota because none sees the others' traffic, so the effective global limit is N times the intended one."
     },
     {
       "q": "You centralize counters in Redis. What are the main new risks?",
@@ -120,7 +130,8 @@
         "Atomic increments become impossible, so counts are always stale"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Accuracy now costs a network round trip on every request, and the store becomes a shared critical dependency where a hot key or outage affects all traffic."
     },
     {
       "q": "Why prefer failing open (allowing traffic) when the limiter backend is down for a consumer API?",
@@ -131,7 +142,8 @@
         "Failing closed would corrupt the counter store permanently"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Failing closed turns a counter outage into a total service outage. Since limits guard against abuse rather than enforce correctness, briefly unmetered traffic is the smaller harm."
     },
     {
       "q": "A batch client sends 10k requests at midnight and gets throttled. Which limiter change lets it proceed smoothly?",
@@ -142,7 +154,8 @@
         "Per-IP limits, since batch jobs originate from many source addresses"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Token bucket separates burst from average: raising capacity lets an idle client cash in accumulated tokens at once while the refill rate still caps sustained usage."
     },
     {
       "q": "Clients retry immediately on 429, amplifying load. What server guidance most directly breaks the loop?",
@@ -153,7 +166,8 @@
         "Retry-After headers plus jittered exponential backoff in client guidance"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Retry-After tells clients when capacity actually returns, and exponential backoff with jitter keeps them from converging on that instant together."
     },
     {
       "q": "Why add jitter to client retry backoff?",
@@ -164,7 +178,8 @@
         "To satisfy TCP congestion control requirements on retransmission"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Pure exponential backoff keeps clients that failed together retrying together, re-creating the spike. Randomizing the delay spreads them across the interval."
     },
     {
       "q": "Tiered limits (free vs paid). Where does the tier lookup belong?",
@@ -175,7 +190,8 @@
         "In DNS, by resolving paying customers to a separate pool of faster endpoints"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Tier is a property of the authenticated principal, so resolving it during auth means the limiter uses a server-verified value that clients cannot forge, with no extra lookup."
     },
     {
       "q": "1M active clients with a 10 req/s limit each, sliding window log in Redis. Why does memory blow up?",
@@ -186,7 +202,8 @@
         "Sorted sets must store the full request body alongside every entry"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The log keeps one sorted-set entry per request in the window, so total memory scales as clients times requests per window rather than one counter per client."
     },
     {
       "q": "Global limit of 1000 req/s across 10 gateway nodes: split local quotas vs a central counter?",
@@ -197,7 +214,8 @@
         "Split quotas require sticky sessions, which double memory usage on the balancer"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A static 100/s per node throttles a hot node while others sit idle, so the global limit is under-used. Central counting is accurate but pays a round trip and concentrates risk."
     },
     {
       "q": "A downstream handles 5k req/s. Steady traffic is 4k with 3x spikes lasting 10s. Which limiter config fits best?",
@@ -208,7 +226,8 @@
         "A token bucket refilling near 5k/s with burst capacity sized to downstream headroom"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The refill rate must match what downstream can actually sustain, around 5k/s, while a bounded burst absorbs short spikes. Refilling at 12k/s would simply pass the overload through."
     },
     {
       "q": "Thousands of users behind one corporate NAT constantly hit per-IP limits. What is the best fix?",
@@ -219,7 +238,8 @@
         "Exempt all known corporate IP ranges from rate limiting entirely"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "IP is a poor proxy for a user once NAT collapses thousands behind one address. Keying on the authenticated principal restores fairness, with IP retained only for anonymous traffic."
     }
   ]
 }

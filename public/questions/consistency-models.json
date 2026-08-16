@@ -10,7 +10,8 @@
         "A client always reads values at least as new as ones it previously read"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Linearizability is a real-time recency guarantee: the system behaves like a single copy where each operation takes effect instantaneously at some point between its invocation and its response."
     },
     {
       "q": "What does eventual consistency promise?",
@@ -21,7 +22,8 @@
         "Absent new writes, replicas eventually converge to the same value"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Eventual consistency is a liveness-only promise: given a quiet period with no new writes, replicas converge. It puts no bound on how long staleness lasts."
     },
     {
       "q": "What does read-your-writes guarantee for a single user?",
@@ -32,7 +34,8 @@
         "Their reads never block, even during network partitions"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Read-your-writes is a session guarantee scoped to one client: it only promises a user never loses sight of their own write, saying nothing about other users' updates."
     },
     {
       "q": "Which anomaly does monotonic reads prevent?",
@@ -43,7 +46,8 @@
         "A transaction reading its own uncommitted data"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Monotonic reads forbids reads moving backwards in time for one client, which is what happens when successive requests hit replicas with different amounts of lag."
     },
     {
       "q": "What does causal consistency ensure?",
@@ -54,7 +58,8 @@
         "Causally related writes are seen in order; concurrent writes may differ"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Causal consistency orders only the happens-before pairs, so everyone sees a cause before its effect. Truly concurrent writes are unordered and may appear differently at different replicas."
     },
     {
       "q": "Which of these consistency models is the strongest?",
@@ -65,7 +70,8 @@
         "Monotonic reads"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Linearizability sits at the top: it implies causal consistency and every session guarantee, because a single real-time order over all operations satisfies them all."
     },
     {
       "q": "Linearizability and serializability apply to what, respectively?",
@@ -76,7 +82,8 @@
         "In-memory caching layers vs durable on-disk storage engines"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Linearizability is a recency property of individual object operations; serializability is an isolation property of multi-object transactions. Combining both gives strict serializability."
     },
     {
       "q": "Why do systems offer weaker consistency models at all?",
@@ -87,7 +94,8 @@
         "Weaker models let replicas skip durability, saving disk writes"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Weaker models let a replica answer locally without coordinating, cutting cross-region round trips and staying available during partitions. They complicate application code rather than simplifying it."
     },
     {
       "q": "A user posts a comment, refreshes, and it is gone, reappearing later. Which minimal session guarantee fixes this?",
@@ -98,7 +106,8 @@
         "Linearizability across all users' sessions"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The user is failing to see their own write, which is exactly read-your-writes. Linearizability would also fix it but is far stronger and more expensive than needed."
     },
     {
       "q": "Reading a lagging replica right after writing to the primary breaks read-your-writes. Common fix?",
@@ -109,7 +118,8 @@
         "Retry every read up to three separate times and return the oldest value observed across attempts"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Routing a writer's reads to the primary, or to a replica past the write's log position, guarantees the write is visible for the short window where lag matters."
     },
     {
       "q": "Two users see a chat thread as A-then-B vs B-then-A, where B replies to A. Which model rules this out?",
@@ -120,7 +130,8 @@
         "Causal consistency, since the reply depends on the original"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The reply causally depends on the original message, so causal consistency forces every reader to see A before B. Eventual consistency permits the reordering entirely."
     },
     {
       "q": "What do quorum reads and writes (R + W > N) in Dynamo-style stores actually give you?",
@@ -131,7 +142,8 @@
         "Exactly-once write semantics without any client retries"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Overlapping quorums ensure a read touches at least one node holding the newest write, but sloppy quorums, concurrent writes, and lack of read repair still break linearizability."
     },
     {
       "q": "Why does linearizability get expensive across geographic regions?",
@@ -142,7 +154,8 @@
         "Clock skew forces all regions to pause writes whenever clocks drift"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A single global order requires consensus, and each consensus round trip costs the speed-of-light delay between regions, adding tens to hundreds of milliseconds per operation."
     },
     {
       "q": "A user's profile photo alternates between old and new on successive requests. Which minimal guarantee stops this?",
@@ -153,7 +166,8 @@
         "Strict serializability for all photo upload transactions"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Flip-flopping values mean reads are going backwards in time, the exact anomaly monotonic reads forbids. Sticky routing to one replica is the cheap implementation."
     },
     {
       "q": "With serializability but not linearizability, which anomaly is still allowed?",
@@ -164,7 +178,8 @@
         "Lost updates whenever two concurrent increments race on the very same counter row"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Serializability only demands some equivalent serial order, not one matching wall-clock order. So a transaction can be serialized before another that actually committed earlier."
     },
     {
       "q": "CRDTs are designed for which setting?",
@@ -175,7 +190,8 @@
         "Multi-writer replication where concurrent updates merge without coordination"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "CRDTs define commutative, associative, idempotent merge operations, so replicas accepting concurrent writes converge automatically without locks, leaders, or consensus."
     },
     {
       "q": "A ledger does check-balance-then-deduct against eventually consistent replicas. What is the risk?",
@@ -186,7 +202,8 @@
         "Reads block indefinitely while waiting for all replicas to agree"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Read-modify-write on stale state is a classic lost-update race: both requests read the same pre-deduction balance and both succeed, violating the non-negative invariant."
     },
     {
       "q": "Chain: client, cache, strongly consistent DB with replicas. Users still report stale reads. Likely culprit?",
@@ -197,7 +214,8 @@
         "TCP reordering delivers responses out of order to the client"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Consistency is an end-to-end property: a cache in front of the database is a second, uncoordinated replica, so its TTL-based staleness defeats the store's guarantees."
     },
     {
       "q": "A geo-replicated store offers per-key linearizability. What can still go wrong across keys?",
@@ -208,7 +226,8 @@
         "Cross-key invariants can be observed violated, since ordering is not transactional"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Per-key guarantees compose only per key. Reading two keys is two separate operations, so a client can observe one updated and the other not, breaking invariants spanning both."
     },
     {
       "q": "A client sees its own write on one read, then misses it on the next read from a different replica. Which two guarantees are violated?",
@@ -219,7 +238,8 @@
         "Serializability and durability"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "The second read omits the client's own write (read-your-writes) and also returns older state than the first read did (monotonic reads), so both session guarantees break."
     }
   ]
 }

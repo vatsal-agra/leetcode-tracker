@@ -10,7 +10,8 @@
         "The leader holds the only copy of the table schema"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Funnelling writes through one node yields a single serialized change log that every follower can replay identically, avoiding conflicts. Followers are fully capable engines; they are simply kept read-only by design."
     },
     {
       "q": "What does synchronous replication guarantee that asynchronous does not?",
@@ -21,7 +22,8 @@
         "Replication traffic is encrypted between the leader and followers"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The leader waits for follower confirmation before acknowledging, so any committed write is durable on at least two nodes. That is what makes zero data loss on failover possible."
     },
     {
       "q": "What is replication lag?",
@@ -32,7 +34,8 @@
         "The pause writes experience while a new follower is added"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Lag measures how far behind a follower's applied state is from the leader's, combining shipping and apply time. It is why replica reads can return stale data."
     },
     {
       "q": "Why add read replicas to a database?",
@@ -43,7 +46,8 @@
         "They spread read traffic across copies, offloading the primary"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Replicas hold full copies, so read queries can fan out across them while the leader concentrates on writes. They add no write capacity, since all writes still funnel through the leader."
     },
     {
       "q": "A follower crashes and restarts. How does it typically catch up?",
@@ -54,7 +58,8 @@
         "It serves stale reads permanently until an operator reseeds it"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The follower records its last applied log offset on disk and asks the leader to resume streaming from there, so only the missed changes travel. A full resync is needed only if that log has been discarded."
     },
     {
       "q": "What is failover in a replicated database?",
@@ -65,7 +70,8 @@
         "Splitting the leader into two nodes to double write capacity"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Failover restores write availability by electing a replica as the new leader and repointing clients to it. The old leader must be fenced off so it cannot keep accepting writes."
     },
     {
       "q": "Why is asynchronous replication the common default despite its risks?",
@@ -76,7 +82,8 @@
         "Writes commit without waiting on followers, keeping latency low and tolerating slow replicas"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Commit latency stays independent of replica health and network distance, so one lagging follower cannot stall the leader. The trade is a window of unreplicated writes that failover can lose."
     },
     {
       "q": "In multi-leader replication, when do write conflicts arise?",
@@ -87,7 +94,8 @@
         "When a leader's clock drifts more than the replication interval"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Each leader accepts its write locally, so two updates to the same item made before replication reaches the other node collide and must be reconciled. Writes to different records never conflict."
     },
     {
       "q": "A user posts a comment, refreshes, and the comment is gone, then reappears. Likely cause?",
@@ -98,7 +106,8 @@
         "Successive reads hit different replicas, some behind the leader"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "With asynchronous replicas, one request can land on a caught-up node and the next on a lagging one, so data appears to move backwards. Read-your-writes routing or monotonic-read stickiness fixes it."
     },
     {
       "q": "How does a 'read-your-writes' guarantee typically get implemented?",
@@ -109,7 +118,8 @@
         "Every write is duplicated into a per-user client cache that overrides later reads"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Only the user who just wrote needs the fresh copy, so the system pins their reads to the leader briefly, or picks a replica whose applied position covers their write token. Everyone else keeps using replicas."
     },
     {
       "q": "Why can promoting an asynchronous follower during failover lose data?",
@@ -120,7 +130,8 @@
         "All clients must reconnect during promotion, and their in-flight reads get counted as lost writes"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Asynchronous commits are acknowledged before shipping, so anything still in flight when the leader dies is simply absent from the new leader. That unreplicated window is the effective RPO."
     },
     {
       "q": "Two leaders concurrently update the same profile field. 'Last write wins' resolves it. What is the hidden cost?",
@@ -131,7 +142,8 @@
         "Clocks must be perfectly synchronized or the cluster halts"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "LWW always converges, but it converges by throwing away a write the client was told succeeded, and clock skew can make the older update win. Nothing halts, the loss is just invisible."
     },
     {
       "q": "What problem does a replication quorum (W + R > N) solve?",
@@ -142,7 +154,8 @@
         "It caps replica count so lag can never exceed one write"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "If writes touch W nodes and reads touch R nodes out of N, requiring W + R > N forces at least one node in common, so the reader can observe the newest version rather than only stale ones."
     },
     {
       "q": "During a network blip, two nodes both believe they are leader ('split brain'). Chief danger?",
@@ -153,7 +166,8 @@
         "Both accept conflicting writes, diverging the dataset irrecoverably"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Two authoritative write paths produce two histories that cannot be automatically merged once the partition heals. Quorum-based election and fencing tokens exist to prevent this."
     },
     {
       "q": "Why do many systems use semi-synchronous replication (one sync follower, rest async)?",
@@ -164,7 +178,8 @@
         "It removes the need for failover automation and monitoring"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Waiting on exactly one replica guarantees each commit exists on two nodes while the commit path only ever waits on the fastest peer, not on every distant or slow follower."
     },
     {
       "q": "A monitoring dashboard shows follower lag climbing steadily under normal traffic. Most likely cause?",
@@ -175,7 +190,8 @@
         "Lag metrics are cumulative and always climb until a restart"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "The leader commits with many parallel connections while replay is often serial, so once apply throughput falls below write throughput the backlog grows without bound. Parallel apply or lighter writes are the fix."
     },
     {
       "q": "An RPO of zero (no lost writes) is mandated across two regions 80 ms apart. What is the unavoidable consequence?",
@@ -186,7 +202,8 @@
         "The follower region can never be promoted without operator sign-off"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Losing nothing when a region dies means the other region must already hold the write, so each commit includes at least one cross-region round trip. Zero RPO buys durability with latency."
     },
     {
       "q": "Why is automatic failover dangerous with aggressive (short) failure-detection timeouts?",
@@ -197,7 +214,8 @@
         "The write-ahead log truncates whenever detection fires, corrupting replicas"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "A GC pause or traffic spike is indistinguishable from death over a short timeout, so the system promotes needlessly. Each unnecessary promotion drops in-flight writes and risks two live leaders."
     },
     {
       "q": "Compared with last-write-wins, what do version vectors add to multi-leader conflict handling?",
@@ -208,7 +226,8 @@
         "They detect concurrent updates so conflicts surface instead of being silently dropped"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Per-replica counters establish causality, distinguishing a genuine overwrite from two concurrent edits. Concurrent versions are kept as siblings for the application or a CRDT to merge, at the cost of extra metadata."
     },
     {
       "q": "You must scale writes for a workload with heavy per-record contention across regions. Why does multi-leader replication help less than hoped?",
@@ -219,7 +238,8 @@
         "Cross-region links cannot carry replication and client traffic together"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Extra leaders only add throughput when writes touch disjoint records. With hot contended keys, every region's write collides, and merge logic plus lost updates cost more than the parallelism gains. Partitioning by key locality is the better fix."
     }
   ]
 }

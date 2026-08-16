@@ -10,7 +10,8 @@
         "Users can view aggregate click counts per shortened link"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "A p99 latency target describes how well the system behaves, not what it does, so it is non-functional. Custom aliases, error pages, and click counts are all user-visible features."
     },
     {
       "q": "A team sets itself an internal target of 99.9% monthly availability, with no contractual penalty attached. What is this?",
@@ -21,7 +22,8 @@
         "An error budget policy"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An internal target with no penalty is an SLO. An SLA would carry contractual consequences, and an SLI is the measured metric itself rather than the goal set on it."
     },
     {
       "q": "You're asked to design a chat application in an interview. What should you typically clarify first?",
@@ -32,7 +34,8 @@
         "The team's preferred CI/CD tooling"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Features and scale define the problem and drive every later choice. Picking a database vendor or cloud first commits to a solution before you know what it must satisfy."
     },
     {
       "q": "Which of these is a service level indicator rather than a target or contract?",
@@ -43,7 +46,8 @@
         "The measured fraction of requests served under 300 ms"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An SLI is the actual measurement of service behavior. Goals are SLOs and contractual refunds or promises are SLAs; only the measured fraction of fast requests is the metric itself."
     },
     {
       "q": "A requirement states 'the system must support 1 million daily active users'. What kind of requirement is this?",
@@ -54,7 +58,8 @@
         "An SLA commitment"
       ],
       "answer": 1,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Supporting a user volume is a scalability property of the system, not a feature it offers, making it non-functional. No contractual penalty is attached, so it is not an SLA."
     },
     {
       "q": "Why cut scope early in a system design interview?",
@@ -65,7 +70,8 @@
         "Because scale estimates rarely change the design"
       ],
       "answer": 0,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "Interview time is fixed, so narrowing scope buys depth on what actually matters. The goal is focus, not avoiding breadth or skipping non-functional requirements."
     },
     {
       "q": "Which question best clarifies the read/write balance for a news feed design?",
@@ -76,7 +82,8 @@
         "Will the mobile app be native or hybrid?"
       ],
       "answer": 2,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "The reads-per-write ratio directly quantifies read/write balance and decides fanout-on-write versus fanout-on-read. Framework and formatting questions do not affect that ratio."
     },
     {
       "q": "What does an error budget let a team do?",
@@ -87,7 +94,8 @@
         "Spend allowed unreliability on shipping and experimentation"
       ],
       "answer": 3,
-      "difficulty": "easy"
+      "difficulty": "easy",
+      "explanation": "An error budget is the unreliability the SLO permits, and teams deliberately spend it on releases and experiments. It enables calculated risk-taking, not billing or zero-downtime guarantees."
     },
     {
       "q": "You have 45 minutes to design a ride-hailing app and the interviewer stays silent on scope. Best move?",
@@ -98,7 +106,8 @@
         "Ask the interviewer to enumerate the entire scope for you"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Proposing a scope and confirming it shows judgment while keeping the interviewer aligned. Covering the whole product spreads you too thin, and asking them to define scope offloads the work you are being evaluated on."
     },
     {
       "q": "A service's SLO is 99.9% monthly availability. Roughly how much downtime does that allow in a 30-day month?",
@@ -109,7 +118,8 @@
         "About 43 minutes"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A 30-day month is 43,200 minutes, and 0.1% of that is about 43 minutes. The common trap is confusing this with 99.99%, which allows roughly 4.3 minutes."
     },
     {
       "q": "Mid-interview, the interviewer says 'now support 100x more users'. What should you do?",
@@ -120,7 +130,8 @@
         "Only add more application servers, since databases scale up automatically anyway"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Recomputing load and evolving only the components that break shows incremental scaling judgment. Databases do not scale themselves, and restarting discards sound work."
     },
     {
       "q": "Which pair correctly separates functional from non-functional for a payment system?",
@@ -131,7 +142,8 @@
         "Functional: durability of records; non-functional: fraud checks"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Initiating refunds is a capability the system offers, while latency is a quality attribute of how it performs. The other pairs invert features and quality attributes."
     },
     {
       "q": "Your API's external SLA promises 99.9%, but the internal SLO is 99.95%. Why set the SLO tighter?",
@@ -142,7 +154,8 @@
         "So there's a buffer before customer-facing penalties trigger"
       ],
       "answer": 3,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "A stricter internal SLO gives the team early warning and room to react before the SLA is breached and penalties apply. No regulation or fixed ratio mandates the gap."
     },
     {
       "q": "Scoping a video platform, the interviewer says 'ignore uploads, focus on playback'. What follows?",
@@ -153,7 +166,8 @@
         "Strong consistency becomes the dominant design concern"
       ],
       "answer": 1,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Playback is the read path, so CDN placement, caching, and startup latency dominate. Revisiting uploads ignores the given scope, and you still need storage estimates to serve content."
     },
     {
       "q": "A stakeholder insists the system must 'never lose data and always respond instantly'. Best response?",
@@ -164,7 +178,8 @@
         "Log it as a functional requirement and move on"
       ],
       "answer": 0,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Vague absolutes cannot be verified or designed against, so convert them into testable numbers like eleven nines of durability and a p99 latency budget. Flat rejection wastes a real signal about priorities."
     },
     {
       "q": "Which scope cut is most defensible when designing a Twitter-like service in an interview?",
@@ -175,7 +190,8 @@
         "Ignoring the celebrity hot-key fanout problem since it rarely matters in practice"
       ],
       "answer": 2,
-      "difficulty": "medium"
+      "difficulty": "medium",
+      "explanation": "Ads, DMs, and trends are peripheral, so deferring them preserves the core posting and timeline problem. Cutting timelines, fanout, or hot keys removes the interesting engineering."
     },
     {
       "q": "A team sets a 99.99% SLO for a service whose only database dependency offers 99.9%. What's the flaw?",
@@ -186,7 +202,8 @@
         "Without redundancy, composite availability can't exceed the weakest hard dependency"
       ],
       "answer": 3,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Availability multiplies across hard dependencies, so a 99.9% database caps the service below 99.99% unless you add replicas, failover, or graceful degradation."
     },
     {
       "q": "A bad release burns the whole quarterly error budget in week one. Per SRE practice, what should happen?",
@@ -197,7 +214,8 @@
         "Treat the budget as advisory and continue the launch schedule"
       ],
       "answer": 0,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "An exhausted budget triggers a launch freeze that redirects effort to reliability. Moving the SLO to hide the overrun defeats the whole purpose of the mechanism."
     },
     {
       "q": "Candidate A covers matching, pricing, payments, and maps shallowly; candidate B confirms priorities, then goes deep on matching. Why is B usually stronger?",
@@ -208,7 +226,8 @@
         "Payments discussions require legal expertise that candidates typically lack"
       ],
       "answer": 1,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Interviews assess reasoning about tradeoffs, which only surfaces when you dig into one hard component. Shallow breadth shows recall of a checklist rather than engineering judgment."
     },
     {
       "q": "A request fans out to five independent services, each 99.9% available, all required to succeed. Approximate overall success rate?",
@@ -219,7 +238,8 @@
         "About 98%"
       ],
       "answer": 2,
-      "difficulty": "hard"
+      "difficulty": "hard",
+      "explanation": "Independent required dependencies multiply: 0.999^5 is about 0.995, so roughly 99.5%. Serial dependencies always lower availability below any single component's."
     }
   ]
 }
